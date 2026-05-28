@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Send oppskrift – nineofve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF8F4;--surface:#FFFFFF;--surface2:#F2EFE8;--border:rgba(60,50,30,.15);--border2:rgba(60,50,30,.28);
+  --text:#1E1A14;--text2:#6B6152;--text3:#A8998A;
+  --accent:#2D6A4F;--accent-bg:#E8F3EC;--accent-text:#1B4332;
+  --amber:#B5621E;--amber-bg:#FDF0E6;--coral:#C0392B;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#18150F;--surface:#221E16;--surface2:#2C2720;--border:rgba(255,240,210,.12);--border2:rgba(255,240,210,.24);
+  --text:#F5F0E8;--text2:#B0A090;--text3:#705F50;
+  --accent:#52B788;--accent-bg:#1B3A2D;--accent-text:#A3D9B8;
+  --amber:#E88C3A;--amber-bg:#2C1E0F;
+}}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:10}
+.header-inner{max-width:500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px}
+.logo{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--text);text-decoration:none}
+.logo span{color:var(--accent)}
+.back-link{font-size:13px;color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px}
+.back-link:hover{color:var(--accent)}
+
+.page{max-width:500px;margin:0 auto;padding:22px 20px}
+.page-title{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:5px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6}
+
+.section-label{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.section-label .optional{background:var(--surface2);border:1px solid var(--border);color:var(--text3);font-size:9px;padding:1px 6px;letter-spacing:.04em}
+
+.photo-zone{border:1px solid var(--border2);overflow:hidden;margin-bottom:18px;cursor:pointer;transition:border-color .12s;background:var(--surface);display:block}
+.photo-zone:hover{border-color:var(--accent)}
+.photo-zone input{display:none}
+.photo-placeholder{padding:22px 16px;text-align:center}
+.photo-placeholder .icon{font-size:36px;margin-bottom:8px}
+.photo-placeholder p{font-size:14px;color:var(--text2);font-weight:500}
+.photo-placeholder small{font-size:11px;color:var(--text3)}
+.photo-preview{width:100%;max-height:240px;object-fit:cover;display:none}
+.photo-retake{width:100%;padding:9px;background:var(--surface2);border:none;border-top:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;display:none;text-align:center}
+.photo-retake:hover{background:var(--border);color:var(--coral)}
+
+.or-divider{display:flex;align-items:center;gap:10px;margin:4px 0 16px;color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.recipe-input{width:100%;min-height:140px;padding:12px;background:var(--surface);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;line-height:1.6;margin-bottom:18px;transition:border-color .12s}
+.recipe-input:focus{border-color:var(--accent)}
+.recipe-input::placeholder{color:var(--text3)}
+
+.examples{background:var(--surface2);border:1px solid var(--border);padding:12px 14px;margin-bottom:18px}
+.examples p{font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.example-chip{display:inline-block;font-size:12px;padding:3px 9px;background:var(--surface);border:1px solid var(--border2);border-radius:0;color:var(--text2);cursor:pointer;margin:2px 2px 0 0;transition:all .12s}
+.example-chip:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Multi-photo strip */
+.step-photos-section{margin-bottom:18px}
+.step-photos-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.step-photo-item{flex-shrink:0;width:90px;height:90px;position:relative;border:1px solid var(--border2);overflow:hidden;background:var(--surface2)}
+.step-photo-item img{width:100%;height:100%;object-fit:cover;display:block}
+.step-photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;flex-direction:column;justify-content:space-between;padding:4px;opacity:0;transition:opacity .15s}
+.step-photo-item:hover .step-photo-overlay{opacity:1}
+.step-photo-del{background:rgba(0,0,0,.7);color:#fff;border:none;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:0;margin-left:auto}
+.step-photo-label{color:#fff;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.step-photo-add{flex-shrink:0;width:90px;height:90px;border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);transition:border-color .12s;font-size:11px;color:var(--text3);gap:4px}
+.step-photo-add:hover{border-color:var(--accent);color:var(--accent)}
+.step-photo-add svg{width:18px;height:18px}
+.step-photo-add input{display:none}
+
+/* Analyze chip */
+.analyze-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px;background:var(--accent-bg);border:1px solid var(--accent-text);color:var(--accent-text);cursor:pointer;border-radius:0;font-family:'DM Sans',sans-serif;transition:opacity .15s;margin-bottom:12px}
+.analyze-chip:hover{opacity:.85}
+.analyze-chip:disabled{opacity:.5;cursor:not-allowed}
+
+.send-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.send-btn:hover{opacity:.85}
+.send-btn:disabled{opacity:.5;cursor:not-allowed}
+.send-btn svg{width:16px;height:16px;flex-shrink:0}
+
+.status-area{margin-top:14px;text-align:center;min-height:22px}
+.status-msg{font-size:13px;color:var(--text2)}
+.status-msg.err{color:var(--coral)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(45,106,79,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.success-card{display:none;background:var(--accent-bg);border:1px solid var(--accent);border-radius:0;padding:22px;margin-top:18px;text-align:center}
+.success-card.show{display:block}
+.success-emoji{font-size:40px;margin-bottom:10px}
+.success-title{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--accent-text);margin-bottom:5px}
+.success-sub{font-size:13px;color:var(--accent-text);opacity:.8;margin-bottom:14px}
+.success-name{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--accent-text);background:rgba(255,255,255,.5);border-radius:0;padding:7px 12px;display:inline-block;margin-bottom:14px}
+.go-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none}
+.go-btn:hover{opacity:.85}
+
+.no-key{background:var(--amber-bg);border:1px solid var(--amber);border-radius:0;padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--amber);display:none}
+.no-key.show{display:block}
+.no-key a{color:var(--amber);font-weight:600}
+
+/* Auth overlay */
+.auth-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:10px;transition:border-color .12s;display:block}
+.auth-input:focus{border-color:var(--accent)}
+.auth-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:opacity .15s}
+.auth-btn:hover{opacity:.85}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed}
+.auth-switch{text-align:center;font-size:13px;color:var(--text2)}
+.auth-switch a{color:var(--accent);cursor:pointer;text-decoration:underline}
+.auth-status{font-size:13px;text-align:center;min-height:18px;margin-bottom:8px}
+.auth-status.ok{color:var(--accent)}
+.auth-status.err{color:var(--coral)}
+</style>
+</head>
+<body>
+
+<!-- Auth overlay -->
+<div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--border2);padding:32px;width:100%;max-width:380px">
+    <div style="font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">nine<span style="color:var(--accent)">of</span>ve 🍽</div>
+    <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5">Logg inn for å sende oppskrifter</div>
+    <input class="auth-input" type="email" id="authEmail" placeholder="E-postadresse" autocomplete="email">
+    <input class="auth-input" type="password" id="authPassword" placeholder="Passord" autocomplete="current-password">
+    <div class="auth-status" id="authStatus"></div>
+    <button class="auth-btn" id="authSignInBtn" onclick="signIn()">Logg inn</button>
+    <button class="auth-btn" id="authSignUpBtn" style="display:none" onclick="signUp()">Opprett konto</button>
+    <div class="auth-switch" id="authModeSwitch">Ny bruker? <a onclick="toggleAuthMode('signup')">Opprett konto</a></div>
+  </div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="index.html">nine<span>of</span>ve 🍽</a>
+    <a class="back-link" href="index.html">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Tilbake
+    </a>
+  </div>
+</header>
+
+<div class="page">
+  <h1 class="page-title">Send oppskrift</h1>
+  <p class="page-sub">Last opp bilde av oppskriften, lim inn en lenke, eller skriv oppskriften. Claude strukturerer den automatisk.</p>
+
+  <div class="no-key" id="noKeyBanner">
+    ⚠️ Ingen API-nøkkel funnet. <a href="index.html">Gå til kokeboken</a> og sett opp Claude API-nøkkel i ⚙️ Innstillinger først.
+  </div>
+
+  <!-- Recipe card photo (for Claude to read) -->
+  <div class="section-label">
+    Bilde av oppskriften
+    <span class="optional">valgfritt</span>
+  </div>
+  <label class="photo-zone" id="recipeCardZone">
+    <input type="file" accept="image/*" id="recipeCardInput" onchange="onRecipeCardSelected(this)">
+    <div class="photo-placeholder" id="recipeCardPlaceholder">
+      <div class="icon">📋</div>
+      <p>Håndskrevet, utskrift, oppskriftsbok</p>
+      <small>Claude leser og strukturerer innholdet automatisk</small>
+    </div>
+    <img id="recipeCardPreview" class="photo-preview" alt="Oppskriftsbilde">
+    <button class="photo-retake" id="recipeCardRetake" type="button" onclick="event.preventDefault();retakeRecipeCard()">↺ Velg nytt bilde</button>
+  </label>
+
+  <div class="or-divider">eller</div>
+
+  <!-- Text -->
+  <div class="section-label">
+    Oppskriftstekst eller lenke
+    <span class="optional">valgfritt</span>
+  </div>
+  <textarea
+    id="recipeText"
+    class="recipe-input"
+    placeholder="Lim inn lenke, tekst, eller skriv oppskriften her...
+
+https://www.matprat.no/oppskrifter/...
+
+— eller —
+
+Lasagne
+500g kjøttdeig, løk, hvitløk, hermetiske tomater..."></textarea>
+
+  <div class="examples">
+    <p>Prøv disse</p>
+    <span class="example-chip" onclick="setExample('url')">🔗 Lenke fra nettside</span>
+    <span class="example-chip" onclick="setExample('instagram')">📱 Instagram-lenke</span>
+    <span class="example-chip" onclick="setExample('text')">✏️ Fritekst</span>
+  </div>
+
+  <!-- Step photos section -->
+  <div class="section-label">
+    Bilder (opptil 5)
+    <span class="optional">valgfritt — steg-for-steg + ferdig rett</span>
+  </div>
+  <p style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">Første bilde blir forsidebilde. Claude kan analysere hvert bilde og generere en beskrivende merkelapp automatisk.</p>
+
+  <div class="step-photos-section">
+    <div class="step-photos-strip" id="stepPhotosStrip">
+      <!-- Photos added here dynamically -->
+      <label class="step-photo-add" id="stepPhotoAddBtn" title="Legg til bilde">
+        <input type="file" accept="image/*" capture="environment" id="stepPhotoInput" onchange="onStepPhotoSelected(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Legg til bilde
+      </label>
+    </div>
+  </div>
+
+  <button class="analyze-chip" id="analyzePhotosBtn" onclick="analyzeAllPhotos()" style="display:none">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    ✨ Analyser bilder med Claude – generer merkelapper
+  </button>
+  <div style="font-size:11px;color:var(--text3);margin-bottom:16px" id="analyzeStatus"></div>
+
+  <button class="send-btn" id="sendBtn" onclick="sendRecipe()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Analyser og legg til i kokeboken
+  </button>
+
+  <div class="status-area">
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
+  <div class="success-card" id="successCard">
+    <div class="success-emoji">🎉</div>
+    <div class="success-title">Oppskrift lagt til!</div>
+    <div id="successName" class="success-name"></div>
+    <div class="success-sub">Åpne kokeboken for å se den.</div>
+    <a href="index.html" class="go-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Gå til kokeboken
+    </a>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+// Update these values when moving to a new domain or Supabase project:
+const CONFIG = {
+  SUPABASE_URL: 'https://hfktoxmjudaopjsbvram.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhma3RveG1qdWRhb3Bqc2J2cmFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDAyNTUsImV4cCI6MjA5NTM3NjI1NX0.riZHTmNJpA0yDyzA6WHzFfVxtpf5z8aT-NCkuSEKSJQ',
+  STORAGE_BUCKET: 'recipe-images',
+  MAX_STEP_PHOTOS: 5,
+  MODEL_IMPORT: 'claude-sonnet-4-5',
+  MODEL_LABEL: 'claude-haiku-4-5-20251001'
+};
+
+const _supa = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let recipeCardBase64 = null;
+
+// Step photos: [{base64, label}]
+let stepPhotos = [];
+
+// ─── Auth ──────────────────────────────────────────────────────────────────────
+async function initAuth() {
+  const {data:{session}} = await _supa.auth.getSession();
+  if (session) { currentUser = session.user; showApp(); }
+  else { showAuthScreen(); }
+  _supa.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) { currentUser = session.user; showApp(); }
+    else if (event === 'SIGNED_OUT') { currentUser = null; showAuthScreen(); }
+  });
+}
+
+function showApp() {
+  document.getElementById('authOverlay').style.display = 'none';
+  checkKey();
+}
+
+function showAuthScreen() {
+  document.getElementById('authOverlay').style.display = 'flex';
+}
+
+function toggleAuthMode(mode) {
+  const isLogin = mode === 'login';
+  document.getElementById('authSignInBtn').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('authSignUpBtn').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('authModeSwitch').innerHTML = isLogin
+    ? 'Ny bruker? <a onclick="toggleAuthMode(\'signup\')">Opprett konto</a>'
+    : 'Har du konto? <a onclick="toggleAuthMode(\'login\')">Logg inn</a>';
+  document.getElementById('authStatus').textContent = '';
+  document.getElementById('authPassword').value = '';
+}
+
+async function signIn() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const status = document.getElementById('authStatus');
+  if (!email || !password) { status.textContent = 'Fyll inn e-post og passord.'; status.className = 'auth-status err'; return; }
+  const btn = document.getElementById('authSignInBtn');
+  btn.disabled = true; btn.textContent = 'Logger inn…';
+  const {error} = await _supa.auth.signInWithPassword({email, password});
+  btn.disabled = false; btn.textContent = 'Logg inn';
+  if (error) { status.textContent = '⚠️ Feil e-post eller passord.'; status.className = 'auth-status err'; }
+}
+
+async function signUp() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const status = document.getElementById('authStatus');
+  if (!email || !password) { status.textContent = 'Fyll inn e-post og passord.'; status.className = 'auth-status err'; return; }
+  if (password.length < 6) { status.textContent = 'Passordet må ha minst 6 tegn.'; status.className = 'auth-status err'; return; }
+  const btn = document.getElementById('authSignUpBtn');
+  btn.disabled = true; btn.textContent = 'Oppretter konto…';
+  const {error} = await _supa.auth.signUp({email, password, options:{emailRedirectTo: window.location.href}});
+  btn.disabled = false; btn.textContent = 'Opprett konto';
+  if (error) { status.textContent = '⚠️ ' + error.message; status.className = 'auth-status err'; }
+  else { status.textContent = '✓ Sjekk e-posten din for bekreftelseslenke!'; status.className = 'auth-status ok'; }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const overlay = document.getElementById('authOverlay');
+    if (overlay && overlay.style.display !== 'none') {
+      if (document.getElementById('authSignInBtn').style.display !== 'none') signIn();
+      else signUp();
+    }
+  }
+});
+
+// ─── API Key ───────────────────────────────────────────────────────────────────
+function getApiKey() { return localStorage.getItem('nineofve_apikey') || ''; }
+
+function checkKey() {
+  if (!getApiKey()) document.getElementById('noKeyBanner').classList.add('show');
+}
+
+// ─── Recipe card photo ─────────────────────────────────────────────────────────
+function onRecipeCardSelected(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    recipeCardBase64 = e.target.result;
+    document.getElementById('recipeCardPreview').src = recipeCardBase64;
+    document.getElementById('recipeCardPreview').style.display = 'block';
+    document.getElementById('recipeCardPlaceholder').style.display = 'none';
+    document.getElementById('recipeCardRetake').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function retakeRecipeCard() {
+  recipeCardBase64 = null;
+  document.getElementById('recipeCardInput').value = '';
+  document.getElementById('recipeCardPreview').style.display = 'none';
+  document.getElementById('recipeCardPlaceholder').style.display = 'block';
+  document.getElementById('recipeCardRetake').style.display = 'none';
+}
+
+// ─── Step photos ───────────────────────────────────────────────────────────────
+function onStepPhotoSelected(input) {
+  const file = input.files[0]; if (!file) return;
+  if (stepPhotos.length >= CONFIG.MAX_STEP_PHOTOS) {
+    alert('Maks ' + CONFIG.MAX_STEP_PHOTOS + ' bilder.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    stepPhotos.push({base64: e.target.result, label: ''});
+    input.value = ''; // Reset so same file can be added (edge case)
+    renderStepPhotos();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeStepPhoto(idx) {
+  stepPhotos.splice(idx, 1);
+  renderStepPhotos();
+}
+
+function renderStepPhotos() {
+  const strip = document.getElementById('stepPhotosStrip');
+  const addBtn = document.getElementById('stepPhotoAddBtn');
+  const analyzeBtn = document.getElementById('analyzePhotosBtn');
+
+  // Remove existing photo items (keep add button)
+  strip.querySelectorAll('.step-photo-item').forEach(el => el.remove());
+
+  // Insert photo items before add button
+  stepPhotos.forEach((photo, i) => {
+    const item = document.createElement('div');
+    item.className = 'step-photo-item';
+    item.innerHTML =
+      '<img src="' + photo.base64 + '" alt="Bilde ' + (i + 1) + '">'
+      + '<div class="step-photo-overlay">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+      + '<span style="color:#FFD700;font-size:9px;padding:1px 3px;background:rgba(0,0,0,.4)">' + (i === 0 ? '⭐' : (i + 1)) + '</span>'
+      + '<button class="step-photo-del" onclick="removeStepPhoto(' + i + ')">✕</button>'
+      + '</div>'
+      + '<span class="step-photo-label">' + (photo.label || 'Klikk for å analysere') + '</span>'
+      + '</div>';
+    strip.insertBefore(item, addBtn);
+  });
+
+  // Hide add button if at max
+  addBtn.style.display = stepPhotos.length >= CONFIG.MAX_STEP_PHOTOS ? 'none' : '';
+  analyzeBtn.style.display = stepPhotos.length > 0 ? 'flex' : 'none';
+}
+
+// ─── Analyze step photos with Claude ──────────────────────────────────────────
+async function analyzeAllPhotos() {
+  const apiKey = getApiKey();
+  if (!apiKey) { alert('Legg inn Claude API-nøkkel i kokebokens innstillinger.'); return; }
+  if (!stepPhotos.length) return;
+
+  const btn = document.getElementById('analyzePhotosBtn');
+  const status = document.getElementById('analyzeStatus');
+  btn.disabled = true; btn.textContent = '⏳ Analyserer…';
+  status.textContent = '';
+
+  let analyzed = 0;
+  for (let i = 0; i < stepPhotos.length; i++) {
+    status.textContent = 'Analyserer bilde ' + (i + 1) + ' av ' + stepPhotos.length + '…';
+    try {
+      const photo = stepPhotos[i];
+      const mtype = photo.base64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body: JSON.stringify({
+          model: CONFIG.MODEL_LABEL,
+          max_tokens: 80,
+          messages: [{role:'user', content:[
+            {type:'image', source:{type:'base64', media_type:mtype, data:photo.base64.split(',')[1]}},
+            {type:'text', text:'Beskriv kort hva som vises i dette matlagingsbildet på norsk (maks 8 ord). Eks: "Steg 1: Finhakk løk og hvitløk", "Ferdig rett på tallerken", "Råvarer klargjort". Returner KUN beskrivelsen.'}
+          ]}]
+        })
+      });
+      const d = await resp.json();
+      const label = d.content?.[0]?.text?.trim() || '';
+      if (label) { stepPhotos[i].label = label; analyzed++; }
+    } catch(e) {
+      console.error('Analyse av bilde ' + (i + 1) + ' feilet:', e);
+    }
+  }
+
+  renderStepPhotos();
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ✨ Analyser bilder med Claude – generer merkelapper';
+  status.textContent = analyzed > 0 ? '✓ ' + analyzed + ' bilde(r) analysert og merket!' : '⚠️ Klarte ikke analysere bilder.';
+}
+
+function setExample(type) {
+  const ta = document.getElementById('recipeText');
+  if (type === 'url') ta.value = 'https://www.matprat.no/oppskrifter/';
+  else if (type === 'instagram') ta.value = 'https://www.instagram.com/p/';
+  else ta.value = 'Skriv inn oppskriftsnavn\nIngredienser: ...\nFremgangsmåte: ...';
+  ta.focus();
+}
+
+// ─── Upload single image to Supabase Storage + recipe_images table ─────────────
+async function uploadRecipeImage(recipeId, dataUrl, label, isHero, position) {
+  const resp = await fetch(dataUrl);
+  const blob = await resp.blob();
+  const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+  const ts = Date.now() + position;
+  const path = currentUser.id + '/' + recipeId + '/' + ts + '.' + ext;
+
+  const {error: upErr} = await _supa.storage.from(CONFIG.STORAGE_BUCKET).upload(path, blob, {upsert: false, contentType: blob.type});
+  if (upErr) throw upErr;
+
+  const {data: {publicUrl}} = _supa.storage.from(CONFIG.STORAGE_BUCKET).getPublicUrl(path);
+
+  await _supa.from('recipe_images').insert({
+    recipe_id: recipeId,
+    user_id: currentUser.id,
+    storage_path: path,
+    url: publicUrl,
+    position: position,
+    label: label || '',
+    is_hero: isHero
+  });
+
+  return publicUrl;
+}
+
+// ─── Send recipe ───────────────────────────────────────────────────────────────
+async function sendRecipe() {
+  if (!currentUser) { alert('Du må logge inn først.'); return; }
+  const text = document.getElementById('recipeText').value.trim();
+  const apiKey = getApiKey();
+
+  if (!apiKey) { alert('Legg inn Claude API-nøkkel i kokebokens innstillinger først.'); return; }
+  if (!text && !recipeCardBase64 && !stepPhotos.length) {
+    alert('Skriv inn en oppskrift, last opp bilde av oppskriften, eller ta et bilde!');
+    return;
+  }
+
+  const btn = document.getElementById('sendBtn');
+  const status = document.getElementById('statusMsg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Claude analyserer...';
+  status.textContent = '';
+  status.className = 'status-msg';
+  document.getElementById('successCard').classList.remove('show');
+
+  try {
+    const content = [];
+
+    // Recipe card image for Claude to read
+    if (recipeCardBase64) {
+      const mtype = recipeCardBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+      content.push({type:'image', source:{type:'base64', media_type:mtype, data:recipeCardBase64.split(',')[1]}});
+    }
+
+    // Include first step photo only if no recipe card (so Claude has visual context)
+    if (!recipeCardBase64 && stepPhotos.length > 0) {
+      const firstPhoto = stepPhotos[0];
+      const mtype = firstPhoto.base64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+      content.push({type:'image', source:{type:'base64', media_type:mtype, data:firstPhoto.base64.split(',')[1]}});
+    }
+
+    const hasImage = content.length > 0;
+    const promptText = 'Du er en assistent som hjelper en familie med å organisere oppskrifter.\n\nAnalyser følgende' + (hasImage ? ' bilde og' : '') + (text ? ' tekst/lenke og' : '') + ' trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' + (text ? 'Input: ' + text : '') + '\n\nReturner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal/porsjon",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "proteininnhold hvis relevant, ellers tom streng",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nBruk norsk i alt innhold.';
+
+    content.push({type:'text', text:promptText});
+
+    status.textContent = 'Analyserer med Claude…';
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens:1500, messages:[{role:'user', content}]})
+    });
+
+    if (!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || 'Feil: ' + resp.status); }
+
+    const data = await resp.json();
+    const raw = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
+    const recipe = JSON.parse(raw);
+
+    if (!recipe.ingr || !recipe.ingr.length) recipe.ingr = [{g:'',items:[]}];
+    if (!recipe.steps || !recipe.steps.length) recipe.steps = ['Se oppskrift.'];
+
+    // Save recipe to DB
+    status.textContent = 'Lagrer oppskrift…';
+    const {data: saved, error: saveErr} = await _supa.from('recipes').insert({
+      user_id: currentUser.id,
+      name: recipe.name,
+      cat: recipe.cat || 'vegetar',
+      emoji: recipe.emoji || '🍽️',
+      time_str: recipe.time || '',
+      health: recipe.health || 3,
+      kcal: recipe.kcal || '',
+      ingr: recipe.ingr,
+      steps: recipe.steps,
+      yield_str: recipe.yield || '',
+      protein: recipe.protein || ''
+    }).select().single();
+
+    if (saveErr) throw saveErr;
+
+    // Upload step photos to recipe_images table
+    if (stepPhotos.length > 0 && saved) {
+      status.textContent = 'Laster opp bilder (' + stepPhotos.length + ')…';
+      let heroUrl = null;
+      for (let i = 0; i < stepPhotos.length; i++) {
+        try {
+          const isHero = i === 0;
+          const url = await uploadRecipeImage(saved.id, stepPhotos[i].base64, stepPhotos[i].label, isHero, i);
+          if (isHero) heroUrl = url;
+        } catch(imgErr) {
+          console.error('Bilde ' + (i + 1) + ' feilet:', imgErr);
+        }
+      }
+      // Update hero image_url on recipe
+      if (heroUrl) {
+        await _supa.from('recipes').update({image_url: heroUrl}).eq('id', saved.id);
+      }
+    }
+
+    // Show success
+    document.getElementById('successName').textContent = (recipe.emoji || '🍽️') + ' ' + recipe.name;
+    document.getElementById('successCard').classList.add('show');
+    document.getElementById('recipeText').value = '';
+    retakeRecipeCard();
+    stepPhotos = [];
+    renderStepPhotos();
+    status.textContent = '';
+
+  } catch(e) {
+    status.textContent = '⚠️ ' + e.message;
+    status.className = 'status-msg err';
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Analyser og legg til i kokeboken';
+  }
+}
+
+initAuth();
+</script>
+</body>
+</html>
