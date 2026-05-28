@@ -869,7 +869,7 @@ async function setHeroImage(imageId) {
 }
 
 // ─── API Keys ──────────────────────────────────────────────────────────────────
-function getApiKey() { return localStorage.getItem('nineofve_apikey') || 'REMOVED'; }
+function getApiKey() { return localStorage.getItem('nineofve_apikey') || 'proxy'; }
 function getOpenAIKey() { return localStorage.getItem('nineofve_openai') || ''; }
 
 function saveApiKey() {
@@ -1004,9 +1004,9 @@ async function analyzeRecipe() {
       content.push({type:'image',source:{type:'base64',media_type:mtype,data:_recipeCardBase64.split(',')[1]}});
     }
     content.push({type:'text',text:prompt});
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 1500, messages:[{role:'user',content}]})
     });
     if (!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || 'Feil: ' + resp.status); }
@@ -1339,9 +1339,9 @@ async function analyzeStepImage() {
   status.textContent = ''; status.style.color = 'var(--text2)';
   try {
     const mtype = _pendingUploadBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         model: CONFIG.MODEL_LABEL,
         max_tokens: 80,
@@ -1401,9 +1401,9 @@ async function runImageGeneration() {
     if (_pendingUploadBase64 && getApiKey()) {
       status.textContent = 'Claude analyserer bildet ditt…';
       const mtype = _pendingUploadBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-      const r1 = await fetch('https://api.anthropic.com/v1/messages', {
+      const r1 = await fetch('/.netlify/functions/claude', {
         method: 'POST',
-        headers: {'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens:250, messages:[{role:'user', content:[
           {type:'image', source:{type:'base64', media_type:mtype, data:_pendingUploadBase64.split(',')[1]}},
           {type:'text', text:'Describe this dish in 1-2 sentences for a DALL-E food photography prompt. Include what the dish is, key visible ingredients, colors and textures. Be specific and appetizing. English only.'}
