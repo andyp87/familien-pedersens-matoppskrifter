@@ -652,7 +652,7 @@ async function signIn() {
   status.textContent = ''; status.className = 'auth-status';
   const {error} = await _supa.auth.signInWithPassword({email, password});
   btn.disabled = false; btn.textContent = 'Logg inn';
-  if (error) { status.textContent = '⚠️ Feil e-post eller passord.'; status.className = 'auth-status err'; }
+  if (error) { status.textContent = '⚠️ ' + error.message; status.className = 'auth-status err'; }
 }
 
 async function signUp() {
