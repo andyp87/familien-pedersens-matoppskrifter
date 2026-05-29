@@ -720,6 +720,8 @@ function getHeroImage(recipeId) {
 }
 
 async function addRecipeToDB(recipe) {
+  console.log('[SAVE] addRecipeToDB start');
+  console.time('[SAVE] supabase-insert');
   const {data, error} = await _supa.from('recipes').insert({
     user_id: currentUser.id,
     name: recipe.name,
@@ -733,7 +735,9 @@ async function addRecipeToDB(recipe) {
     yield_str: recipe.yield || '',
     protein: recipe.protein || ''
   }).select().single();
-  if (error) { console.error('Save error:', error); return null; }
+  console.timeEnd('[SAVE] supabase-insert');
+  if (error) { console.error('[SAVE] supabase-insert ERROR:', error); return null; }
+  console.log('[SAVE] addRecipeToDB done, id:', data?.id);
   return dbRowToRecipe(data);
 }
 
@@ -1041,12 +1045,16 @@ async function saveAiRecipe() {
   if (!pendingAiRecipe) return;
   const btn = document.querySelector('#aiPreview .ai-save-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Lagrer...'; }
+  console.log('[SAVE] saveAiRecipe startet');
+  console.time('[SAVE] total-save');
   const recipe = Object.assign({}, pendingAiRecipe);
   if (!recipe.ingr || !recipe.ingr.length) recipe.ingr = [{g:'',items:[]}];
   if (!recipe.steps || !recipe.steps.length) recipe.steps = ['Se oppskrift.'];
   const saved = await addRecipeToDB(recipe);
+  console.timeEnd('[SAVE] total-save');
   if (btn) { btn.disabled = false; btn.textContent = '✓ Legg til i kokeboken'; }
   if (saved) recipes.unshift(saved);
+  console.log('[SAVE] closeAddModal');
   closeAddModal();
   document.getElementById('aiInput').value = '';
   document.getElementById('aiPreview').style.display = 'none';
