@@ -101,9 +101,18 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ingr-group-name{font-size:12px;font-weight:500;color:var(--text2);margin:8px 0 5px}
 .ingr-tags{display:flex;flex-wrap:wrap;gap:5px}
 .ingr-tag{font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:0;padding:3px 9px;color:var(--text2)}
+.ingr-list{list-style:none;padding:0;margin:0 0 10px}
+.ingr-list li{font-size:14px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.45}
+.ingr-list li::before{content:"• ";color:var(--accent);font-weight:600}
+.ingr-list li:last-child{border-bottom:none}
 .steps-list{list-style:none}
 .steps-list li{display:flex;gap:11px;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.55}
 .steps-list li:last-child{border-bottom:none}
+.recipe-result{font-size:14px;color:var(--text2);line-height:1.6;margin:0 0 14px;font-style:italic}
+.nutri-list{list-style:none;padding:0;margin:0 0 14px}
+.nutri-list li{font-size:14px;color:var(--text2);padding:4px 0;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
+.nutri-list li:last-child{border-bottom:none}
+.nutri-list svg{flex-shrink:0;width:14px;height:14px;color:var(--text3)}
 .step-num{min-width:20px;height:20px;background:var(--accent-bg);color:var(--accent-text);border-radius:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;margin-top:2px;flex-shrink:0}
 .nutri-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
 .nutri-card{background:var(--surface2);border:1px solid var(--border);border-radius:0;padding:10px 12px}
@@ -595,6 +604,34 @@ const ICONS = {
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 const _supa = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function withTimeout(promise, ms = 10000, msg) {
+  const errMsg = msg || 'Tidsavbrudd etter ' + (ms/1000) + 's – sjekk nettilkoblingen og prøv igjen';
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(errMsg)), ms))
+  ]);
+}
+
+async function compressImage(dataUrl, maxPx = 1200, quality = 0.85) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w >= h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl); // fall back to original on error
+    img.src = dataUrl;
+  });
+}
+
 let currentUser = null;
 let recipes = [];
 let recipeImagesCache = {}; // { recipeId: [{id, url, label, is_hero, position, storage_path}] }
@@ -689,6 +726,9 @@ function dbRowToRecipe(row) {
     steps: row.steps || [],
     yield: row.yield_str || '',
     protein: row.protein || '',
+    carbs: row.carbs || '',
+    fat: row.fat || '',
+    result: row.result || '',
     image_url: row.image_url || null
   };
 }
@@ -720,24 +760,23 @@ function getHeroImage(recipeId) {
 }
 
 async function addRecipeToDB(recipe) {
-  console.log('[SAVE] addRecipeToDB start');
-  console.time('[SAVE] supabase-insert');
-  const {data, error} = await _supa.from('recipes').insert({
-    user_id: currentUser.id,
-    name: recipe.name,
-    cat: recipe.cat || 'vegetar',
-    emoji: recipe.emoji || '🍽️',
-    time_str: recipe.time || '',
-    health: recipe.health || 3,
-    kcal: recipe.kcal || '',
-    ingr: recipe.ingr || [{g:'',items:[]}],
-    steps: recipe.steps || [],
-    yield_str: recipe.yield || '',
-    protein: recipe.protein || ''
-  }).select().single();
-  console.timeEnd('[SAVE] supabase-insert');
-  if (error) { console.error('[SAVE] supabase-insert ERROR:', error); return null; }
-  console.log('[SAVE] addRecipeToDB done, id:', data?.id);
+  const {data, error} = await withTimeout(
+    _supa.from('recipes').insert({
+      user_id: currentUser.id,
+      name: recipe.name,
+      cat: recipe.cat || 'vegetar',
+      emoji: recipe.emoji || '🍽️',
+      time_str: recipe.time || '',
+      health: recipe.health || 3,
+      kcal: recipe.kcal || '',
+      ingr: recipe.ingr || [{g:'',items:[]}],
+      steps: recipe.steps || [],
+      yield_str: recipe.yield || '',
+      protein: recipe.protein || ''
+    }).select().single(),
+    10000
+  );
+  if (error) throw error;
   return dbRowToRecipe(data);
 }
 
@@ -753,8 +792,12 @@ async function updateRecipeInDB(id, fields) {
   if (fields.steps !== undefined) dbFields.steps = fields.steps;
   if (fields.yield !== undefined) dbFields.yield_str = fields.yield;
   if (fields.protein !== undefined) dbFields.protein = fields.protein;
-  const {error} = await _supa.from('recipes').update(dbFields).eq('id', id);
-  return !error;
+  const {error} = await withTimeout(
+    _supa.from('recipes').update(dbFields).eq('id', id),
+    10000
+  );
+  if (error) throw error;
+  return true;
 }
 
 async function deleteRecipeFromDB(id) {
@@ -995,24 +1038,58 @@ async function analyzeRecipe() {
   const preview = document.getElementById('aiPreview');
   btn.disabled = true;
   btn.innerHTML = '<span class="img-spinner"></span>Analyserer...';
-  status.textContent = 'Claude leser oppskriften...';
+  status.textContent = '';
   preview.style.display = 'none';
   pendingAiRecipe = null;
 
-  const prompt = 'Du er en assistent som hjelper en familie med å organisere oppskrifter.\n\nAnalyser følgende' + (_recipeCardBase64 ? ' bilde og/eller' : '') + (input ? ' tekst/lenke og' : '') + ' trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' + (input ? 'Input: ' + input : '') + '\n\nReturner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal/porsjon",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "proteininnhold hvis relevant, ellers tom streng",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nBruk norsk i alt innhold.';
-
   try {
+    // ── Punkt 3: URL-henting ──────────────────────────────────────────────────
+    let textForClaude = input;
+    if (input && /^https?:\/\//i.test(input)) {
+      if (/(instagram\.com|facebook\.com|fb\.com)/i.test(input)) {
+        throw new Error('Instagram og Facebook blokkerer automatisk henting. Ta et skjermbilde av oppskriften og last det opp som bilde i stedet.');
+      }
+      status.textContent = 'Henter oppskriftssiden...';
+      const fetchResp = await withTimeout(
+        fetch('/.netlify/functions/fetch-url', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({url: input})
+        }),
+        15000, 'Siden svarte ikke – kopier oppskriftsteksten manuelt og lim inn'
+      );
+      const fetchData = await fetchResp.json();
+      if (fetchData.error) throw new Error('Kunne ikke hente siden: ' + fetchData.error);
+      textForClaude = fetchData.text;
+    }
+
+    status.textContent = 'Claude leser oppskriften...';
+
+    // ── Punkt 2: komprimer bilde før sending ──────────────────────────────────
     const content = [];
     if (_recipeCardBase64) {
-      const mtype = _recipeCardBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-      content.push({type:'image',source:{type:'base64',media_type:mtype,data:_recipeCardBase64.split(',')[1]}});
+      const compressed = await compressImage(_recipeCardBase64, 1200, 0.85);
+      content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:compressed.split(',')[1]}});
     }
-    content.push({type:'text',text:prompt});
-    const resp = await fetch('/.netlify/functions/claude', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 1500, messages:[{role:'user',content}]})
-    });
+
+    const prompt = 'Du er en assistent som hjelper en familie med å organisere oppskrifter.\n\nAnalyser følgende' +
+      (_recipeCardBase64 ? ' bilde og/eller' : '') + (textForClaude ? ' tekst' : '') +
+      ' og trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' +
+      (textForClaude ? 'Input:\n' + textForClaude + '\n\n' : '') +
+      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nBruk norsk i alt innhold.';
+
+    content.push({type:'text', text: prompt});
+
+    const t0 = Date.now();
+    const resp = await withTimeout(
+      fetch('/.netlify/functions/claude', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 1500, messages:[{role:'user',content}]})
+      }),
+      60000, 'Claude svarte ikke innen 60 sekunder – prøv igjen'
+    );
+    console.log('[ANALYSE] Claude svarte på', Date.now() - t0, 'ms');
     if (!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || 'Feil: ' + resp.status); }
     const data = await resp.json();
     const text = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
@@ -1044,23 +1121,41 @@ function showAiPreview(r) {
 async function saveAiRecipe() {
   if (!pendingAiRecipe) return;
   const btn = document.querySelector('#aiPreview .ai-save-btn');
+  const status = document.getElementById('aiStatus');
   if (btn) { btn.disabled = true; btn.textContent = 'Lagrer...'; }
-  console.log('[SAVE] saveAiRecipe startet');
-  console.time('[SAVE] total-save');
+  if (status) { status.textContent = ''; }
   const recipe = Object.assign({}, pendingAiRecipe);
   if (!recipe.ingr || !recipe.ingr.length) recipe.ingr = [{g:'',items:[]}];
   if (!recipe.steps || !recipe.steps.length) recipe.steps = ['Se oppskrift.'];
-  const saved = await addRecipeToDB(recipe);
-  console.timeEnd('[SAVE] total-save');
-  if (btn) { btn.disabled = false; btn.textContent = '✓ Legg til i kokeboken'; }
-  if (saved) recipes.unshift(saved);
-  console.log('[SAVE] closeAddModal');
-  closeAddModal();
-  document.getElementById('aiInput').value = '';
-  document.getElementById('aiPreview').style.display = 'none';
-  clearRecipeCard();
-  pendingAiRecipe = null;
-  buildFilters(); render();
+  const t0 = Date.now();
+  try {
+    const saved = await addRecipeToDB(recipe);
+    // Punkt 4: lagre oppskriftskortet som hero-bilde
+    if (_recipeCardBase64) {
+      try {
+        if (status) { status.textContent = 'Lagrer bilde...'; }
+        const compressed = await compressImage(_recipeCardBase64, 1200, 0.85);
+        await uploadNewImage(saved.id, compressed, 'Oppskriftsbilde', true);
+        const hero = (recipeImagesCache[saved.id] || []).find(i => i.is_hero);
+        if (hero) saved.image_url = hero.url;
+      } catch(imgErr) {
+        console.warn('Klarte ikke lagre oppskriftsbilde:', imgErr.message);
+      }
+    }
+    console.log('[SAVE] fullført på', Date.now() - t0, 'ms');
+    recipes.unshift(saved);
+    closeAddModal();
+    document.getElementById('aiInput').value = '';
+    document.getElementById('aiPreview').style.display = 'none';
+    clearRecipeCard();
+    pendingAiRecipe = null;
+    buildFilters(); render();
+  } catch(e) {
+    console.error('saveAiRecipe feil:', e);
+    if (status) { status.textContent = '⚠️ Lagring feilet: ' + e.message; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Legg til i kokeboken'; }
+  }
 }
 
 // ─── Manual Save / Edit ────────────────────────────────────────────────────────
@@ -1085,23 +1180,23 @@ async function saveManualRecipe() {
     protein: ''
   };
 
-  if (editId) {
-    // Edit existing
-    const ok = await updateRecipeInDB(editId, recipe);
-    if (btn) { btn.disabled = false; btn.textContent = 'Lagre endringer'; }
-    if (ok) {
+  try {
+    if (editId) {
+      await updateRecipeInDB(editId, recipe);
       const idx = recipes.findIndex(r => r.id === editId);
       if (idx !== -1) recipes[idx] = Object.assign(recipes[idx], recipe);
+    } else {
+      const saved = await addRecipeToDB(recipe);
+      recipes.unshift(saved);
     }
-  } else {
-    // New recipe
-    const saved = await addRecipeToDB(recipe);
-    if (btn) { btn.disabled = false; btn.textContent = 'Lagre oppskrift'; }
-    if (saved) recipes.unshift(saved);
+    closeAddModal();
+    buildFilters(); render();
+  } catch(e) {
+    console.error('saveManualRecipe feil:', e);
+    alert('Lagring feilet: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = editId ? 'Lagre endringer' : 'Lagre oppskrift'; }
   }
-
-  closeAddModal();
-  buildFilters(); render();
 }
 
 // ─── Delete Recipe ─────────────────────────────────────────────────────────────
@@ -1216,6 +1311,18 @@ function openDetail(id) {
       + '</div></div>';
   }
 
+  const totalIngr = (r.ingr || []).reduce((s, g) => s + (g.items || []).length, 0);
+  const ingrBullets = (r.ingr || []).map(g =>
+    (r.ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + g.g + '</div>' : '')
+    + '<ul class="ingr-list">' + (g.items || []).map(i => '<li>' + i + '</li>').join('') + '</ul>'
+  ).join('');
+
+  const nutriItems = [];
+  if (r.kcal) nutriItems.push('<li>' + ICONS.flame + '<span>' + r.kcal + '</span></li>');
+  if (r.protein) nutriItems.push('<li><strong>Protein:</strong> ' + r.protein + '</li>');
+  if (r.carbs) nutriItems.push('<li><strong>Karbohydrater:</strong> ' + r.carbs + '</li>');
+  if (r.fat) nutriItems.push('<li><strong>Fett:</strong> ' + r.fat + '</li>');
+
   document.getElementById('detailContent').innerHTML =
     '<div class="modal-hero" style="background:' + cm.bg + '">'
     + heroContent
@@ -1229,15 +1336,15 @@ function openDetail(id) {
     + '<div class="modal-title">' + r.name + '</div>'
     + '<div class="modal-info">'
     + (r.time ? '<div class="info-pill">' + ICONS.clock + r.time + '</div>' : '')
-    + (r.kcal ? '<div class="info-pill">' + ICONS.flame + r.kcal + '</div>' : '')
     + (r.yield ? '<div class="info-pill">' + ICONS.users + r.yield + '</div>' : '')
     + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
     + '</div>'
-    + '<div class="section-title">Ingredienser</div>'
-    + ingrHtml
+    + '<div class="section-title">Ingredienser' + (totalIngr ? ' (' + totalIngr + ')' : '') + '</div>'
+    + ingrBullets
     + '<div class="section-title">Fremgangsmåte</div>'
     + '<ol class="steps-list">' + (r.steps || []).map((s, i) => '<li><span class="step-num">' + (i + 1) + '</span><span>' + s + '</span></li>').join('') + '</ol>'
-    + (r.protein ? '<div class="nutri-grid"><div class="nutri-card"><div class="nutri-val">' + (r.kcal || '–') + '</div><div class="nutri-lbl">Kalorier</div></div><div class="nutri-card"><div class="nutri-val">' + r.protein + '</div><div class="nutri-lbl">Protein</div></div></div>' : '')
+    + (r.result ? '<div class="section-title">Resultat</div><p class="recipe-result">' + r.result + '</p>' : '')
+    + (nutriItems.length ? '<div class="section-title">Næring (per ' + (r.yield || 'porsjon') + ')</div><ul class="nutri-list">' + nutriItems.join('') + '</ul>' : '')
     + galleryHtml
     + '<div class="detail-actions">'
     + '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">' + ICONS.edit + 'Rediger</button>'
