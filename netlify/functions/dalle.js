@@ -25,7 +25,7 @@ exports.handler = async function(event) {
     const resp = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openaiKey },
-      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', quality: 'hd', response_format: 'b64_json' })
+      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', quality: 'hd' })
     });
 
     if (!resp.ok) {
@@ -38,10 +38,17 @@ exports.handler = async function(event) {
     }
 
     const data = await resp.json();
+    const imageUrl = data.data[0].url;
+
+    // Fetch image and convert to base64 so client can use it offline
+    const imgResp = await fetch(imageUrl);
+    const arrayBuf = await imgResp.arrayBuffer();
+    const b64 = Buffer.from(arrayBuf).toString('base64');
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ b64_json: data.data[0].b64_json })
+      body: JSON.stringify({ b64_json: b64 })
     };
   } catch(e) {
     return {
