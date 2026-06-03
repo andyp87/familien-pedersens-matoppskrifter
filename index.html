@@ -167,10 +167,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .img-label-row input{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--border2);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;border-radius:0;transition:border-color .12s}
 .img-label-row input:focus{border-color:var(--accent)}
 .img-analyze-row{display:none;margin-bottom:10px}
-.img-gen-result{display:none;margin-top:12px}
-.img-gen-result img{width:100%;border-radius:0;margin-bottom:8px;display:block;border:1px solid var(--border)}
-.img-result-btns{display:flex;gap:6px}
-.img-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 .img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:none;align-items:center;justify-content:center;cursor:pointer}
 .img-lightbox.open{display:flex}
 .img-lightbox img{max-width:92vw;max-height:92vh;object-fit:contain}
@@ -473,14 +469,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       </div>
       <div class="api-status" id="apiStatus"></div>
 
-      <div class="settings-section">
-        <h3>🎨 Bildegenerering med DALL-E 3</h3>
-        <p>Bildegenerering kjøres via serveren – ingen nøkkel trengs her. Ca. 0,04–0,08 kr per bilde.</p>
-      </div>
 
       <div class="settings-section">
         <h3>💰 Hva koster det?</h3>
-        <p>Veldig lite. Én oppskriftsimport koster ca. <b>0,01–0,02 kr</b>. Ett matbilde med DALL-E 3 koster ca. <b>0,04–0,08 kr</b>. Merkelapp-analyse av ett stegbilde med Claude Haiku: ca. <b>0,003 kr</b>.</p>
+        <p>Veldig lite. Én oppskriftsimport koster ca. <b>0,01–0,02 kr</b>. Merkelapp-analyse av ett stegbilde med Claude Haiku: ca. <b>0,003 kr</b>.</p>
       </div>
 
       <div class="settings-section">
@@ -531,19 +523,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           <button class="btn-save" style="width:100%;font-size:13px" onclick="saveNewImage()">✓ Lagre bilde</button>
         </div>
 
-        <button class="ai-analyze-btn" id="imgGenBtn" onclick="runImageGeneration()" style="margin-top:4px">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          Generer oda.no-stil bilde med DALL-E 3
-        </button>
-        <div class="ai-status" id="imgGenStatus"></div>
-
-        <div class="img-gen-result" id="imgGenResult">
-          <img id="imgGenResultImg" alt="Generert matbilde">
-          <div class="img-result-btns">
-            <button class="btn-save" style="flex:1" onclick="useGeneratedImage()">✓ Bruk dette bildet</button>
-            <button class="btn-cancel" onclick="runImageGeneration()">↺ Prøv igjen</button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -908,7 +887,6 @@ async function setHeroImage(imageId) {
 
 // ─── API Keys ──────────────────────────────────────────────────────────────────
 function getApiKey() { return localStorage.getItem('nineofve_apikey') || 'proxy'; }
-function getOpenAIKey() { return localStorage.getItem('nineofve_openai') || ''; }
 
 function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
@@ -920,14 +898,6 @@ function saveApiKey() {
   setTimeout(() => document.getElementById('settingsModal').classList.remove('open'), 1400);
 }
 
-function saveOpenAIKey() {
-  const key = document.getElementById('openaiKeyInput').value.trim();
-  if (!key) { document.getElementById('openaiStatus').textContent = 'Skriv inn nøkkelen først.'; document.getElementById('openaiStatus').className = 'api-status err'; return; }
-  localStorage.setItem('nineofve_openai', key);
-  document.getElementById('openaiStatus').textContent = '✓ OpenAI-nøkkel lagret!';
-  document.getElementById('openaiStatus').className = 'api-status ok';
-}
-
 function checkKeyBanner() {
   const banner = document.getElementById('noKeyBanner');
   if (getApiKey()) { banner.classList.remove('show'); } else { banner.classList.add('show'); }
@@ -935,7 +905,6 @@ function checkKeyBanner() {
 
 function openSettings() {
   const ck = getApiKey(); if (ck) document.getElementById('apiKeyInput').value = ck;
-  const ok = getOpenAIKey(); if (ok) document.getElementById('openaiKeyInput').value = ok;
   const emailEl = document.getElementById('settingsUserEmail');
   if (emailEl) emailEl.textContent = currentUser?.email || '';
   document.getElementById('settingsModal').classList.add('open');
@@ -1349,12 +1318,10 @@ function openDetail(id) {
 // ─── Image Manager Modal ───────────────────────────────────────────────────────
 let _imgRecipeId = null;
 let _pendingUploadBase64 = null;
-let _generatedBase64 = null;
 
 function openImgModal(recipeId) {
   _imgRecipeId = recipeId;
   _pendingUploadBase64 = null;
-  _generatedBase64 = null;
   resetImgUploadPanel();
   renderImgManager();
   document.getElementById('imgModal').classList.add('open');
@@ -1408,14 +1375,8 @@ function resetImgUploadPanel() {
   document.getElementById('imgLabelRow').style.display = 'none';
   document.getElementById('imgAnalyzeRow').style.display = 'none';
   document.getElementById('imgSaveOrigDiv').style.display = 'none';
-  document.getElementById('imgGenStatus').textContent = '';
-  document.getElementById('imgGenResult').style.display = 'none';
   document.getElementById('imgAnalyzeStatus').textContent = '';
-  const genBtn = document.getElementById('imgGenBtn');
-  genBtn.disabled = false;
-  genBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Generer oda.no-stil bilde med DALL-E 3';
   _pendingUploadBase64 = null;
-  _generatedBase64 = null;
 }
 
 function onImgFileSelected(input) {
@@ -1490,76 +1451,6 @@ async function saveNewImage() {
   }
 }
 
-// ─── DALL-E 3 Image Generation ─────────────────────────────────────────────────
-async function runImageGeneration() {
-  const recipe = recipes.find(r => r.id === _imgRecipeId);
-  if (!recipe) return;
-  const btn = document.getElementById('imgGenBtn');
-  const status = document.getElementById('imgGenStatus');
-  const result = document.getElementById('imgGenResult');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="img-spinner"></span>Genererer…';
-  status.textContent = ''; result.style.display = 'none'; _generatedBase64 = null;
-  try {
-    let description = '';
-    if (_pendingUploadBase64) {
-      status.textContent = 'Claude analyserer bildet ditt…';
-      const mtype = _pendingUploadBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-      const r1 = await withTimeout(
-        fetch('/.netlify/functions/claude', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens:250, messages:[{role:'user', content:[
-            {type:'image', source:{type:'base64', media_type:mtype, data:_pendingUploadBase64.split(',')[1]}},
-            {type:'text', text:'Describe this dish in 1-2 sentences for a DALL-E food photography prompt. Include what the dish is, key visible ingredients, colors and textures. Be specific and appetizing. English only.'}
-          ]}]})
-        }).then(r => r.json()),
-        20000
-      );
-      description = r1.content?.[0]?.text || '';
-    }
-    if (!description) {
-      const ingrs = recipe.ingr.flatMap(g => g.items).slice(0, 6).join(', ');
-      description = recipe.name + ', a Norwegian home-cooked dish with ' + ingrs;
-    }
-    status.textContent = 'DALL-E 3 genererer bilde… (dette tar ~20–30 sek)';
-    const prompt = 'Professional food photography of ' + description + '. Birds-eye overhead shot on a white marble surface with subtle texture. Soft natural daylight streaming from upper-left, gentle shadows. Minimalist Scandinavian food styling. Beautiful plating with fresh herb garnishes and vibrant colors. No people, no hands, no text, no watermarks. Ultra-photorealistic, tack sharp focus, f/4 aperture, high-end editorial magazine quality, similar to Nordic food photography from oda.no or similar premium Scandinavian food brands.';
-    const d2 = await withTimeout(
-      fetch('/.netlify/functions/dalle', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({prompt})
-      }).then(r => r.json()),
-      120000,
-      'DALL-E tok for lang tid – prøv igjen'
-    );
-    if (d2.error) throw new Error(d2.error);
-    _generatedBase64 = 'data:image/png;base64,' + d2.b64_json;
-    status.textContent = '';
-    document.getElementById('imgGenResultImg').src = _generatedBase64;
-    result.style.display = 'block';
-  } catch(e) {
-    status.textContent = '⚠️ ' + e.message; console.error(e);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Generer oda.no-stil bilde med DALL-E 3';
-  }
-}
-
-async function useGeneratedImage() {
-  if (!_generatedBase64 || !_imgRecipeId) return;
-  const btn = document.querySelector('#imgGenResult .btn-save');
-  if (btn) { btn.disabled = true; btn.textContent = 'Laster opp…'; }
-  try {
-    await uploadNewImage(_imgRecipeId, _generatedBase64, '', false);
-    resetImgUploadPanel();
-    renderImgManager();
-    render();
-  } catch(e) {
-    alert('Feil ved bildeopplasting: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = '✓ Bruk dette bildet'; }
-  }
-}
 
 // ─── Lightbox ──────────────────────────────────────────────────────────────────
 function openLightbox(url) {
