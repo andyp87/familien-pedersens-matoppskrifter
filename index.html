@@ -474,21 +474,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="api-status" id="apiStatus"></div>
 
       <div class="settings-section">
-        <h3>OpenAI API-nøkkel <span style="font-size:12px;color:var(--text3);font-weight:400">(for bildegenerering)</span></h3>
-        <p>Brukes av DALL-E 3 til å generere fotorealistiske matbilder. Ca. 0,04–0,08 kr per bilde.</p>
-        <div class="step-guide">
-          <ol>
-            <li>Gå til <a class="api-link" href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></li>
-            <li>Logg inn med ChatGPT-konto</li>
-            <li>Klikk <b>"Create new secret key"</b></li>
-            <li>Kopier nøkkelen og lim inn under</li>
-          </ol>
-        </div>
-        <div class="api-input-row">
-          <input type="password" id="openaiKeyInput" placeholder="sk-proj-..." autocomplete="off">
-          <button class="api-save-btn" onclick="saveOpenAIKey()">Lagre</button>
-        </div>
-        <div class="api-status" id="openaiStatus"></div>
+        <h3>🎨 Bildegenerering med DALL-E 3</h3>
+        <p>Bildegenerering kjøres via serveren – ingen nøkkel trengs her. Ca. 0,04–0,08 kr per bilde.</p>
       </div>
 
       <div class="settings-section">
@@ -813,7 +800,11 @@ async function uploadNewImage(recipeId, dataUrl, label = '', setAsHero = false) 
   const ts = Date.now();
   const path = currentUser.id + '/' + recipeId + '/' + ts + '.' + ext;
 
-  const {error: upErr} = await _supa.storage.from(CONFIG.STORAGE_BUCKET).upload(path, blob, {upsert: false, contentType: blob.type});
+  const {error: upErr} = await withTimeout(
+    _supa.storage.from(CONFIG.STORAGE_BUCKET).upload(path, blob, {upsert: false, contentType: blob.type}),
+    30000,
+    'Bildeopplasting tok for lang tid – sjekk nettilkoblingen og prøv igjen'
+  );
   if (upErr) throw upErr;
 
   const {data: {publicUrl}} = _supa.storage.from(CONFIG.STORAGE_BUCKET).getPublicUrl(path);
@@ -1503,8 +1494,6 @@ async function saveNewImage() {
 async function runImageGeneration() {
   const recipe = recipes.find(r => r.id === _imgRecipeId);
   if (!recipe) return;
-  const openaiKey = getOpenAIKey();
-  if (!openaiKey) { alert('Legg inn OpenAI API-nøkkel i innstillingene for å generere bilder!'); closeImgModal(); openSettings(); return; }
   const btn = document.getElementById('imgGenBtn');
   const status = document.getElementById('imgGenStatus');
   const result = document.getElementById('imgGenResult');
@@ -1513,34 +1502,39 @@ async function runImageGeneration() {
   status.textContent = ''; result.style.display = 'none'; _generatedBase64 = null;
   try {
     let description = '';
-    if (_pendingUploadBase64 && getApiKey()) {
+    if (_pendingUploadBase64) {
       status.textContent = 'Claude analyserer bildet ditt…';
       const mtype = _pendingUploadBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-      const r1 = await fetch('/.netlify/functions/claude', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens:250, messages:[{role:'user', content:[
-          {type:'image', source:{type:'base64', media_type:mtype, data:_pendingUploadBase64.split(',')[1]}},
-          {type:'text', text:'Describe this dish in 1-2 sentences for a DALL-E food photography prompt. Include what the dish is, key visible ingredients, colors and textures. Be specific and appetizing. English only.'}
-        ]}]})
-      });
-      const d1 = await r1.json();
-      description = d1.content?.[0]?.text || '';
+      const r1 = await withTimeout(
+        fetch('/.netlify/functions/claude', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens:250, messages:[{role:'user', content:[
+            {type:'image', source:{type:'base64', media_type:mtype, data:_pendingUploadBase64.split(',')[1]}},
+            {type:'text', text:'Describe this dish in 1-2 sentences for a DALL-E food photography prompt. Include what the dish is, key visible ingredients, colors and textures. Be specific and appetizing. English only.'}
+          ]}]})
+        }).then(r => r.json()),
+        20000
+      );
+      description = r1.content?.[0]?.text || '';
     }
     if (!description) {
       const ingrs = recipe.ingr.flatMap(g => g.items).slice(0, 6).join(', ');
       description = recipe.name + ', a Norwegian home-cooked dish with ' + ingrs;
     }
-    status.textContent = 'DALL-E 3 genererer bilde…';
+    status.textContent = 'DALL-E 3 genererer bilde… (dette tar ~20–30 sek)';
     const prompt = 'Professional food photography of ' + description + '. Birds-eye overhead shot on a white marble surface with subtle texture. Soft natural daylight streaming from upper-left, gentle shadows. Minimalist Scandinavian food styling. Beautiful plating with fresh herb garnishes and vibrant colors. No people, no hands, no text, no watermarks. Ultra-photorealistic, tack sharp focus, f/4 aperture, high-end editorial magazine quality, similar to Nordic food photography from oda.no or similar premium Scandinavian food brands.';
-    const r2 = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer ' + openaiKey},
-      body: JSON.stringify({model:'dall-e-3', prompt, n:1, size:'1024x1024', quality:'hd', response_format:'b64_json'})
-    });
-    if (!r2.ok) { const err = await r2.json(); throw new Error(err.error?.message || 'OpenAI feil: ' + r2.status); }
-    const d2 = await r2.json();
-    _generatedBase64 = 'data:image/png;base64,' + d2.data[0].b64_json;
+    const d2 = await withTimeout(
+      fetch('/.netlify/functions/dalle', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({prompt})
+      }).then(r => r.json()),
+      120000,
+      'DALL-E tok for lang tid – prøv igjen'
+    );
+    if (d2.error) throw new Error(d2.error);
+    _generatedBase64 = 'data:image/png;base64,' + d2.b64_json;
     status.textContent = '';
     document.getElementById('imgGenResultImg').src = _generatedBase64;
     result.style.display = 'block';
