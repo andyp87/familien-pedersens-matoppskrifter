@@ -1039,10 +1039,8 @@ async function analyzeRecipe() {
     // ── URL-henting ───────────────────────────────────────────────────────────
     let textForClaude = input;
     if (input && /^https?:\/\//i.test(input)) {
-      if (/(instagram\.com|facebook\.com|fb\.com)/i.test(input)) {
-        throw new Error('Instagram-støtte er under utvikling.');
-      }
-      status.textContent = 'Henter oppskriftssiden...';
+      const isInstagram = /(instagram\.com|facebook\.com|fb\.com)/i.test(input);
+      status.textContent = isInstagram ? 'Henter Instagram-post via ScrapingAnt…' : 'Henter oppskriftssiden...';
       const fetchResp = await withTimeout(
         fetch('/.netlify/functions/fetch-url', {
           method: 'POST',
