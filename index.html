@@ -155,13 +155,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .mgr-add-cell svg{width:20px;height:20px}
 .img-add-panel{background:var(--surface2);border:1px solid var(--border2);padding:14px;margin-top:2px}
 .img-add-panel-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
-.img-upload-zone{display:block;border:1px dashed var(--border2);background:var(--surface);cursor:pointer;transition:border-color .12s;margin-bottom:10px;overflow:hidden}
-.img-upload-zone:hover{border-color:var(--accent)}
-.img-upload-zone input{display:none}
-.img-upload-prompt{padding:14px;text-align:center}
-.img-upload-prompt .up-icon{font-size:28px;margin-bottom:5px}
-.img-upload-prompt p{font-size:13px;color:var(--text2);font-weight:500}
-.img-upload-prompt small{font-size:11px;color:var(--text3)}
+.img-upload-zone{margin-bottom:10px;overflow:hidden}
+.img-upload-prompt{display:flex;gap:8px;padding:2px 0 10px}
+.img-pick-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;background:var(--surface);border:1px dashed var(--border2);border-radius:10px;cursor:pointer;gap:6px;transition:border-color .12s}
+.img-pick-btn:hover{border-color:var(--accent)}
+.img-pick-btn input{display:none}
+.img-pick-btn .pick-icon{font-size:26px}
+.img-pick-btn span{font-size:12px;color:var(--text2);font-weight:500}
+.img-upload-preview{display:none;width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-bottom:10px}
 .img-upload-preview{display:none;width:100%;max-height:160px;object-fit:cover}
 .img-label-row{display:none;margin-bottom:10px}
 .img-label-row input{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--border2);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;border-radius:0;transition:border-color .12s}
@@ -500,15 +501,21 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="img-add-panel" id="imgAddPanel">
         <div class="img-add-panel-title" id="imgAddTitle">Legg til bilde</div>
 
-        <label class="img-upload-zone" id="imgUploadZone">
-          <input type="file" accept="image/*" id="imgFileInput" onchange="onImgFileSelected(this)">
-          <div class="img-upload-prompt" id="imgUploadPrompt">
-            <div class="up-icon">📷</div>
-            <p>Velg bilde eller ta foto</p>
-            <small>Steg-for-steg bilder, ferdig rett, råvarer…</small>
-          </div>
+        <div class="img-upload-zone" id="imgUploadZone">
           <img class="img-upload-preview" id="imgUploadPreview" alt="Forhåndsvisning">
-        </label>
+          <div class="img-upload-prompt" id="imgUploadPrompt">
+            <label class="img-pick-btn">
+              <input type="file" accept="image/*" capture="environment" id="imgCameraInput" onchange="onImgFileSelected(this)">
+              <span class="pick-icon">📷</span>
+              <span>Ta bilde</span>
+            </label>
+            <label class="img-pick-btn">
+              <input type="file" accept="image/*" id="imgLibraryInput" onchange="onImgFileSelected(this)">
+              <span class="pick-icon">🖼️</span>
+              <span>Bildebibliotek</span>
+            </label>
+          </div>
+        </div>
 
         <div class="img-label-row" id="imgLabelRow">
           <input type="text" id="imgLabelInput" placeholder="Merkelapp f.eks. Steg 2: Fres løk og hvitløk…">
@@ -1381,9 +1388,12 @@ function renderImgManager() {
 }
 
 function resetImgUploadPanel() {
-  document.getElementById('imgFileInput').value = '';
+  const cam = document.getElementById('imgCameraInput');
+  const lib = document.getElementById('imgLibraryInput');
+  if (cam) cam.value = '';
+  if (lib) lib.value = '';
   document.getElementById('imgUploadPreview').style.display = 'none';
-  document.getElementById('imgUploadPrompt').style.display = 'block';
+  document.getElementById('imgUploadPrompt').style.display = 'flex';
   document.getElementById('imgLabelRow').style.display = 'none';
   document.getElementById('imgAnalyzeRow').style.display = 'none';
   document.getElementById('imgSaveOrigDiv').style.display = 'none';
