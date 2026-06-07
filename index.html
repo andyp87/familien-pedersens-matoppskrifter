@@ -753,7 +753,10 @@ async function addRecipeToDB(recipe) {
       ingr: recipe.ingr || [{g:'',items:[]}],
       steps: recipe.steps || [],
       yield_str: recipe.yield || '',
-      protein: recipe.protein || ''
+      protein: recipe.protein || '',
+      carbs: recipe.carbs || '',
+      fat: recipe.fat || '',
+      result: recipe.result || ''
     }).select().single(),
     10000
   );
@@ -773,6 +776,9 @@ async function updateRecipeInDB(id, fields) {
   if (fields.steps !== undefined) dbFields.steps = fields.steps;
   if (fields.yield !== undefined) dbFields.yield_str = fields.yield;
   if (fields.protein !== undefined) dbFields.protein = fields.protein;
+  if (fields.carbs !== undefined) dbFields.carbs = fields.carbs;
+  if (fields.fat !== undefined) dbFields.fat = fields.fat;
+  if (fields.result !== undefined) dbFields.result = fields.result;
   const {error} = await withTimeout(
     _supa.from('recipes').update(dbFields).eq('id', id),
     10000
