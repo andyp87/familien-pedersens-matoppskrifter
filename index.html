@@ -1271,6 +1271,7 @@ function render() {
 // ─── Portion calculator ────────────────────────────────────────────────────────
 let _detailRecipeId = null;
 let _detailBaseServings = 4;
+let _detailKcalPerServing = 0;
 
 function parseServings(yieldStr) {
   if (!yieldStr) return 4;
@@ -1331,15 +1332,11 @@ function changeServings(delta) {
   const ratio = v / _detailBaseServings;
   const ingrEl = document.getElementById('ingrScaled');
   if (ingrEl) ingrEl.innerHTML = buildIngrHtml(r.ingr, ratio);
-  // Scale nutrition per serving
-  const nutriEl = document.getElementById('nutriScaled');
-  if (nutriEl && r.kcal) {
-    const km = r.kcal.match(/(\d+)/);
-    if (km) {
-      const scaled = Math.round(+km[1] * ratio);
-      const base = r.kcal.replace(/\d+/, scaled);
-      nutriEl.querySelector('.kcal-val') && (nutriEl.querySelector('.kcal-val').textContent = base);
-    }
+  // Update total kcal
+  const totalEl = document.getElementById('totalKcalVal');
+  if (totalEl && _detailKcalPerServing) {
+    const total = Math.round(_detailKcalPerServing * v);
+    totalEl.textContent = total.toLocaleString('nb-NO');
   }
 }
 
@@ -1376,14 +1373,21 @@ function openDetail(id) {
 
   _detailRecipeId = id;
   _detailBaseServings = parseServings(r.yield);
+  _detailKcalPerServing = r.kcal ? (parseInt(r.kcal.match(/\d+/)?.[0]) || 0) : 0;
   const totalIngr = (r.ingr || []).reduce((s, g) => s + (g.items || []).length, 0);
   const ingrBullets = buildIngrHtml(r.ingr, 1);
 
+  const totalKcal = _detailKcalPerServing * _detailBaseServings;
   const nutriItems = [];
-  if (r.kcal) nutriItems.push('<li>' + ICONS.flame + '<span>' + r.kcal + '</span></li>');
-  if (r.protein) nutriItems.push('<li><strong>Protein:</strong> ' + r.protein + '</li>');
-  if (r.carbs) nutriItems.push('<li><strong>Karbohydrater:</strong> ' + r.carbs + '</li>');
-  if (r.fat) nutriItems.push('<li><strong>Fett:</strong> ' + r.fat + '</li>');
+  if (r.kcal) nutriItems.push(
+    '<li>' + ICONS.flame
+    + '<span>' + r.kcal + ' per porsjon'
+    + (totalKcal ? ' &nbsp;·&nbsp; <strong id="totalKcalVal">' + totalKcal.toLocaleString('nb-NO') + '</strong> kcal totalt' : '')
+    + '</span></li>'
+  );
+  if (r.protein) nutriItems.push('<li><strong>Protein:</strong> ' + r.protein + ' per porsjon</li>');
+  if (r.carbs) nutriItems.push('<li><strong>Karbohydrater:</strong> ' + r.carbs + ' per porsjon</li>');
+  if (r.fat) nutriItems.push('<li><strong>Fett:</strong> ' + r.fat + ' per porsjon</li>');
 
   document.getElementById('detailContent').innerHTML =
     '<div class="modal-hero" style="background:' + cm.bg + '">'
