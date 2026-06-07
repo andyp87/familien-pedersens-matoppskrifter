@@ -772,51 +772,63 @@ async function deleteRecipeFromDB(id) {
 }
 
 // ─── Images (Supabase Storage + recipe_images table) ─────────────────────────
+
+// Safely convert a data URL to Blob without using fetch() (which hangs on iOS for large images)
+function dataUrlToBlob(dataUrl) {
+  const parts = dataUrl.split(',');
+  const mime = parts[0].match(/:(.*?);/)[1];
+  const raw = atob(parts[1]);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return new Blob([arr], {type: mime});
+}
+
 async function uploadNewImage(recipeId, dataUrl, label = '', setAsHero = false) {
-  const resp = await fetch(dataUrl);
-  const blob = await resp.blob();
+  // Compress before upload — prevents large iPhone photos from timing out
+  const compressed = await compressImage(dataUrl, 1400, 0.88);
+  const blob = dataUrlToBlob(compressed);
   const ext = blob.type === 'image/png' ? 'png' : 'jpg';
-  const ts = Date.now();
-  const path = currentUser.id + '/' + recipeId + '/' + ts + '.' + ext;
+  const path = currentUser.id + '/' + recipeId + '/' + Date.now() + '.' + ext;
 
   const {error: upErr} = await withTimeout(
     _supa.storage.from(CONFIG.STORAGE_BUCKET).upload(path, blob, {upsert: false, contentType: blob.type}),
     30000,
-    'Bildeopplasting tok for lang tid – sjekk nettilkoblingen og prøv igjen'
+    'Bildeopplasting tok for lang tid – sjekk nettilkoblingen'
   );
   if (upErr) throw upErr;
 
   const {data: {publicUrl}} = _supa.storage.from(CONFIG.STORAGE_BUCKET).getPublicUrl(path);
 
   const existing = recipeImagesCache[recipeId] || [];
-  const isHero = setAsHero || existing.length === 0; // First image is always hero
+  const isHero = setAsHero || existing.length === 0;
 
-  // Unset current hero if we're replacing it
   if (isHero && existing.length > 0) {
     const cur = existing.find(i => i.is_hero);
     if (cur) {
-      await _supa.from('recipe_images').update({is_hero: false}).eq('id', cur.id);
+      await withTimeout(_supa.from('recipe_images').update({is_hero: false}).eq('id', cur.id), 8000);
       cur.is_hero = false;
     }
   }
 
-  const {data: imgRow, error: insertErr} = await _supa.from('recipe_images').insert({
-    recipe_id: recipeId,
-    user_id: currentUser.id,
-    storage_path: path,
-    url: publicUrl,
-    position: existing.length,
-    label: label,
-    is_hero: isHero
-  }).select().single();
+  const {data: imgRow, error: insertErr} = await withTimeout(
+    _supa.from('recipe_images').insert({
+      recipe_id: recipeId,
+      user_id: currentUser.id,
+      storage_path: path,
+      url: publicUrl,
+      position: existing.length,
+      label: label,
+      is_hero: isHero
+    }).select().single(),
+    8000
+  );
   if (insertErr) throw insertErr;
 
   if (!recipeImagesCache[recipeId]) recipeImagesCache[recipeId] = [];
   recipeImagesCache[recipeId].push(imgRow);
 
-  // Update legacy image_url on recipe for compatibility
   if (isHero) {
-    await _supa.from('recipes').update({image_url: publicUrl}).eq('id', recipeId);
+    await withTimeout(_supa.from('recipes').update({image_url: publicUrl}).eq('id', recipeId), 8000);
     const r = recipes.find(x => x.id === recipeId);
     if (r) r.image_url = publicUrl;
   }
@@ -1438,7 +1450,9 @@ async function analyzeStepImage() {
 async function saveNewImage() {
   if (!_pendingUploadBase64 || !_imgRecipeId) return;
   const btn = document.querySelector('#imgSaveOrigDiv button');
+  const status = document.getElementById('imgAnalyzeStatus');
   if (btn) { btn.disabled = true; btn.textContent = 'Laster opp…'; }
+  if (status) { status.textContent = 'Komprimerer bilde…'; status.style.color = 'var(--text2)'; }
   const label = document.getElementById('imgLabelInput').value.trim();
   try {
     await uploadNewImage(_imgRecipeId, _pendingUploadBase64, label, false);
@@ -1446,8 +1460,10 @@ async function saveNewImage() {
     renderImgManager();
     render();
   } catch(e) {
-    alert('Feil ved bildeopplasting: ' + e.message);
+    if (status) status.textContent = '';
     if (btn) { btn.disabled = false; btn.textContent = '✓ Lagre bilde'; }
+    document.getElementById('imgAnalyzeStatus').textContent = '⚠️ ' + e.message;
+    document.getElementById('imgAnalyzeStatus').style.color = 'var(--danger, #e05)';
   }
 }
 
