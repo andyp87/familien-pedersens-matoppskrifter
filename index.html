@@ -119,6 +119,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .nutri-val{font-size:15px;font-weight:500;color:var(--text)}
 .nutri-lbl{font-size:11px;color:var(--text3);margin-top:2px}
 
+/* Portion calculator */
+.ingr-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.serving-ctrl{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.serving-ctrl button{width:26px;height:26px;border:1px solid var(--border2);background:var(--surface2);border-radius:50%;cursor:pointer;font-size:16px;line-height:1;color:var(--text);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .12s}
+.serving-ctrl button:hover{border-color:var(--accent);color:var(--accent)}
+.serving-ctrl input[type=number]{width:40px;text-align:center;border:1px solid var(--border2);background:var(--surface);border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;padding:3px 0;color:var(--text);-moz-appearance:textfield}
+.serving-ctrl input[type=number]::-webkit-outer-spin-button,.serving-ctrl input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 /* Detail actions */
 .detail-actions{display:flex;gap:8px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
 .detail-action-btn{padding:6px 14px;background:none;border:1px solid var(--border2);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
@@ -1261,6 +1268,81 @@ function render() {
     + '<div class="stat"><span class="stat-n">' + avg + '/5</span><span class="stat-l">snitt sunnhet</span></div>';
 }
 
+// ─── Portion calculator ────────────────────────────────────────────────────────
+let _detailRecipeId = null;
+let _detailBaseServings = 4;
+
+function parseServings(yieldStr) {
+  if (!yieldStr) return 4;
+  const range = yieldStr.match(/(\d+)\s*[-–]\s*(\d+)/);
+  if (range) return Math.round((+range[1] + +range[2]) / 2);
+  const m = yieldStr.match(/(\d+)/);
+  return m ? +m[1] : 4;
+}
+
+function formatScaled(n) {
+  if (n <= 0) return '0';
+  const fracs = [[1/8,'⅛'],[1/4,'¼'],[1/3,'⅓'],[3/8,'⅜'],[1/2,'½'],[5/8,'⅝'],[2/3,'⅔'],[3/4,'¾'],[7/8,'⅞']];
+  if (n < 1) {
+    const best = fracs.reduce((p,c) => Math.abs(c[0]-n) < Math.abs(p[0]-n) ? c : p);
+    if (Math.abs(best[0]-n) < 0.09) return best[1];
+    return (Math.round(n*100)/100) + '';
+  }
+  const whole = Math.floor(n), frac = n - whole;
+  if (frac < 0.09) return whole + '';
+  if (frac > 0.91) return (whole+1) + '';
+  const best = fracs.reduce((p,c) => Math.abs(c[0]-frac) < Math.abs(p[0]-frac) ? c : p);
+  if (Math.abs(best[0]-frac) < 0.09) return (whole > 0 ? whole : '') + best[1];
+  if (n < 10) return (Math.round(n*4)/4).toFixed(n < 2 ? 2 : 1).replace(/\.?0+$/,'') + '';
+  if (n < 200) return (Math.round(n*2)/2) + '';
+  return Math.round(n) + '';
+}
+
+function scaleIngredientText(text, ratio) {
+  if (ratio === 1) return text;
+  const uf = {'½':0.5,'¼':0.25,'¾':0.75,'⅓':1/3,'⅔':2/3,'⅛':0.125,'⅜':0.375,'⅝':0.625,'⅞':0.875};
+  const re = /^(\d+[.,]\d+|\d+\s+\d+\/\d+|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞]|\d+)/;
+  const m = text.match(re);
+  if (!m) return text;
+  const raw = m[1];
+  let val = 0;
+  if (uf[raw]) { val = uf[raw]; }
+  else if (/^\d+$/.test(raw)) { val = +raw; }
+  else if (/^\d+[.,]\d+$/.test(raw)) { val = parseFloat(raw.replace(',','.')); }
+  else if (/^\d+\/\d+$/.test(raw)) { const [a,b] = raw.split('/'); val = +a/+b; }
+  else if (/^\d+\s+\d+\/\d+$/.test(raw)) { const [w,f] = raw.split(' '); const [a,b] = f.split('/'); val = +w + +a/+b; }
+  if (!val) return text;
+  return formatScaled(val * ratio) + text.slice(raw.length);
+}
+
+function buildIngrHtml(ingr, ratio) {
+  return (ingr || []).map(g =>
+    (ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + g.g + '</div>' : '')
+    + '<ul class="ingr-list">' + (g.items||[]).map(i => '<li>' + scaleIngredientText(i, ratio) + '</li>').join('') + '</ul>'
+  ).join('');
+}
+
+function changeServings(delta) {
+  const inp = document.getElementById('servingsInput');
+  if (!inp) return;
+  let v = Math.max(1, Math.min(99, (parseInt(inp.value)||_detailBaseServings) + delta));
+  inp.value = v;
+  const r = recipes.find(x => x.id === _detailRecipeId); if (!r) return;
+  const ratio = v / _detailBaseServings;
+  const ingrEl = document.getElementById('ingrScaled');
+  if (ingrEl) ingrEl.innerHTML = buildIngrHtml(r.ingr, ratio);
+  // Scale nutrition per serving
+  const nutriEl = document.getElementById('nutriScaled');
+  if (nutriEl && r.kcal) {
+    const km = r.kcal.match(/(\d+)/);
+    if (km) {
+      const scaled = Math.round(+km[1] * ratio);
+      const base = r.kcal.replace(/\d+/, scaled);
+      nutriEl.querySelector('.kcal-val') && (nutriEl.querySelector('.kcal-val').textContent = base);
+    }
+  }
+}
+
 // ─── Detail Modal ──────────────────────────────────────────────────────────────
 function openDetail(id) {
   const r = recipes.find(x => x.id === id); if (!r) return;
@@ -1292,11 +1374,10 @@ function openDetail(id) {
       + '</div></div>';
   }
 
+  _detailRecipeId = id;
+  _detailBaseServings = parseServings(r.yield);
   const totalIngr = (r.ingr || []).reduce((s, g) => s + (g.items || []).length, 0);
-  const ingrBullets = (r.ingr || []).map(g =>
-    (r.ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + g.g + '</div>' : '')
-    + '<ul class="ingr-list">' + (g.items || []).map(i => '<li>' + i + '</li>').join('') + '</ul>'
-  ).join('');
+  const ingrBullets = buildIngrHtml(r.ingr, 1);
 
   const nutriItems = [];
   if (r.kcal) nutriItems.push('<li>' + ICONS.flame + '<span>' + r.kcal + '</span></li>');
@@ -1320,12 +1401,19 @@ function openDetail(id) {
     + (r.yield ? '<div class="info-pill">' + ICONS.users + r.yield + '</div>' : '')
     + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
     + '</div>'
-    + '<div class="section-title">Ingredienser' + (totalIngr ? ' (' + totalIngr + ')' : '') + '</div>'
-    + ingrBullets
+    + '<div class="section-title ingr-header">'
+    + 'Ingredienser' + (totalIngr ? ' (' + totalIngr + ')' : '')
+    + '<div class="serving-ctrl">'
+    + '<button onclick="changeServings(-1)" aria-label="Færre porsjoner">−</button>'
+    + '<input type="number" id="servingsInput" value="' + _detailBaseServings + '" min="1" max="99" oninput="changeServings(0)" aria-label="Antall porsjoner">'
+    + '<button onclick="changeServings(1)" aria-label="Flere porsjoner">+</button>'
+    + '<span>porsj.</span>'
+    + '</div></div>'
+    + '<div id="ingrScaled">' + ingrBullets + '</div>'
     + '<div class="section-title">Fremgangsmåte</div>'
     + '<ol class="steps-list">' + (r.steps || []).map((s, i) => '<li><span class="step-num">' + (i + 1) + '</span><span>' + s + '</span></li>').join('') + '</ol>'
     + (r.result ? '<div class="section-title">Resultat</div><p class="recipe-result">' + r.result + '</p>' : '')
-    + (nutriItems.length ? '<div class="section-title">Næring (per ' + (r.yield || 'porsjon') + ')</div><ul class="nutri-list">' + nutriItems.join('') + '</ul>' : '')
+    + (nutriItems.length ? '<div class="section-title">Næring per porsjon</div><ul class="nutri-list" id="nutriScaled">' + nutriItems.join('') + '</ul>' : '')
     + galleryHtml
     + '<div class="detail-actions">'
     + '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">Rediger</button>'
