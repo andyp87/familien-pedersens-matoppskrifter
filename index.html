@@ -120,10 +120,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .nutri-lbl{font-size:11px;color:var(--text3);margin-top:2px}
 
 /* Detail actions */
-.detail-actions{display:flex;gap:6px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
-.detail-action-btn{flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:5px}
-.detail-action-btn:hover{border-color:var(--accent);color:var(--accent)}
-.detail-action-btn.danger:hover{border-color:var(--coral);color:var(--coral)}
+.detail-actions{display:flex;gap:8px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
+.detail-action-btn{padding:6px 14px;background:none;border:1px solid var(--border2);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
+.detail-action-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
+.detail-action-btn.danger{color:var(--coral,#e05)}
+.detail-action-btn.danger:hover{border-color:var(--coral,#e05);background:var(--surface2)}
 
 /* GALLERY */
 .detail-gallery{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
@@ -1182,7 +1183,8 @@ async function saveManualRecipe() {
 async function deleteRecipe(recipeId) {
   const r = recipes.find(x => x.id === recipeId);
   if (!r) return;
-  if (!confirm('Slette "' + r.name + '"? Dette kan ikke angres.')) return;
+  if (!confirm('Vil du slette "' + r.name + '"?')) return;
+  if (!confirm('Er du helt sikker? Dette kan ikke angres.')) return;
   document.getElementById('detailModal').classList.remove('open');
   const ok = await deleteRecipeFromDB(recipeId);
   if (ok) {
@@ -1326,9 +1328,9 @@ function openDetail(id) {
     + (nutriItems.length ? '<div class="section-title">Næring (per ' + (r.yield || 'porsjon') + ')</div><ul class="nutri-list">' + nutriItems.join('') + '</ul>' : '')
     + galleryHtml
     + '<div class="detail-actions">'
-    + '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">' + ICONS.edit + 'Rediger</button>'
-    + '<button class="detail-action-btn" onclick="openImgModal(\'' + r.id + '\')">' + ICONS.camera + 'Bilder</button>'
-    + '<button class="detail-action-btn danger" onclick="deleteRecipe(\'' + r.id + '\')">' + ICONS.trash + 'Slett</button>'
+    + '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">Rediger</button>'
+    + '<button class="detail-action-btn" onclick="openImgModal(\'' + r.id + '\')">Bilder</button>'
+    + '<button class="detail-action-btn danger" onclick="deleteRecipe(\'' + r.id + '\')">Slett</button>'
     + '</div>'
     + '</div>';
   document.getElementById('detailModal').classList.add('open');
