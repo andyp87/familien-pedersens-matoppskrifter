@@ -56,6 +56,12 @@ exports.handler = async function(event) {
     }
     const html = await resp.text();
 
+    // og:image hentes ut FØR taggene strippes — brukes som forslag til forsidebilde
+    let imageUrl = null;
+    const og = html.match(/<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image)["'][^>]*content=["']([^"']+)["']/i)
+            || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image)["']/i);
+    if (og && /^https?:\/\//i.test(og[1])) imageUrl = og[1].replace(/&amp;/g, '&');
+
     // Strip scripts, styles, nav, footer etc.
     const clean = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -73,7 +79,7 @@ exports.handler = async function(event) {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ text: clean })
+      body: JSON.stringify({ text: clean, imageUrl })
     };
   } catch(e) {
     return {

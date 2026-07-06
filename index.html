@@ -177,6 +177,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .img-label-row input{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--border2);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;border-radius:0;transition:border-color .12s}
 .img-label-row input:focus{border-color:var(--accent)}
 .img-analyze-row{display:none;margin-bottom:10px}
+.img-suggest-row{margin-bottom:10px}
+.img-suggest-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.img-suggest-grid img{width:100%;aspect-ratio:1;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .12s}
+.img-suggest-grid img:hover{border-color:var(--accent)}
+.img-suggest-msg{grid-column:1/-1;font-size:12px;color:var(--text2)}
 .img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:none;align-items:center;justify-content:center;cursor:pointer}
 .img-lightbox.open{display:flex}
 .img-lightbox img{max-width:92vw;max-height:92vh;object-fit:contain}
@@ -526,6 +531,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           </div>
         </div>
 
+        <div class="img-suggest-row" id="imgSuggestRow">
+          <button class="btn-cancel" style="width:100%;font-size:13px" id="imgSuggestBtn" onclick="loadImgSuggestions()">✨ Foreslå bilder automatisk</button>
+          <div class="img-suggest-grid" id="imgSuggestGrid"></div>
+        </div>
+
         <div class="img-label-row" id="imgLabelRow">
           <input type="text" id="imgLabelInput" placeholder="Merkelapp f.eks. Steg 2: Fres løk og hvitløk…">
         </div>
@@ -619,6 +629,7 @@ let recipes = [];
 let recipeImagesCache = {}; // { recipeId: [{id, url, label, is_hero, position, storage_path}] }
 let activeCat = 'alle', activeHealth = 'alle';
 let pendingAiRecipe = null;
+let pendingSourceImageUrl = null; // bilde fra kilden (IG-video/og:image) til forslag
 let _recipeCardBase64 = null;
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
@@ -1035,6 +1046,7 @@ async function analyzeRecipe() {
   status.textContent = '';
   preview.style.display = 'none';
   pendingAiRecipe = null;
+  pendingSourceImageUrl = null;
 
   try {
     // ── URL-henting ───────────────────────────────────────────────────────────
@@ -1072,6 +1084,7 @@ async function analyzeRecipe() {
         }
       }
       textForClaude = fetchData.text;
+      pendingSourceImageUrl = fetchData.imageUrl || null;
     }
 
     status.textContent = 'Claude leser oppskriften...';
@@ -1087,7 +1100,7 @@ async function analyzeRecipe() {
       (_recipeCardBase64 ? ' bilde og/eller' : '') + (textForClaude ? ' tekst' : '') +
       ' og trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' +
       (textForClaude ? 'Input:\n' + textForClaude + '\n\n' : '') +
-      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væske kan oppgis i gram OG dl/liter (f.eks. "2 dl / 200 g melk", "1 liter vann")\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- Bruk norsk: ss (spiseskje), ts (teskje), klype, stk\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
+      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "img_query": "engelsk bildesøketekst som beskriver den ferdige retten, 2-5 ord, f.eks. creamy chicken pasta dish",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væske kan oppgis i gram OG dl/liter (f.eks. "2 dl / 200 g melk", "1 liter vann")\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- Bruk norsk: ss (spiseskje), ts (teskje), klype, stk\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
 
     content.push({type:'text', text: prompt});
 
@@ -1152,6 +1165,14 @@ async function saveAiRecipe() {
       } catch(imgErr) {
         console.warn('Klarte ikke lagre oppskriftsbilde:', imgErr.message);
       }
+    } else {
+      // Automatisk bildeforslag: kildens bilde (IG-video/og:image), ellers Pexels
+      try {
+        if (status) { status.textContent = 'Finner bilde til retten…'; }
+        await suggestHeroForRecipe(saved, recipe, pendingSourceImageUrl);
+      } catch(imgErr) {
+        console.warn('Bildeforslag feilet:', imgErr.message);
+      }
     }
     console.log('[SAVE] fullført på', Date.now() - t0, 'ms');
     recipes.unshift(saved);
@@ -1160,6 +1181,7 @@ async function saveAiRecipe() {
     document.getElementById('aiPreview').style.display = 'none';
     clearRecipeCard();
     pendingAiRecipe = null;
+    pendingSourceImageUrl = null;
     buildFilters(); render();
   } catch(e) {
     console.error('saveAiRecipe feil:', e);
@@ -1516,7 +1538,9 @@ function resetImgUploadPanel() {
   document.getElementById('imgAnalyzeRow').style.display = 'none';
   document.getElementById('imgSaveOrigDiv').style.display = 'none';
   document.getElementById('imgAnalyzeStatus').textContent = '';
+  document.getElementById('imgSuggestGrid').innerHTML = '';
   _pendingUploadBase64 = null;
+  _imgSuggestions = [];
 }
 
 function onImgFileSelected(input) {
@@ -1595,6 +1619,111 @@ async function saveNewImage() {
   }
 }
 
+
+// ─── Automatiske bildeforslag ──────────────────────────────────────────────────
+async function fetchImageAsDataUrl(url) {
+  const resp = await withTimeout(
+    fetch('/.netlify/functions/fetch-image', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({url})
+    }), 20000, 'Bildehentingen tok for lang tid');
+  const d = await resp.json();
+  if (d.error || !d.dataUrl) throw new Error(d.error || 'Fikk ikke hentet bildet');
+  return d.dataUrl;
+}
+
+async function searchImageCandidates(query) {
+  const resp = await withTimeout(
+    fetch('/.netlify/functions/search-image', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({query})
+    }), 15000, 'Bildesøket tok for lang tid');
+  const d = await resp.json();
+  if (d.error) throw new Error(d.error);
+  return d.photos || [];
+}
+
+// Finner og lagrer et forslag til forsidebilde ved import:
+// 1) bildet fra kilden (IG-videoens coverbilde / nettsidens og:image),
+// 2) ellers beste treff fra Pexels basert på Claudes img_query.
+async function suggestHeroForRecipe(saved, recipe, sourceUrl) {
+  let dataUrl = null, label = '';
+  if (sourceUrl) {
+    try {
+      dataUrl = await fetchImageAsDataUrl(sourceUrl);
+      label = 'Fra kilden – bytt gjerne';
+    } catch(e) { console.warn('Kildebilde feilet, prøver bildesøk:', e.message); }
+  }
+  if (!dataUrl) {
+    const photos = await searchImageCandidates(recipe.img_query || recipe.name);
+    if (!photos.length) return false;
+    dataUrl = await fetchImageAsDataUrl(photos[0].url);
+    label = 'Bildeforslag – bytt gjerne';
+  }
+  const compressed = await compressImage(dataUrl, 1200, 0.85);
+  await uploadNewImage(saved.id, compressed, label, true);
+  const hero = (recipeImagesCache[saved.id] || []).find(i => i.is_hero);
+  if (hero) saved.image_url = hero.url;
+  return true;
+}
+
+// Manuelt bildeforslag fra bildebehandleren — Claude oversetter rettnavnet til
+// engelske søkeord, Pexels leverer kandidater, brukeren velger.
+let _imgSuggestions = [];
+async function loadImgSuggestions() {
+  const recipe = recipes.find(r => r.id === _imgRecipeId);
+  if (!recipe) return;
+  const btn = document.getElementById('imgSuggestBtn');
+  const grid = document.getElementById('imgSuggestGrid');
+  btn.disabled = true; btn.innerHTML = '<span class="img-spinner"></span>Søker etter bilder…';
+  grid.innerHTML = '';
+  try {
+    let query = recipe.name;
+    if (getApiKey()) {
+      try {
+        const resp = await withTimeout(fetch('/.netlify/functions/claude', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({model: CONFIG.MODEL_LABEL, max_tokens: 30, messages: [{role:'user',
+            content: 'Oversett dette rettnavnet til en kort engelsk bildesøketekst for et pent matbilde (2-5 ord). Returner KUN søketeksten: ' + recipe.name}]})
+        }), 10000);
+        const d = await resp.json();
+        const q = d.content?.[0]?.text?.trim();
+        if (q) query = q;
+      } catch(e) { console.warn('Klarte ikke generere søkeord, bruker rettnavnet:', e.message); }
+    }
+    const photos = await searchImageCandidates(query);
+    if (!photos.length) {
+      grid.innerHTML = '<div class="img-suggest-msg">Fant ingen bilder – prøv å laste opp manuelt.</div>';
+      return;
+    }
+    _imgSuggestions = photos.slice(0, 8);
+    grid.innerHTML = _imgSuggestions.map((p, i) =>
+      '<img src="' + p.thumb + '" alt="' + (p.alt || '').replace(/"/g, '&quot;') + '" title="Foto: ' + p.photographer.replace(/"/g, '&quot;') + '" onclick="pickSuggestedImage(' + i + ')">'
+    ).join('');
+  } catch(e) {
+    grid.innerHTML = '<div class="img-suggest-msg" style="color:var(--coral)">⚠️ ' + e.message + '</div>';
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Foreslå bilder automatisk';
+  }
+}
+
+async function pickSuggestedImage(i) {
+  const p = _imgSuggestions[i];
+  if (!p || !_imgRecipeId) return;
+  const status = document.getElementById('imgAnalyzeStatus');
+  status.textContent = 'Henter og lagrer bildet…'; status.style.color = 'var(--text2)';
+  try {
+    const dataUrl = await fetchImageAsDataUrl(p.url);
+    const compressed = await compressImage(dataUrl, 1200, 0.85);
+    const imgs = recipeImagesCache[_imgRecipeId] || [];
+    await uploadNewImage(_imgRecipeId, compressed, 'Bildeforslag', imgs.length === 0);
+    status.textContent = '✓ Bilde lagt til!'; status.style.color = 'var(--accent)';
+    document.getElementById('imgSuggestGrid').innerHTML = '';
+    renderImgManager(); render();
+  } catch(e) {
+    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
+  }
+}
 
 // ─── Lightbox ──────────────────────────────────────────────────────────────────
 function openLightbox(url) {

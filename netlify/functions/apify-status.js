@@ -47,8 +47,12 @@ exports.handler = async function(event) {
     if (it.firstComment) parts.push('FØRSTE KOMMENTAR (ofte oppskriften): ' + it.firstComment);
     const text = parts.join('\n\n').slice(0, 14000);
 
+    // displayUrl er postens coverbilde — for videoer et stillbilde av retten.
+    // Frontenden bruker det som forslag til forsidebilde.
+    const imageUrl = it.displayUrl || (Array.isArray(it.images) && it.images.length ? it.images[0] : null);
+
     if (!text) return json({ error: 'Posten hadde ingen bildetekst å hente oppskrift fra' });
-    return json({ text });
+    return json({ text, imageUrl });
   } catch(e) {
     return json({ error: e.message });
   }
