@@ -1,0 +1,5 @@
+# Ikke bruk Disallow mens sidene skal AV-indekseres:
+# Google må få crawle sidene for å se noindex-taggen (meta + X-Robots-Tag).
+# Når sidene er ute av indeksen kan Disallow legges til om ønskelig.
+User-agent: *
+Allow: /
