@@ -15,51 +15,46 @@ exports.handler = async function(event) {
   const isInstagram = /(instagram\.com|facebook\.com|fb\.com)/i.test(url);
 
   try {
-    let html;
-
     if (isInstagram) {
-      // Route Instagram through ScrapingAnt — renders the page in a real browser
-      const antKey = process.env.SCRAPINGANT_API_KEY;
-      if (!antKey) {
+      // Instagram hentes via Apify (strukturert data, full bildetekst).
+      // Apify bruker 30–120 sek — for lenge for én Netlify-funksjon, så vi
+      // STARTER kjøringen her og lar frontenden polle apify-status.js.
+      const token = process.env.APIFY_TOKEN;
+      if (!token) {
         return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'SCRAPINGANT_API_KEY ikke konfigurert på serveren' }) };
+          body: JSON.stringify({ error: 'APIFY_TOKEN ikke konfigurert på serveren' }) };
       }
-      const antResp = await fetch(
-        `https://api.scrapingant.com/v2/general?url=${encodeURIComponent(url)}&x-api-key=${antKey}&browser=false&proxy_country=NO`,
-        { headers: { 'Accept': 'application/json' } }
-      );
-      if (!antResp.ok) {
-        return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'ScrapingAnt svarte med feil: ' + antResp.status }) };
-      }
-      html = await antResp.text();
-    } else {
-      const resp = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; FamilienPedersen-RecipeBot/1.0)',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'nb,no;q=0.9,en;q=0.8'
-        },
-        redirect: 'follow'
+      const startResp = await fetch('https://api.apify.com/v2/acts/apify~instagram-scraper/runs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ directUrls: [url], resultsType: 'posts', resultsLimit: 1 })
       });
-      if (!resp.ok) {
+      if (!startResp.ok) {
         return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Siden svarte med feilkode ' + resp.status }) };
+          body: JSON.stringify({ error: 'Apify svarte med feil: ' + startResp.status }) };
       }
-      html = await resp.text();
+      const run = (await startResp.json()).data;
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ pending: true, runId: run.id, datasetId: run.defaultDatasetId })
+      };
     }
 
-    // For Instagram: extract caption text from meta tags and JSON-LD first
-    let captionText = '';
-    if (isInstagram) {
-      const ogDesc = html.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i)?.[1] ||
-                     html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:description"/i)?.[1] || '';
-      // og:description on Instagram is usually: "N likes, M comments - Author: caption text"
-      // Extract just the caption part (after the colon)
-      const colonIdx = ogDesc.indexOf(': ');
-      if (colonIdx !== -1) captionText = ogDesc.slice(colonIdx + 2);
-      else captionText = ogDesc;
+    // Vanlige nettsider: direkte henting som før
+    const resp = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FamilienPedersen-RecipeBot/1.0)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'nb,no;q=0.9,en;q=0.8'
+      },
+      redirect: 'follow'
+    });
+    if (!resp.ok) {
+      return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Siden svarte med feilkode ' + resp.status }) };
     }
+    const html = await resp.text();
 
     // Strip scripts, styles, nav, footer etc.
     const clean = html
@@ -75,13 +70,10 @@ exports.handler = async function(event) {
       .trim()
       .slice(0, 14000);
 
-    // For Instagram: prepend extracted caption to increase Claude's chance of finding the recipe
-    const text = captionText ? 'BILDETEKST: ' + captionText + '\n\n' + clean : clean;
-
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text: clean })
     };
   } catch(e) {
     return {

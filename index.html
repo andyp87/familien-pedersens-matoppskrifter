@@ -1041,7 +1041,7 @@ async function analyzeRecipe() {
     let textForClaude = input;
     if (input && /^https?:\/\//i.test(input)) {
       const isInstagram = /(instagram\.com|facebook\.com|fb\.com)/i.test(input);
-      status.textContent = isInstagram ? 'Henter Instagram-post via ScrapingAnt…' : 'Henter oppskriftssiden...';
+      status.textContent = isInstagram ? 'Henter Instagram-post… (tar gjerne ett minutt)' : 'Henter oppskriftssiden...';
       const fetchResp = await withTimeout(
         fetch('/.netlify/functions/fetch-url', {
           method: 'POST',
@@ -1050,8 +1050,27 @@ async function analyzeRecipe() {
         }),
         15000, 'Siden svarte ikke – kopier oppskriftsteksten manuelt og lim inn'
       );
-      const fetchData = await fetchResp.json();
+      let fetchData = await fetchResp.json();
       if (fetchData.error) throw new Error('Kunne ikke hente siden: ' + fetchData.error);
+
+      // Instagram via Apify: kjøringen er startet — poll til den er ferdig (maks ~2,5 min)
+      if (fetchData.pending) {
+        const deadline = Date.now() + 150000;
+        const t0 = Date.now();
+        while (fetchData.pending) {
+          if (Date.now() > deadline) throw new Error('Instagram-hentingen brukte for lang tid – prøv igjen');
+          await new Promise(r => setTimeout(r, 3000));
+          status.textContent = 'Henter Instagram-post… (' + Math.round((Date.now() - t0) / 1000) + ' sek)';
+          const pollResp = await fetch('/.netlify/functions/apify-status', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({runId: fetchData.runId, datasetId: fetchData.datasetId})
+          });
+          const poll = await pollResp.json();
+          if (poll.error) throw new Error('Kunne ikke hente siden: ' + poll.error);
+          if (poll.text) { fetchData = poll; break; }
+        }
+      }
       textForClaude = fetchData.text;
     }
 
