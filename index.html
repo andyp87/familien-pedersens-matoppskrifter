@@ -1100,7 +1100,7 @@ async function analyzeRecipe() {
       (_recipeCardBase64 ? ' bilde og/eller' : '') + (textForClaude ? ' tekst' : '') +
       ' og trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' +
       (textForClaude ? 'Input:\n' + textForClaude + '\n\n' : '') +
-      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "img_query": "engelsk bildesøketekst som beskriver den ferdige retten, 2-5 ord, f.eks. creamy chicken pasta dish",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væske kan oppgis i gram OG dl/liter (f.eks. "2 dl / 200 g melk", "1 liter vann")\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- Bruk norsk: ss (spiseskje), ts (teskje), klype, stk\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
+      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "img_query": "engelsk bildesøketekst som beskriver den ferdige retten, 2-5 ord, f.eks. creamy chicken pasta dish",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væsker (melk, fløte, olje o.l.) oppgis ALLTID med både dl/liter OG gram: "2 dl / 200 g melk". Vann kan oppgis kun i dl/liter\n- Bruk ALDRI brøker som 1/4, 3/4, 1/8 eller 2/3 — regn om til gram/dl i stedet. ENESTE unntak: "1/2" for hele råvarer som deles i to (f.eks. "1/2 lime", "1/2 sitron", "1/2 løk")\n- Alt målbart skal i g, kg, dl eller liter. ss (spiseskje) og ts (teskje) er kun lov for små mengder krydder, salt o.l.\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- stk kan brukes for hele enheter (egg, løk), gjerne med gram i parentes\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
 
     content.push({type:'text', text: prompt});
 
@@ -1214,13 +1214,24 @@ async function saveManualRecipe() {
   };
 
   try {
+    let savedId;
     if (editId) {
       await updateRecipeInDB(editId, recipe);
       const idx = recipes.findIndex(r => r.id === editId);
       if (idx !== -1) recipes[idx] = Object.assign(recipes[idx], recipe);
+      savedId = editId;
     } else {
       const saved = await addRecipeToDB(recipe);
       recipes.unshift(saved);
+      savedId = saved.id;
+    }
+    // Automatisk: Claude reberegner kcal/protein/karbo/fett når oppskriften
+    // lagres — mengder eller porsjonsantall kan ha endret seg.
+    if (btn) { btn.textContent = 'Claude regner ut næring…'; }
+    try {
+      await recalcNutrition(savedId, recipe);
+    } catch(nutriErr) {
+      console.warn('Næringsberegning feilet:', nutriErr.message);
     }
     closeAddModal();
     buildFilters(); render();
@@ -1619,6 +1630,39 @@ async function saveNewImage() {
   }
 }
 
+
+// ─── Automatisk næringsberegning ───────────────────────────────────────────────
+// Kalles automatisk når en oppskrift lagres eller redigeres: mengder eller
+// porsjonsantall kan ha endret seg, så Claude regner ut kcal/protein/karbo/fett
+// per porsjon på nytt fra ingredienslisten og oppdaterer databasen.
+async function recalcNutrition(recipeId, recipe) {
+  const prompt = 'Beregn næringsinnhold PER PORSJON for denne oppskriften.\n\n' +
+    'Navn: ' + recipe.name + '\n' +
+    'Antall porsjoner: ' + (recipe.yield || 'ukjent — anslå selv fra mengdene') + '\n' +
+    'Ingredienser (JSON):\n' + JSON.stringify(recipe.ingr) + '\n\n' +
+    'Regn nøye: bruk standard næringsverdier per ingrediens, summer totalen for hele oppskriften, ' +
+    'og del på antall porsjoner. Returner KUN gyldig JSON, ingen forklaring, ingen markdown:\n' +
+    '{"kcal": "350 kcal", "protein": "24g", "carbs": "45g", "fat": "12g"}';
+  const resp = await withTimeout(
+    fetch('/.netlify/functions/claude', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 200, messages: [{role:'user', content: prompt}]})
+    }), 30000, 'Claude svarte ikke på næringsberegningen');
+  if (!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || 'Feil: ' + resp.status); }
+  const data = await resp.json();
+  const text = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
+  const nutri = JSON.parse(text);
+  const fields = {
+    kcal: nutri.kcal || '',
+    protein: nutri.protein || '',
+    carbs: nutri.carbs || '',
+    fat: nutri.fat || ''
+  };
+  await updateRecipeInDB(recipeId, fields);
+  const idx = recipes.findIndex(r => r.id === recipeId);
+  if (idx !== -1) Object.assign(recipes[idx], fields);
+  return fields;
+}
 
 // ─── Automatiske bildeforslag ──────────────────────────────────────────────────
 async function fetchImageAsDataUrl(url) {
