@@ -188,6 +188,25 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .img-suggest-grid img{width:100%;aspect-ratio:1;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .12s}
 .img-suggest-grid img:hover{border-color:var(--accent)}
 .img-suggest-msg{grid-column:1/-1;font-size:12px;color:var(--text2)}
+/* STATISTIKK */
+.stat-btn{cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+.stat-btn:hover .stat-l{color:var(--accent)}
+.card-counts{display:flex;gap:7px;font-size:11px;color:var(--text3);white-space:nowrap}
+.cooked-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin:14px 0 4px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;transition:opacity .15s}
+.cooked-btn:hover:not(:disabled){opacity:.9}
+.cooked-btn:disabled{opacity:.85;cursor:default}
+.cooked-badge{font-weight:400;font-size:12px;opacity:.92}
+.stats-modal{max-width:640px}
+.stat-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+.stat-tile{background:var(--surface2);border:1px solid var(--border2);padding:12px}
+.stat-tile .tile-n{font-family:'Lora',serif;font-size:26px;font-weight:600;color:var(--accent);line-height:1.1}
+.stat-tile .tile-l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.sbar-row{display:grid;grid-template-columns:minmax(90px,170px) 1fr 36px;align-items:center;gap:8px;padding:3px 0;font-size:12px}
+.sbar-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.sbar-track{background:var(--surface2);height:14px}
+.sbar-fill{height:100%;min-width:2px}
+.sbar-val{text-align:right;color:var(--text);font-weight:500;font-variant-numeric:tabular-nums}
+.stats-empty{font-size:13px;color:var(--text2)}
 .img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:none;align-items:center;justify-content:center;cursor:pointer}
 .img-lightbox.open{display:flex}
 .img-lightbox img{max-width:92vw;max-height:92vh;object-fit:contain}
@@ -363,6 +382,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <div class="filter-group">
     <span class="filter-label">Sunnhet</span>
     <div id="healthFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Sorter</span>
+    <div id="sortFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
   </div>
 </div>
 
@@ -560,6 +583,17 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
+<!-- Statistikk modal -->
+<div class="modal-bg" id="statsModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal stats-modal">
+    <div class="modal-header">
+      <span class="modal-header-title">📊 Statistikk</span>
+      <button class="modal-header-close" onclick="document.getElementById('statsModal').classList.remove('open')">✕</button>
+    </div>
+    <div style="padding:16px 20px 24px" id="statsContent"></div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div class="img-lightbox" id="imgLightbox" onclick="this.classList.remove('open')">
   <img id="imgLightboxImg" alt="Stort bilde">
@@ -633,7 +667,7 @@ async function compressImage(dataUrl, maxPx = 1200, quality = 0.85) {
 let currentUser = null;
 let recipes = [];
 let recipeImagesCache = {}; // { recipeId: [{id, url, label, is_hero, position, storage_path}] }
-let activeCat = 'alle', activeHealth = 'alle';
+let activeCat = 'alle', activeHealth = 'alle', activeSort = 'popular';
 let pendingAiRecipe = null;
 let pendingSourceImageUrl = null; // bilde fra kilden (IG-video/og:image) til forslag
 let _recipeCardBase64 = null;
@@ -728,7 +762,10 @@ function dbRowToRecipe(row) {
     carbs: row.carbs || '',
     fat: row.fat || '',
     result: row.result || '',
-    image_url: row.image_url || null
+    image_url: row.image_url || null,
+    view_count: row.view_count || 0,
+    cooked_count: row.cooked_count || 0,
+    created_at: row.created_at || null
   };
 }
 
@@ -1275,9 +1312,27 @@ function buildFilters() {
   const hf = document.getElementById('healthFilters');
   hf.innerHTML = '<button class="chip' + (activeHealth === 'alle' ? ' active' : '') + '" onclick="setHealth(\'alle\')">Alle</button>'
     + [5,4,3,2,1].map(n => '<button class="chip' + (activeHealth === n ? ' active' : '') + '" onclick="setHealth(' + n + ')">' + HEALTH_LABEL[n] + '</button>').join('');
+  const sf = document.getElementById('sortFilters');
+  if (sf) {
+    const SORTS = [['popular','👁 Mest sett'],['cooked','🍳 Mest laget'],['newest','✨ Nyeste']];
+    sf.innerHTML = SORTS.map(([k, label]) =>
+      '<button class="chip' + (activeSort === k ? ' active' : '') + '" onclick="setSort(\'' + k + '\')">' + label + '</button>').join('');
+  }
 }
 function setCat(v) { activeCat = v; buildFilters(); render(); }
 function setHealth(v) { activeHealth = v; buildFilters(); render(); }
+function setSort(v) { activeSort = v; buildFilters(); render(); }
+
+function sortForView(list) {
+  const arr = list.slice();
+  if (activeSort === 'popular') {
+    arr.sort((a, b) => (b.view_count - a.view_count) || (b.cooked_count - a.cooked_count));
+  } else if (activeSort === 'cooked') {
+    arr.sort((a, b) => (b.cooked_count - a.cooked_count) || (b.view_count - a.view_count));
+  }
+  // 'newest': behold rekkefølgen fra databasen (created_at synkende)
+  return arr;
+}
 
 function dotHtml(health, size) {
   return [1,2,3,4,5].map(i => '<div class="h-dot" style="width:' + size + 'px;height:' + size + 'px;' + (i <= health ? 'background:' + HEALTH_COLOR[health] : '') + '"></div>').join('');
@@ -1292,11 +1347,12 @@ function render() {
     if (q && !r.name.toLowerCase().includes(q)) return false;
     return true;
   });
+  const sorted = sortForView(filtered);
   const grid = document.getElementById('recipeGrid');
-  if (!filtered.length) {
+  if (!sorted.length) {
     grid.innerHTML = '<div class="empty"><div style="font-size:36px">🔍</div><p style="margin-top:8px">Ingen oppskrifter funnet</p></div>';
   } else {
-    grid.innerHTML = filtered.map(r => {
+    grid.innerHTML = sorted.map(r => {
       const cm = CAT_META[r.cat] || CAT_META.vegetar;
       const heroUrl = getHeroImage(r.id);
       const imgHtml = heroUrl
@@ -1318,6 +1374,9 @@ function render() {
         + '<div class="card-title">' + r.name + '</div>'
         + '<div class="card-footer">'
         + '<div style="display:flex;gap:3px">' + dotHtml(r.health, 7) + '</div>'
+        + '<div class="card-counts" title="' + r.view_count + ' visninger · laget ' + r.cooked_count + ' ganger">'
+        + '<span>👁 ' + r.view_count + '</span><span>🍳 ' + r.cooked_count + '</span>'
+        + '</div>'
         + '<div class="meta-tag">' + ICONS.clock + r.time + '</div>'
         + '</div></div></article>';
     }).join('');
@@ -1325,10 +1384,86 @@ function render() {
   const n = recipes.length;
   const avg = n > 0 ? (recipes.reduce((s, r) => s + r.health, 0) / n).toFixed(1) : '–';
   const cats = new Set(recipes.map(r => r.cat)).size;
+  const totalViews = recipes.reduce((s, r) => s + (r.view_count || 0), 0);
+  const totalCooked = recipes.reduce((s, r) => s + (r.cooked_count || 0), 0);
   document.getElementById('statsRow').innerHTML =
     '<div class="stat"><span class="stat-n">' + n + '</span><span class="stat-l">oppskrifter</span></div>'
     + '<div class="stat"><span class="stat-n">' + cats + '</span><span class="stat-l">kategorier</span></div>'
-    + '<div class="stat"><span class="stat-n">' + avg + '/5</span><span class="stat-l">snitt sunnhet</span></div>';
+    + '<div class="stat"><span class="stat-n">' + avg + '/5</span><span class="stat-l">snitt sunnhet</span></div>'
+    + '<div class="stat"><span class="stat-n">' + totalViews + '</span><span class="stat-l">visninger</span></div>'
+    + '<div class="stat"><span class="stat-n">' + totalCooked + '</span><span class="stat-l">ganger laget</span></div>'
+    + '<button class="stat stat-btn" onclick="openStats()" title="Se statistikk"><span class="stat-n">📊</span><span class="stat-l">statistikk</span></button>';
+}
+
+// ─── Visnings- og laget-telling ────────────────────────────────────────────────
+// Én visning per oppskrift per nettleserøkt (sessionStorage), lagres i Supabase.
+function trackView(r) {
+  const key = 'sett_' + r.id;
+  if (sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key, '1');
+  r.view_count = (r.view_count || 0) + 1;
+  _supa.from('recipes').update({view_count: r.view_count}).eq('id', r.id)
+    .then(() => {}, e => console.warn('Visningstelling feilet:', e));
+}
+
+async function markCooked(id) {
+  const r = recipes.find(x => x.id === id); if (!r) return;
+  r.cooked_count = (r.cooked_count || 0) + 1;
+  const btn = document.getElementById('cookedBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '🎉 Registrert! Denne er nå laget ' + r.cooked_count + ' ganger';
+  }
+  try {
+    await _supa.from('recipes').update({cooked_count: r.cooked_count}).eq('id', id);
+  } catch(e) { console.warn('Laget-telling feilet:', e); }
+  render();
+}
+
+// ─── Statistikk-modal ──────────────────────────────────────────────────────────
+function statBars(list, val, color) {
+  const max = Math.max(...list.map(val), 1);
+  return list.map(r =>
+    '<div class="sbar-row" title="' + r.name.replace(/"/g, '&quot;') + ': ' + val(r) + '">'
+    + '<span class="sbar-name">' + (r.emoji || '') + ' ' + r.name + '</span>'
+    + '<div class="sbar-track"><div class="sbar-fill" style="width:' + Math.round(val(r) / max * 100) + '%;background:' + color + '"></div></div>'
+    + '<span class="sbar-val">' + val(r) + '</span>'
+    + '</div>').join('');
+}
+
+function openStats() {
+  const totV = recipes.reduce((s, r) => s + (r.view_count || 0), 0);
+  const totC = recipes.reduce((s, r) => s + (r.cooked_count || 0), 0);
+  const avgH = recipes.length ? (recipes.reduce((s, r) => s + r.health, 0) / recipes.length).toFixed(1) : '–';
+  const topV = recipes.slice().sort((a, b) => b.view_count - a.view_count).filter(r => r.view_count > 0).slice(0, 10);
+  const topC = recipes.slice().sort((a, b) => b.cooked_count - a.cooked_count).filter(r => r.cooked_count > 0).slice(0, 10);
+  const catCount = {};
+  recipes.forEach(r => { catCount[r.cat] = (catCount[r.cat] || 0) + 1; });
+  const catList = Object.entries(catCount).sort((a, b) => b[1] - a[1]);
+  const catMax = Math.max(...catList.map(c => c[1]), 1);
+
+  document.getElementById('statsContent').innerHTML =
+    '<div class="stat-tiles">'
+    + '<div class="stat-tile"><div class="tile-n">' + totV + '</div><div class="tile-l">👁 visninger totalt</div></div>'
+    + '<div class="stat-tile"><div class="tile-n">' + totC + '</div><div class="tile-l">🍳 ganger laget</div></div>'
+    + '<div class="stat-tile"><div class="tile-n">' + recipes.length + '</div><div class="tile-l">oppskrifter</div></div>'
+    + '<div class="stat-tile"><div class="tile-n">' + avgH + '/5</div><div class="tile-l">snitt sunnhet</div></div>'
+    + '</div>'
+    + '<div class="section-title">👁 Mest sett</div>'
+    + (topV.length ? statBars(topV, r => r.view_count, 'var(--accent)')
+        : '<p class="stats-empty">Ingen visninger registrert ennå — de telles fra nå av.</p>')
+    + '<div class="section-title" style="margin-top:18px">🍳 Mest laget</div>'
+    + (topC.length ? statBars(topC, r => r.cooked_count, 'var(--amber)')
+        : '<p class="stats-empty">Ingen registrert ennå — trykk «🍳 Vi lagde denne i dag!» inne på en oppskrift når dere har laget den.</p>')
+    + '<div class="section-title" style="margin-top:18px">Kategorier</div>'
+    + catList.map(([k, c]) => {
+        const cm = CAT_META[k] || CAT_META.vegetar;
+        return '<div class="sbar-row" title="' + cm.label + ': ' + c + '">'
+          + '<span class="sbar-name">' + cm.label + '</span>'
+          + '<div class="sbar-track"><div class="sbar-fill" style="width:' + Math.round(c / catMax * 100) + '%;background:' + cm.color + '"></div></div>'
+          + '<span class="sbar-val">' + c + '</span></div>';
+      }).join('');
+  document.getElementById('statsModal').classList.add('open');
 }
 
 // ─── Portion calculator ────────────────────────────────────────────────────────
@@ -1509,6 +1644,7 @@ function openDetail(id) {
       + '</div></div>';
   }
 
+  trackView(r);
   _detailRecipeId = id;
   _detailBaseServings = parseServings(r.yield);
   _detailKcalPerServing = r.kcal ? (parseInt(r.kcal.match(/\d+/)?.[0]) || 0) : 0;
@@ -1543,6 +1679,8 @@ function openDetail(id) {
     + (r.time ? '<div class="info-pill">' + ICONS.clock + r.time + '</div>' : '')
     + (r.yield ? '<div class="info-pill">' + ICONS.users + r.yield + '</div>' : '')
     + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
+    + '<div class="info-pill" title="Visninger">👁 ' + r.view_count + '</div>'
+    + (r.cooked_count > 0 ? '<div class="info-pill" title="Ganger laget">🍳 ' + r.cooked_count + '</div>' : '')
     + '</div>'
     + '<div class="section-title ingr-header">'
     + 'Ingredienser' + (totalIngr ? ' (' + totalIngr + ')' : '')
@@ -1560,6 +1698,9 @@ function openDetail(id) {
     + (r.result ? '<div class="section-title">Resultat</div><p class="recipe-result">' + r.result + '</p>' : '')
     + (nutriItems.length ? '<div class="section-title">Næring per porsjon</div><ul class="nutri-list" id="nutriScaled">' + nutriItems.join('') + '</ul>' : '')
     + galleryHtml
+    + '<button class="cooked-btn" id="cookedBtn" onclick="markCooked(\'' + r.id + '\')">🍳 Vi lagde denne i dag!'
+    + (r.cooked_count > 0 ? ' <span class="cooked-badge">· laget ' + r.cooked_count + ' ganger før</span>' : '')
+    + '</button>'
     + '<div class="detail-actions">'
     + '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">Rediger</button>'
     + '<button class="detail-action-btn" onclick="openImgModal(\'' + r.id + '\')">Bilder</button>'
