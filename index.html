@@ -106,6 +106,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ingr-list li{font-size:14px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.45}
 .ingr-list li::before{content:"• ";color:var(--accent);font-weight:600}
 .ingr-list li:last-child{border-bottom:none}
+.ingr-scalable{cursor:pointer;transition:color .12s}
+.ingr-scalable:hover{color:var(--accent)}
+.ingr-scalable:hover::after{content:" ⚖";font-size:12px;opacity:.7}
+.scale-note{font-size:12px;color:var(--accent);font-weight:500;margin:2px 0 4px}
+.scale-note:empty{display:none}
+.scale-hint{font-size:11px;color:var(--text3);margin:0 0 6px}
 .steps-list{list-style:none}
 .steps-list li{display:flex;gap:11px;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text2);line-height:1.55}
 .steps-list li:last-child{border-bottom:none}
@@ -1329,6 +1335,7 @@ function render() {
 let _detailRecipeId = null;
 let _detailBaseServings = 4;
 let _detailKcalPerServing = 0;
+let _detailScaleRatio = 1;
 
 function parseServings(yieldStr) {
   if (!yieldStr) return 4;
@@ -1359,6 +1366,13 @@ function formatScaled(n) {
 function scaleIngredientText(text, ratio) {
   if (ratio === 1) return text;
   const uf = {'½':0.5,'¼':0.25,'¾':0.75,'⅓':1/3,'⅔':2/3,'⅛':0.125,'⅜':0.375,'⅝':0.625,'⅞':0.875};
+  // Skaler ALLE tall som har en enhet — dekker "2 dl / 200 g melk" og "(ca. 100 g)"
+  let out = text.replace(/(\d+(?:[.,]\d+)?)(\s*)(kg|g|dl|ml|liter|l|ss|ts|stk)\b/gi, (m, num, sp, unit) => {
+    const val = parseFloat(num.replace(',', '.'));
+    return val ? formatScaled(val * ratio) + sp + unit : m;
+  });
+  if (out !== text) return out;
+  // Ellers: ledende mengde uten enhet ("4 egg", "1/2 lime", "½ løk")
   const re = /^(\d+[.,]\d+|\d+\s+\d+\/\d+|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞]|\d+)/;
   const m = text.match(re);
   if (!m) return text;
@@ -1374,27 +1388,77 @@ function scaleIngredientText(text, ratio) {
 }
 
 function buildIngrHtml(ingr, ratio) {
+  let idx = 0;
   return (ingr || []).map(g =>
     (ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + g.g + '</div>' : '')
-    + '<ul class="ingr-list">' + (g.items||[]).map(i => '<li>' + scaleIngredientText(i, ratio) + '</li>').join('') + '</ul>'
+    + '<ul class="ingr-list">' + (g.items||[]).map(i => {
+        const my = idx++;
+        const scalable = /(\d+(?:[.,]\d+)?)\s*(kg|g|dl|ml|liter|l|stk)\b/i.test(i);
+        return '<li' + (scalable
+          ? ' class="ingr-scalable" data-idx="' + my + '" onclick="openIngrScale(' + my + ')" title="Trykk for å skalere hele oppskriften ut fra denne mengden"'
+          : '') + '>' + scaleIngredientText(i, ratio) + '</li>';
+      }).join('') + '</ul>'
   ).join('');
 }
 
 function changeServings(delta) {
   const inp = document.getElementById('servingsInput');
   if (!inp) return;
-  let v = Math.max(1, Math.min(99, (parseInt(inp.value)||_detailBaseServings) + delta));
+  let v = (parseFloat(String(inp.value).replace(',', '.')) || _detailBaseServings) + delta;
+  if (delta) v = Math.round(v); // +/- går i hele porsjoner
+  v = Math.max(0.5, Math.min(99, v));
   inp.value = v;
+  applyScale(v / _detailBaseServings);
+}
+
+// ─── Skalering ut fra mengden man faktisk har ─────────────────────────────────
+// Trykk på en ingrediens i detaljvisningen, oppgi mengden du har (f.eks. 924 g
+// cottage cheese = 3 bokser à 308 g), og hele oppskriften + antall porsjoner +
+// total-kcal skaleres proporsjonalt. Næring PER porsjon er uendret.
+function flatIngrItems(r) { return (r.ingr || []).flatMap(g => g.items || []); }
+
+function servingsUnitWord(yieldStr) {
+  const w = (yieldStr || '').replace(/^[\d\s\-–,.]+/, '').trim();
+  return w || 'porsjoner';
+}
+
+function applyScale(ratio) {
+  _detailScaleRatio = ratio;
   const r = recipes.find(x => x.id === _detailRecipeId); if (!r) return;
-  const ratio = v / _detailBaseServings;
   const ingrEl = document.getElementById('ingrScaled');
   if (ingrEl) ingrEl.innerHTML = buildIngrHtml(r.ingr, ratio);
-  // Update total kcal
+  const scaled = _detailBaseServings * ratio;
+  const inp = document.getElementById('servingsInput');
+  if (inp) inp.value = Math.round(scaled * 10) / 10;
   const totalEl = document.getElementById('totalKcalVal');
   if (totalEl && _detailKcalPerServing) {
-    const total = Math.round(_detailKcalPerServing * v);
-    totalEl.textContent = total.toLocaleString('nb-NO');
+    totalEl.textContent = Math.round(_detailKcalPerServing * scaled).toLocaleString('nb-NO');
   }
+  const noteEl = document.getElementById('scaleNote');
+  if (noteEl) {
+    noteEl.textContent = ratio === 1 ? ''
+      : 'Skalert ' + (Math.round(ratio * 100) / 100 + '').replace('.', ',') + '× → ca. ' + formatScaled(scaled) + ' ' + servingsUnitWord(r.yield) + ' · næring per porsjon er uendret';
+  }
+}
+
+function openIngrScale(idx) {
+  const r = recipes.find(x => x.id === _detailRecipeId); if (!r) return;
+  const item = flatIngrItems(r)[idx]; if (!item) return;
+  // Foretrekk gram-mengden ("2 dl / 200 g melk" → 200 g), ellers første enhet
+  const gm = item.match(/(\d+(?:[.,]\d+)?)\s*(g|kg)\b/i) || item.match(/(\d+(?:[.,]\d+)?)\s*(dl|ml|liter|l|stk)\b/i);
+  if (!gm) return;
+  const baseVal = parseFloat(gm[1].replace(',', '.'));
+  if (!baseVal) return;
+  const unit = gm[2].toLowerCase();
+  const current = Math.round(baseVal * _detailScaleRatio * 100) / 100;
+  const svar = prompt(
+    'Skaler hele oppskriften ut fra denne ingrediensen:\n\n«' + item + '»\n\nHvor mange ' + unit + ' har du?',
+    String(current).replace('.', ',')
+  );
+  if (svar === null) return;
+  const val = parseFloat(String(svar).replace(',', '.'));
+  if (!val || val <= 0) { alert('Ugyldig mengde — skriv et tall, f.eks. 924'); return; }
+  applyScale(val / baseVal);
 }
 
 // ─── Detail Modal ──────────────────────────────────────────────────────────────
@@ -1431,6 +1495,7 @@ function openDetail(id) {
   _detailRecipeId = id;
   _detailBaseServings = parseServings(r.yield);
   _detailKcalPerServing = r.kcal ? (parseInt(r.kcal.match(/\d+/)?.[0]) || 0) : 0;
+  _detailScaleRatio = 1;
   const totalIngr = (r.ingr || []).reduce((s, g) => s + (g.items || []).length, 0);
   const ingrBullets = buildIngrHtml(r.ingr, 1);
 
@@ -1466,10 +1531,12 @@ function openDetail(id) {
     + 'Ingredienser' + (totalIngr ? ' (' + totalIngr + ')' : '')
     + '<div class="serving-ctrl">'
     + '<button onclick="changeServings(-1)" aria-label="Færre porsjoner">−</button>'
-    + '<input type="number" id="servingsInput" value="' + _detailBaseServings + '" min="1" max="99" oninput="changeServings(0)" aria-label="Antall porsjoner">'
+    + '<input type="number" id="servingsInput" value="' + _detailBaseServings + '" min="0.5" max="99" step="any" oninput="changeServings(0)" aria-label="Antall porsjoner">'
     + '<button onclick="changeServings(1)" aria-label="Flere porsjoner">+</button>'
     + '<span>porsj.</span>'
     + '</div></div>'
+    + '<div class="scale-note" id="scaleNote"></div>'
+    + '<div class="scale-hint">Tips: trykk på en ingrediens for å skalere alt ut fra mengden du har</div>'
     + '<div id="ingrScaled">' + ingrBullets + '</div>'
     + '<div class="section-title">Fremgangsmåte</div>'
     + '<ol class="steps-list">' + (r.steps || []).map((s, i) => '<li><span class="step-num">' + (i + 1) + '</span><span>' + s + '</span></li>').join('') + '</ol>'
