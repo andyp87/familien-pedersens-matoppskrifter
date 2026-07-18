@@ -1366,8 +1366,9 @@ function formatScaled(n) {
 function scaleIngredientText(text, ratio) {
   if (ratio === 1) return text;
   const uf = {'½':0.5,'¼':0.25,'¾':0.75,'⅓':1/3,'⅔':2/3,'⅛':0.125,'⅜':0.375,'⅝':0.625,'⅞':0.875};
-  // Skaler ALLE tall som har en enhet — dekker "2 dl / 200 g melk" og "(ca. 100 g)"
-  let out = text.replace(/(\d+(?:[.,]\d+)?)(\s*)(kg|g|dl|ml|liter|l|ss|ts|stk)\b/gi, (m, num, sp, unit) => {
+  // Skaler ALLE tall som har en enhet — dekker "2 dl / 200 g melk" og "(ca. 100 g)".
+  // Lookbehind hindrer at "2" i brøken "1/2 ts" tolkes som eget tall.
+  let out = text.replace(/(?<![\d/.,])(\d+(?:[.,]\d+)?)(\s*)(kg|g|dl|ml|liter|l|ss|ts|stk)\b/gi, (m, num, sp, unit) => {
     const val = parseFloat(num.replace(',', '.'));
     return val ? formatScaled(val * ratio) + sp + unit : m;
   });
@@ -1393,7 +1394,7 @@ function buildIngrHtml(ingr, ratio) {
     (ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + g.g + '</div>' : '')
     + '<ul class="ingr-list">' + (g.items||[]).map(i => {
         const my = idx++;
-        const scalable = /(\d+(?:[.,]\d+)?)\s*(kg|g|dl|ml|liter|l|stk)\b/i.test(i);
+        const scalable = /(?<![\d/.,])(\d+(?:[.,]\d+)?)\s*(kg|g|dl|ml|liter|l|stk)\b/i.test(i);
         return '<li' + (scalable
           ? ' class="ingr-scalable" data-idx="' + my + '" onclick="openIngrScale(' + my + ')" title="Trykk for å skalere hele oppskriften ut fra denne mengden"'
           : '') + '>' + scaleIngredientText(i, ratio) + '</li>';
@@ -1445,7 +1446,7 @@ function openIngrScale(idx) {
   const r = recipes.find(x => x.id === _detailRecipeId); if (!r) return;
   const item = flatIngrItems(r)[idx]; if (!item) return;
   // Foretrekk gram-mengden ("2 dl / 200 g melk" → 200 g), ellers første enhet
-  const gm = item.match(/(\d+(?:[.,]\d+)?)\s*(g|kg)\b/i) || item.match(/(\d+(?:[.,]\d+)?)\s*(dl|ml|liter|l|stk)\b/i);
+  const gm = item.match(/(?<![\d/.,])(\d+(?:[.,]\d+)?)\s*(g|kg)\b/i) || item.match(/(?<![\d/.,])(\d+(?:[.,]\d+)?)\s*(dl|ml|liter|l|stk)\b/i);
   if (!gm) return;
   const baseVal = parseFloat(gm[1].replace(',', '.'));
   if (!baseVal) return;
