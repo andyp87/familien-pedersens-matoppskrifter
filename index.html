@@ -1372,7 +1372,10 @@ function scaleIngredientText(text, ratio) {
   // Lookbehind hindrer at "2" i brøken "1/2 ts" tolkes som eget tall.
   let out = text.replace(/(?<![\d/.,])(\d+(?:[.,]\d+)?)(\s*)(kg|g|dl|ml|liter|l|ss|ts|stk)\b/gi, (m, num, sp, unit) => {
     const val = parseFloat(num.replace(',', '.'));
-    return val ? formatScaled(val * ratio) + sp + unit : m;
+    if (!val) return m;
+    // Hele råvarer (stk) rundes til nærmeste hele — man deler ikke 7⅔ egg
+    if (/^stk$/i.test(unit)) return formatWholeItem(val * ratio) + sp + unit;
+    return formatScaled(val * ratio) + sp + unit;
   });
   if (out !== text) return out;
   // Ellers: ledende mengde uten enhet ("4 egg", "1/2 lime", "½ løk")
@@ -1387,7 +1390,14 @@ function scaleIngredientText(text, ratio) {
   else if (/^\d+\/\d+$/.test(raw)) { const [a,b] = raw.split('/'); val = +a/+b; }
   else if (/^\d+\s+\d+\/\d+$/.test(raw)) { const [w,f] = raw.split(' '); const [a,b] = f.split('/'); val = +w + +a/+b; }
   if (!val) return text;
-  return formatScaled(val * ratio) + text.slice(raw.length);
+  // Ledende antall uten enhet = hele råvarer ("4 egg", "1/2 lime") — rund til hele
+  return formatWholeItem(val * ratio) + text.slice(raw.length);
+}
+
+// Nærmeste hele, men aldri null — blir det under ½, vis "½" (lov iht. enhetsreglene)
+function formatWholeItem(n) {
+  const r = Math.round(n);
+  return r >= 1 ? r + '' : '½';
 }
 
 function buildIngrHtml(ingr, ratio) {
