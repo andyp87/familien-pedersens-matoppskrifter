@@ -1,3 +1,11 @@
+function decodeEntities(s) {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d))
+    .replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+}
+
 exports.handler = async function(event) {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' }, body: '' };
@@ -12,9 +20,48 @@ exports.handler = async function(event) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Ugyldig URL' }) };
   }
 
-  const isInstagram = /(instagram\.com|facebook\.com|fb\.com)/i.test(url);
+  const isInstagram = /instagram\.com/i.test(url);
+  const isFacebook = /(facebook\.com|fb\.watch|fb\.com)/i.test(url);
 
   try {
+    if (isFacebook) {
+      // Facebook serverer hele bildeteksten (og et bilde av retten) i og-metaene
+      // til delings-crawlere — gratis, uten Apify. Krever at posten er offentlig.
+      const resp = await fetch(url, {
+        headers: {
+          'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+          'Accept-Language': 'nb,en'
+        },
+        redirect: 'follow'
+      });
+      if (!resp.ok) {
+        return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Facebook svarte med feilkode ' + resp.status }) };
+      }
+      const fbHtml = await resp.text();
+      const og = (prop) => {
+        const m = fbHtml.match(new RegExp('<meta[^>]+property="' + prop + '"[^>]+content="([^"]*)"', 'i'))
+               || fbHtml.match(new RegExp('<meta[^>]+content="([^"]*)"[^>]+property="' + prop + '"', 'i'));
+        return m ? decodeEntities(m[1]) : '';
+      };
+      let text = og('og:title');
+      const desc = og('og:description');
+      if (desc.length > text.length) text = desc;
+      // Fjern "1 mill. visninger · 105 k reaksjoner | "-prefikset (språkavhengig)
+      const pipe = text.indexOf(' | ');
+      if (pipe > -1 && pipe < 120 && /\d/.test(text.slice(0, pipe))) text = text.slice(pipe + 3);
+      const imageUrl = og('og:image') || null;
+      if (!text || text.length < 40) {
+        return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Fant ikke innholdet i Facebook-posten — er den offentlig? Kopier eventuelt oppskriftsteksten og lim den inn.' }) };
+      }
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ text: text.slice(0, 14000), imageUrl })
+      };
+    }
+
     if (isInstagram) {
       // Instagram hentes via Apify (strukturert data, full bildetekst).
       // Apify bruker 30–120 sek — for lenge for én Netlify-funksjon, så vi

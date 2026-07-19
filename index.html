@@ -1095,8 +1095,10 @@ async function analyzeRecipe() {
     // ── URL-henting ───────────────────────────────────────────────────────────
     let textForClaude = input;
     if (input && /^https?:\/\//i.test(input)) {
-      const isInstagram = /(instagram\.com|facebook\.com|fb\.com)/i.test(input);
-      status.textContent = isInstagram ? 'Henter Instagram-post… (tar gjerne ett minutt)' : 'Henter oppskriftssiden...';
+      const isInsta = /instagram\.com/i.test(input);
+      const isFb = /(facebook\.com|fb\.watch|fb\.com)/i.test(input);
+      status.textContent = isInsta ? 'Henter Instagram-post… (tar gjerne ett minutt)'
+        : isFb ? 'Henter Facebook-innlegget…' : 'Henter oppskriftssiden...';
       const fetchResp = await withTimeout(
         fetch('/.netlify/functions/fetch-url', {
           method: 'POST',
