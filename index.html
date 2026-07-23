@@ -1197,6 +1197,14 @@ function clearRecipeCard(e) {
 }
 
 // ─── AI Import ─────────────────────────────────────────────────────────────────
+// Grov sjekk: ser teksten ut som en oppskrift (nok mengder/enheter)? Hvis ikke,
+// og posten er en video, transkriberer vi lyden i stedet.
+function looksLikeRecipe(t) {
+  if (!t || t.length < 60) return false;
+  const units = (t.match(/\d+\s*(g|kg|dl|ml|l|ss|ts|stk|gram|liter)\b/gi) || []).length;
+  return units >= 3;
+}
+
 async function analyzeRecipe() {
   const input = document.getElementById('aiInput').value.trim();
   if (!input && !_recipeCardBase64) { alert('Lim inn en lenke, oppskriftstekst, eller last opp et bilde av oppskriften!'); return; }
@@ -1248,11 +1256,35 @@ async function analyzeRecipe() {
           });
           const poll = await pollResp.json();
           if (poll.error) throw new Error('Kunne ikke hente siden: ' + poll.error);
-          if (poll.text) { fetchData = poll; break; }
+          if (!poll.pending) { fetchData = poll; break; } // ferdig — kan ha tekst og/eller video
         }
       }
-      textForClaude = fetchData.text;
+      textForClaude = fetchData.text || '';
       pendingSourceImageUrl = fetchData.imageUrl || null;
+
+      // Oppskriften i teksten? Hvis ikke, men det finnes en video → hør gjennom lyden.
+      const videoUrl = fetchData.videoUrl || null;
+      if (videoUrl && !looksLikeRecipe(textForClaude)) {
+        status.textContent = 'Ingrediensene står ikke i teksten – hører gjennom videoen…';
+        try {
+          const tResp = await withTimeout(
+            fetch('/.netlify/functions/transcribe', {
+              method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({videoUrl})
+            }),
+            30000, 'Videoanalysen tok for lang tid – prøv igjen'
+          );
+          const t = await tResp.json();
+          if (t.transcript) {
+            textForClaude = (textForClaude ? textForClaude + '\n\n' : '') + 'DETTE BLE SAGT I VIDEOEN:\n' + t.transcript;
+          } else if (t.error) {
+            console.warn('Transkribering:', t.error);
+          }
+        } catch(e) { console.warn('Transkribering feilet:', e.message); }
+      }
+
+      if (!textForClaude && !_recipeCardBase64) {
+        throw new Error('Fant verken tekst eller tale i posten – kopier oppskriften og lim den inn manuelt.');
+      }
     }
 
     status.textContent = 'Claude leser oppskriften...';

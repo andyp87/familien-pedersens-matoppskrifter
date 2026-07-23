@@ -51,8 +51,12 @@ exports.handler = async function(event) {
     // Frontenden bruker det som forslag til forsidebilde.
     const imageUrl = it.displayUrl || (Array.isArray(it.images) && it.images.length ? it.images[0] : null);
 
-    if (!text) return json({ error: 'Posten hadde ingen bildetekst å hente oppskrift fra' });
-    return json({ text, imageUrl });
+    // videoUrl finnes for video-poster (reels). Brukes til å transkribere lyden
+    // når oppskriften ikke står i bildeteksten.
+    const videoUrl = it.videoUrl || null;
+
+    if (!text && !videoUrl) return json({ error: 'Posten hadde verken bildetekst eller video å hente oppskrift fra' });
+    return json({ text: text || '', imageUrl, videoUrl });
   } catch(e) {
     return json({ error: e.message });
   }
