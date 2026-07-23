@@ -733,7 +733,13 @@ async function signIn() {
   status.textContent = ''; status.className = 'auth-status';
   const {error} = await _supa.auth.signInWithPassword({email, password});
   btn.disabled = false; btn.textContent = 'Logg inn';
-  if (error) { status.textContent = '⚠️ ' + error.message; status.className = 'auth-status err'; }
+  if (error) {
+    let msg = error.message;
+    if (/Invalid login credentials/i.test(msg)) msg = 'Feil e-post eller passord.';
+    else if (/Email not confirmed/i.test(msg)) msg = 'Du må bekrefte e-posten din først – klikk lenken i e-posten vi sendte deg.';
+    else if (/only request this after/i.test(msg)) msg = 'Vent noen sekunder før du prøver igjen.';
+    status.textContent = '⚠️ ' + msg; status.className = 'auth-status err';
+  }
 }
 
 async function signUp() {
@@ -745,10 +751,28 @@ async function signUp() {
   const btn = document.getElementById('authSignUpBtn');
   btn.disabled = true; btn.textContent = 'Oppretter konto…';
   status.textContent = ''; status.className = 'auth-status';
-  const {error} = await _supa.auth.signUp({email, password, options:{emailRedirectTo:window.location.href}});
+  const {data, error} = await _supa.auth.signUp({email, password, options:{emailRedirectTo:window.location.href}});
   btn.disabled = false; btn.textContent = 'Opprett konto';
-  if (error) { status.textContent = '⚠️ ' + error.message; status.className = 'auth-status err'; }
-  else { status.textContent = '✓ Sjekk e-posten din for bekreftelseslenke!'; status.className = 'auth-status ok'; }
+  if (error) {
+    let msg = error.message;
+    if (/only request this after/i.test(msg)) msg = 'Vent noen sekunder før du prøver igjen (spam-beskyttelse).';
+    else if (/already registered|already exists/i.test(msg)) msg = 'Denne e-posten har allerede en konto – prøv å logge inn i stedet.';
+    else if (/at least 6/i.test(msg)) msg = 'Passordet må ha minst 6 tegn.';
+    status.innerHTML = '⚠️ ' + msg; status.className = 'auth-status err';
+    return;
+  }
+  // Supabase svarer «suksess» uten å sende e-post hvis kontoen finnes fra før (identities er tom)
+  if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    status.innerHTML = 'Denne e-posten har allerede en konto. <b>Trykk «Logg inn»</b> i stedet.';
+    status.className = 'auth-status err';
+    return;
+  }
+  // Hvis kontoen er logget inn med en gang (e-postbekreftelse er slått av) → inn i appen
+  if (data?.session) { return; }
+  // Ellers: tydelig beskjed om å bekrefte e-posten
+  status.innerHTML = '<b>✓ Konto opprettet!</b><br>Vi sendte en bekreftelses-e-post til <b>' + email + '</b>.<br>Åpne den, klikk lenken (sjekk også <b>søppelpost</b>), og logg inn.';
+  status.className = 'auth-status ok';
+  btn.disabled = true; btn.textContent = '✉️ Sjekk e-posten din';
 }
 
 async function signOut() {
