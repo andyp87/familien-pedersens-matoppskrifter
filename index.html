@@ -616,9 +616,11 @@ const CONFIG = {
   MAX_IMAGES_PER_RECIPE: 20,
   SITE_NAME: 'nineofve',
   SITE_TITLE: 'Familiens middager',
-  // Claude models — import bruker Haiku: raskt nok til å holde seg under
-  // Netlifys ~10 s funksjonsgrense (Sonnet tangerte den og ga 502-feil).
-  MODEL_IMPORT: 'claude-haiku-4-5-20251001',
+  // Claude models — import prøver Sonnet først (best kvalitet). Hvis Sonnet
+  // tangerer Netlifys ~10 s funksjonsgrense og gir 502, tas et nytt forsøk
+  // automatisk med den raskere Haiku (~4 s), så import aldri feiler helt.
+  MODEL_IMPORT: 'claude-sonnet-4-5',
+  MODEL_IMPORT_FALLBACK: 'claude-haiku-4-5-20251001',
   MODEL_LABEL: 'claude-haiku-4-5-20251001'
 };
 
@@ -1270,22 +1272,26 @@ async function analyzeRecipe() {
 
     content.push({type:'text', text: prompt});
 
-    const reqBody = JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 1500, messages:[{role:'user',content}]});
+    // Forsøk 1: Sonnet (best kvalitet). Forsøk 2 (ved 502/serverfeil): Haiku (rask).
+    const models = [CONFIG.MODEL_IMPORT, CONFIG.MODEL_IMPORT_FALLBACK];
     let data = null, lastErr = null;
     for (let attempt = 1; attempt <= 2; attempt++) {
       const t0 = Date.now();
       try {
         const resp = await withTimeout(
-          fetch('/.netlify/functions/claude', {method:'POST', headers:{'Content-Type':'application/json'}, body: reqBody}),
+          fetch('/.netlify/functions/claude', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({model: models[attempt - 1], max_tokens: 1500, messages:[{role:'user',content}]})
+          }),
           30000, 'Claude svarte ikke i tide – prøv igjen'
         );
-        console.log('[ANALYSE] forsøk', attempt, '→', resp.status, 'på', Date.now() - t0, 'ms');
+        console.log('[ANALYSE] forsøk', attempt, models[attempt - 1], '→', resp.status, 'på', Date.now() - t0, 'ms');
         if (resp.ok) { data = await resp.json(); break; }
         const err = await resp.json().catch(() => ({}));
         lastErr = new Error(err.error?.message || 'Serverfeil (' + resp.status + ')');
         if (resp.status < 500) throw lastErr; // klientfeil → ikke prøv igjen
       } catch(e) { lastErr = e; }
-      if (attempt < 2) { status.textContent = 'Serveren var treg – prøver én gang til…'; await new Promise(r => setTimeout(r, 800)); }
+      if (attempt < 2) { status.textContent = 'Førstevalget ble tregt – prøver med en raskere modell…'; await new Promise(r => setTimeout(r, 500)); }
     }
     if (!data) throw lastErr || new Error('Klarte ikke å analysere – prøv igjen');
     const text = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
