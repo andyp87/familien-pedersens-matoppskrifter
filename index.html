@@ -1262,24 +1262,41 @@ async function analyzeRecipe() {
       textForClaude = fetchData.text || '';
       pendingSourceImageUrl = fetchData.imageUrl || null;
 
-      // Oppskriften i teksten? Hvis ikke, men det finnes en video → hør gjennom lyden.
+      // Oppskriften i teksten? Hvis ikke, men det finnes en video → analyser videoen.
       const videoUrl = fetchData.videoUrl || null;
       if (videoUrl && !looksLikeRecipe(textForClaude)) {
-        status.textContent = 'Ingrediensene står ikke i teksten – hører gjennom videoen…';
+        let fromVideo = '';
+        // 1) Gemini: SER + HØRER videoen (dekker både tale og tekst på skjermen)
+        status.textContent = 'Ingrediensene står ikke i teksten – ser gjennom videoen…';
         try {
-          const tResp = await withTimeout(
-            fetch('/.netlify/functions/transcribe', {
+          const gResp = await withTimeout(
+            fetch('/.netlify/functions/gemini-video', {
               method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({videoUrl})
             }),
             30000, 'Videoanalysen tok for lang tid – prøv igjen'
           );
-          const t = await tResp.json();
-          if (t.transcript) {
-            textForClaude = (textForClaude ? textForClaude + '\n\n' : '') + 'DETTE BLE SAGT I VIDEOEN:\n' + t.transcript;
-          } else if (t.error) {
-            console.warn('Transkribering:', t.error);
-          }
-        } catch(e) { console.warn('Transkribering feilet:', e.message); }
+          const g = await gResp.json();
+          if (g.recipeText) fromVideo = 'FRA VIDEOEN (bilde + tale):\n' + g.recipeText;
+          else if (g.error) console.warn('Gemini-video:', g.error);
+        } catch(e) { console.warn('Gemini-video feilet:', e.message); }
+
+        // 2) Fallback: Whisper (kun lyd) hvis Gemini ikke ga noe
+        if (!fromVideo) {
+          status.textContent = 'Hører gjennom videoen…';
+          try {
+            const tResp = await withTimeout(
+              fetch('/.netlify/functions/transcribe', {
+                method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({videoUrl})
+              }),
+              30000, 'Videoanalysen tok for lang tid – prøv igjen'
+            );
+            const t = await tResp.json();
+            if (t.transcript) fromVideo = 'DETTE BLE SAGT I VIDEOEN:\n' + t.transcript;
+            else if (t.error) console.warn('Transkribering:', t.error);
+          } catch(e) { console.warn('Transkribering feilet:', e.message); }
+        }
+
+        if (fromVideo) textForClaude = (textForClaude ? textForClaude + '\n\n' : '') + fromVideo;
       }
 
       if (!textForClaude && !_recipeCardBase64) {
