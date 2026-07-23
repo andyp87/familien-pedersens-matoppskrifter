@@ -616,8 +616,9 @@ const CONFIG = {
   MAX_IMAGES_PER_RECIPE: 20,
   SITE_NAME: 'nineofve',
   SITE_TITLE: 'Familiens middager',
-  // Claude models
-  MODEL_IMPORT: 'claude-sonnet-4-5',
+  // Claude models — import bruker Haiku: raskt nok til å holde seg under
+  // Netlifys ~10 s funksjonsgrense (Sonnet tangerte den og ga 502-feil).
+  MODEL_IMPORT: 'claude-haiku-4-5-20251001',
   MODEL_LABEL: 'claude-haiku-4-5-20251001'
 };
 
@@ -1265,22 +1266,28 @@ async function analyzeRecipe() {
       (_recipeCardBase64 ? ' bilde og/eller' : '') + (textForClaude ? ' tekst' : '') +
       ' og trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' +
       (textForClaude ? 'Input:\n' + textForClaude + '\n\n' : '') +
-      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "img_query": "engelsk bildesøketekst som beskriver den ferdige retten, 2-5 ord, f.eks. creamy chicken pasta dish",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væsker (melk, fløte, olje o.l.) oppgis ALLTID med både dl/liter OG gram: "2 dl / 200 g melk". Vann kan oppgis kun i dl/liter\n- Bruk ALDRI brøker som 1/4, 3/4, 1/8 eller 2/3 — regn om til gram/dl i stedet. ENESTE unntak: "1/2" for hele råvarer som deles i to (f.eks. "1/2 lime", "1/2 sitron", "1/2 løk")\n- Alt målbart skal i g, kg, dl eller liter. ss (spiseskje) og ts (teskje) er kun lov for små mengder krydder, salt o.l.\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- stk kan brukes for hele enheter (egg, løk), gjerne med gram i parentes\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
+      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "img_query": "engelsk bildesøketekst som beskriver den ferdige retten, 2-5 ord, f.eks. creamy chicken pasta dish",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væsker (melk, fløte, olje o.l.) oppgis ALLTID med både dl/liter OG gram: "2 dl / 200 g melk", "1 dl / 100 g fløte". Skriv ALDRI bare "100 g fløte" uten dl-en. Vann kan oppgis kun i dl/liter\n- Bruk ALDRI brøker som 1/4, 3/4, 1/8 eller 2/3 — regn om til gram/dl i stedet. ENESTE unntak: "1/2" for hele råvarer som deles i to (f.eks. "1/2 lime", "1/2 sitron", "1/2 løk")\n- Alt målbart skal i g, kg, dl eller liter. ss (spiseskje) og ts (teskje) er kun lov for små mengder krydder, salt o.l.\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- stk kan brukes for hele enheter (egg, løk), gjerne med gram i parentes\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
 
     content.push({type:'text', text: prompt});
 
-    const t0 = Date.now();
-    const resp = await withTimeout(
-      fetch('/.netlify/functions/claude', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 1500, messages:[{role:'user',content}]})
-      }),
-      60000, 'Claude svarte ikke innen 60 sekunder – prøv igjen'
-    );
-    console.log('[ANALYSE] Claude svarte på', Date.now() - t0, 'ms');
-    if (!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || 'Feil: ' + resp.status); }
-    const data = await resp.json();
+    const reqBody = JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 1500, messages:[{role:'user',content}]});
+    let data = null, lastErr = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const t0 = Date.now();
+      try {
+        const resp = await withTimeout(
+          fetch('/.netlify/functions/claude', {method:'POST', headers:{'Content-Type':'application/json'}, body: reqBody}),
+          30000, 'Claude svarte ikke i tide – prøv igjen'
+        );
+        console.log('[ANALYSE] forsøk', attempt, '→', resp.status, 'på', Date.now() - t0, 'ms');
+        if (resp.ok) { data = await resp.json(); break; }
+        const err = await resp.json().catch(() => ({}));
+        lastErr = new Error(err.error?.message || 'Serverfeil (' + resp.status + ')');
+        if (resp.status < 500) throw lastErr; // klientfeil → ikke prøv igjen
+      } catch(e) { lastErr = e; }
+      if (attempt < 2) { status.textContent = 'Serveren var treg – prøver én gang til…'; await new Promise(r => setTimeout(r, 800)); }
+    }
+    if (!data) throw lastErr || new Error('Klarte ikke å analysere – prøv igjen');
     const text = data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
     const recipe = JSON.parse(text);
     pendingAiRecipe = recipe;
