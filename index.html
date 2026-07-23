@@ -370,6 +370,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
+<div class="mode-bar">
+  <button class="mode-btn active" id="modeCookbook" onclick="setMode('cookbook')">📖 Min kokebok</button>
+  <button class="mode-btn" id="modeDiscover" onclick="setMode('discover')">🔍 Oppdag</button>
+</div>
+
 <div class="filters-bar">
   <div class="no-key-banner" id="noKeyBanner">
     <span>⚠️ Legg inn API-nøkkel for å importere oppskrifter automatisk.</span>
@@ -412,9 +417,17 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
     <!-- AI tab -->
     <div class="tab-panel active" id="tab-ai">
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">
-        Lim inn en lenke eller tekst — eller last opp et bilde av oppskriften (håndskrevet, utskrift, oppskriftsbok). Claude analyserer og legger den til automatisk.
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6">
+        Lim inn en lenke eller oppskriftstekst her — Claude analyserer og legger den til automatisk.
       </p>
+      <div class="ai-import-area">
+        <textarea id="aiInput" autofocus placeholder="Lim inn lenke eller oppskriftstekst her...&#10;&#10;https://www.instagram.com/p/...&#10;— eller —&#10;Kylling tikka masala&#10;Ingredienser: kylling, tikka-saus, ris..."></textarea>
+      </div>
+      <button class="ai-analyze-btn" id="analyzeBtn" onclick="analyzeRecipe()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Analyser med Claude
+      </button>
+      <div class="import-or">— eller last opp et bilde av oppskriften —</div>
       <label class="recipe-card-upload-zone" id="recipeCardLabel">
         <input type="file" accept="image/*" id="recipeCardInput" onchange="onRecipeCardSelected(this)">
         <div id="recipeCardPrompt" class="recipe-card-prompt">
@@ -427,13 +440,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <img id="recipeCardPreview" class="recipe-card-preview-img" alt="Oppskriftsbilde">
       </label>
       <button id="recipeCardClearBtn" class="recipe-card-clear" style="display:none" type="button" onclick="clearRecipeCard(event)">✕ Fjern bilde</button>
-      <div class="ai-import-area">
-        <textarea id="aiInput" placeholder="Lim inn lenke eller oppskriftstekst her...&#10;&#10;https://www.tine.no/oppskrifter/...&#10;— eller —&#10;Kylling tikka masala&#10;Ingredienser: kylling, tikka-saus, ris..."></textarea>
-      </div>
-      <button class="ai-analyze-btn" id="analyzeBtn" onclick="analyzeRecipe()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        Analyser med Claude
-      </button>
       <div class="ai-status" id="aiStatus"></div>
       <div class="ai-preview" id="aiPreview">
         <div class="ai-preview-header">
@@ -562,6 +568,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
         <div class="img-suggest-row" id="imgSuggestRow">
           <button class="btn-cancel" style="width:100%;font-size:13px" id="imgSuggestBtn" onclick="loadImgSuggestions()">✨ Foreslå bilder automatisk</button>
+          <button class="btn-cancel" style="width:100%;font-size:13px;margin-top:6px;display:none" id="sourceImgBtn" onclick="newImageFromSource()">🔗 Nytt bilde fra kilden (original/video)</button>
           <div class="img-suggest-grid" id="imgSuggestGrid"></div>
         </div>
 
@@ -667,9 +674,13 @@ async function compressImage(dataUrl, maxPx = 1200, quality = 0.85) {
 let currentUser = null;
 let recipes = [];
 let recipeImagesCache = {}; // { recipeId: [{id, url, label, is_hero, position, storage_path}] }
+let activeMode = 'cookbook'; // 'cookbook' (min bok) | 'discover' (delt pool)
+let myEntries = {};   // recipe_id -> { id, status, rating, cooked_count }
+let recipeAgg = {};   // recipe_id -> { ratingSum, ratingCount, cookedTotal, inBooks }
 let activeCat = 'alle', activeHealth = 'alle', activeSort = 'popular';
 let pendingAiRecipe = null;
 let pendingSourceImageUrl = null; // bilde fra kilden (IG-video/og:image) til forslag
+let pendingSourceUrl = null;      // kilde-URL fra import → lagres som source_url
 let _recipeCardBase64 = null;
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
@@ -765,27 +776,101 @@ function dbRowToRecipe(row) {
     image_url: row.image_url || null,
     view_count: row.view_count || 0,
     cooked_count: row.cooked_count || 0,
+    source_url: row.source_url || null,
+    author_name: row.author_name || 'Ukjent',
+    author_id: row.user_id || null,
     created_at: row.created_at || null
   };
 }
 
-async function loadRecipesFromDB() {
-  // Load recipes + their images in one round-trip
-  const {data, error} = await _supa
-    .from('recipes')
-    .select('*, recipe_images(*)')
-    .eq('user_id', currentUser.id)
-    .order('created_at', {ascending: false});
+let allEntries = []; // rå bokføringer fra alle brukere (kilde for aggregater)
 
-  if (!error && data) {
-    recipes = data.map(dbRowToRecipe);
+async function loadRecipesFromDB() {
+  // Delt pool: alle oppskrifter + bilder, og ALLE bokføringer (for snitt/topplister)
+  const [recRes, entRes] = await Promise.all([
+    _supa.from('recipes').select('*, recipe_images(*)').order('created_at', {ascending: false}),
+    _supa.from('cookbook_entries').select('*')
+  ]);
+
+  if (!recRes.error && recRes.data) {
+    recipes = recRes.data.map(dbRowToRecipe);
     recipeImagesCache = {};
-    data.forEach(row => {
+    recRes.data.forEach(row => {
       if (row.recipe_images && row.recipe_images.length) {
         recipeImagesCache[row.id] = row.recipe_images.sort((a, b) => a.position - b.position);
       }
     });
   }
+  allEntries = entRes.data || [];
+  rebuildEntryIndex();
+}
+
+// Bygg min-bok-oppslag + aggregater fra allEntries (kalles etter enhver endring)
+function rebuildEntryIndex() {
+  myEntries = {};
+  recipeAgg = {};
+  allEntries.forEach(e => {
+    if (e.user_id === currentUser.id) myEntries[e.recipe_id] = e;
+    const a = recipeAgg[e.recipe_id] || (recipeAgg[e.recipe_id] = {ratingSum: 0, ratingCount: 0, cookedTotal: 0, inBooks: 0});
+    if (e.rating != null) { a.ratingSum += e.rating; a.ratingCount++; }
+    a.cookedTotal += e.cooked_count || 0;
+    if (e.status === 'approved') a.inBooks++;
+  });
+}
+
+// Sett/erstatt min bokføring lokalt i allEntries, så reindekser
+function upsertLocalEntry(entry) {
+  const i = allEntries.findIndex(e => e.user_id === entry.user_id && e.recipe_id === entry.recipe_id);
+  if (i === -1) allEntries.push(entry); else allEntries[i] = entry;
+  rebuildEntryIndex();
+}
+function removeLocalEntry(recipeId) {
+  allEntries = allEntries.filter(e => !(e.user_id === currentUser.id && e.recipe_id === recipeId));
+  rebuildEntryIndex();
+}
+
+// ─── Bokføring (cookbook_entries) ──────────────────────────────────────────────
+function myEntry(id)      { return myEntries[id] || null; }
+function inMyCookbook(id) { return myEntries[id]?.status === 'approved'; }
+function inMyToTry(id)    { return myEntries[id]?.status === 'to_try'; }
+function aggFor(id)       { return recipeAgg[id] || {ratingSum: 0, ratingCount: 0, cookedTotal: 0, inBooks: 0}; }
+function avgRating(id)    { const a = aggFor(id); return a.ratingCount ? a.ratingSum / a.ratingCount : 0; }
+
+// Legg en oppskrift i min bok med gitt status ('to_try' | 'approved'), uten å røre rating/cooked
+async function setEntryStatus(recipeId, status) {
+  const cur = myEntries[recipeId] || {};
+  const payload = {user_id: currentUser.id, recipe_id: recipeId, status};
+  if (cur.rating != null) payload.rating = cur.rating;
+  if (cur.cooked_count != null) payload.cooked_count = cur.cooked_count;
+  const {data, error} = await withTimeout(
+    _supa.from('cookbook_entries').upsert(payload, {onConflict: 'user_id,recipe_id'}).select().single(),
+    10000
+  );
+  if (error) throw error;
+  upsertLocalEntry(data);
+  return data;
+}
+
+async function removeEntry(recipeId) {
+  const {error} = await _supa.from('cookbook_entries').delete()
+    .eq('user_id', currentUser.id).eq('recipe_id', recipeId);
+  if (error) throw error;
+  removeLocalEntry(recipeId);
+}
+
+// Gi terning (1–10). Å rate = å godkjenne → status blir 'approved'.
+async function setMyRating(recipeId, rating) {
+  const cur = myEntries[recipeId] || {};
+  const {data, error} = await withTimeout(
+    _supa.from('cookbook_entries')
+      .upsert({user_id: currentUser.id, recipe_id: recipeId, rating, status: 'approved',
+               cooked_count: cur.cooked_count || 0}, {onConflict: 'user_id,recipe_id'})
+      .select().single(),
+    10000
+  );
+  if (error) throw error;
+  upsertLocalEntry(data);
+  return data;
 }
 
 function getHeroImage(recipeId) {
@@ -799,6 +884,7 @@ async function addRecipeToDB(recipe) {
   const {data, error} = await withTimeout(
     _supa.from('recipes').insert({
       user_id: currentUser.id,
+      author_name: (currentUser.email || '').split('@')[0] || 'Ukjent',
       name: recipe.name,
       cat: recipe.cat || 'vegetar',
       emoji: recipe.emoji || '🍽️',
@@ -811,12 +897,17 @@ async function addRecipeToDB(recipe) {
       protein: recipe.protein || '',
       carbs: recipe.carbs || '',
       fat: recipe.fat || '',
-      result: recipe.result || ''
+      result: recipe.result || '',
+      source_url: recipe.source_url || null
     }).select().single(),
     10000
   );
   if (error) throw error;
-  return dbRowToRecipe(data);
+  const saved = dbRowToRecipe(data);
+  // Nye oppskrifter starter som "uprøvd" i forfatterens egen bok.
+  // De graduerer til kokeboken når de lages og får terning.
+  try { await setEntryStatus(saved.id, 'to_try'); } catch(e) { console.warn('Kunne ikke opprette bokføring:', e.message); }
+  return saved;
 }
 
 async function updateRecipeInDB(id, fields) {
@@ -834,6 +925,7 @@ async function updateRecipeInDB(id, fields) {
   if (fields.carbs !== undefined) dbFields.carbs = fields.carbs;
   if (fields.fat !== undefined) dbFields.fat = fields.fat;
   if (fields.result !== undefined) dbFields.result = fields.result;
+  if (fields.source_url !== undefined) dbFields.source_url = fields.source_url;
   const {error} = await withTimeout(
     _supa.from('recipes').update(dbFields).eq('id', id),
     10000
@@ -1022,6 +1114,8 @@ function openAddModal() {
   document.getElementById('f-health').value = 3;
   document.getElementById('h-out').textContent = 'Balansert';
   document.getElementById('addModal').classList.add('open');
+  // Rett til innliming: fokuser lim-feltet med én gang vinduet er åpent
+  setTimeout(() => { const el = document.getElementById('aiInput'); if (el) el.focus(); }, 60);
 }
 
 function openEditModal(recipeId) {
@@ -1090,11 +1184,13 @@ async function analyzeRecipe() {
   preview.style.display = 'none';
   pendingAiRecipe = null;
   pendingSourceImageUrl = null;
+  pendingSourceUrl = null;
 
   try {
     // ── URL-henting ───────────────────────────────────────────────────────────
     let textForClaude = input;
     if (input && /^https?:\/\//i.test(input)) {
+      pendingSourceUrl = input; // husk kilden for kildehenvisning
       const isInsta = /instagram\.com/i.test(input);
       const isFb = /(facebook\.com|fb\.watch|fb\.com)/i.test(input);
       status.textContent = isInsta ? 'Henter Instagram-post… (tar gjerne ett minutt)'
@@ -1194,6 +1290,7 @@ async function saveAiRecipe() {
   if (btn) { btn.disabled = true; btn.textContent = 'Lagrer...'; }
   if (status) { status.textContent = ''; }
   const recipe = Object.assign({}, pendingAiRecipe);
+  recipe.source_url = pendingSourceUrl || null;
   if (!recipe.ingr || !recipe.ingr.length) recipe.ingr = [{g:'',items:[]}];
   if (!recipe.steps || !recipe.steps.length) recipe.steps = ['Se oppskrift.'];
   const t0 = Date.now();
@@ -1227,6 +1324,8 @@ async function saveAiRecipe() {
     clearRecipeCard();
     pendingAiRecipe = null;
     pendingSourceImageUrl = null;
+    pendingSourceUrl = null;
+    activeMode = 'cookbook'; activeSort = 'newest';
     buildFilters(); render();
   } catch(e) {
     console.error('saveAiRecipe feil:', e);
@@ -1299,6 +1398,8 @@ async function deleteRecipe(recipeId) {
   if (ok) {
     recipes = recipes.filter(x => x.id !== recipeId);
     delete recipeImagesCache[recipeId];
+    allEntries = allEntries.filter(e => e.recipe_id !== recipeId); // FK-cascade i DB
+    rebuildEntryIndex();
     buildFilters(); render();
   } else {
     alert('Kunne ikke slette oppskriften.');
@@ -1316,7 +1417,9 @@ function buildFilters() {
     + [5,4,3,2,1].map(n => '<button class="chip' + (activeHealth === n ? ' active' : '') + '" onclick="setHealth(' + n + ')">' + HEALTH_LABEL[n] + '</button>').join('');
   const sf = document.getElementById('sortFilters');
   if (sf) {
-    const SORTS = [['popular','👁 Mest sett'],['cooked','🍳 Mest laget'],['newest','✨ Nyeste']];
+    const SORTS = activeMode === 'discover'
+      ? [['popular','⭐ Familiens favoritter'],['cooked','🍳 Mest laget'],['newest','✨ Nyeste']]
+      : [['popular','⭐ Mine favoritter'],['cooked','🍳 Mest laget av meg'],['newest','✨ Nyeste']];
     sf.innerHTML = SORTS.map(([k, label]) =>
       '<button class="chip' + (activeSort === k ? ' active' : '') + '" onclick="setSort(\'' + k + '\')">' + label + '</button>').join('');
   }
@@ -1324,15 +1427,31 @@ function buildFilters() {
 function setCat(v) { activeCat = v; buildFilters(); render(); }
 function setHealth(v) { activeHealth = v; buildFilters(); render(); }
 function setSort(v) { activeSort = v; buildFilters(); render(); }
+function setMode(m) {
+  if (activeMode === m) return;
+  activeMode = m;
+  document.getElementById('modeCookbook').classList.toggle('active', m === 'cookbook');
+  document.getElementById('modeDiscover').classList.toggle('active', m === 'discover');
+  const h1 = document.querySelector('.hero h1'), p = document.querySelector('.hero p');
+  if (h1) h1.textContent = m === 'discover' ? 'Oppdag oppskrifter' : 'Min kokebok';
+  if (p) p.textContent = m === 'discover'
+    ? 'Alle familiens oppskrifter – legg til dem du vil prøve'
+    : 'Dine godkjente oppskrifter og det du vil prøve';
+  buildFilters(); render();
+}
 
 function sortForView(list) {
   const arr = list.slice();
   if (activeSort === 'popular') {
-    arr.sort((a, b) => (b.view_count - a.view_count) || (b.cooked_count - a.cooked_count));
+    if (activeMode === 'discover')
+      arr.sort((a, b) => (avgRating(b.id) - avgRating(a.id)) || (aggFor(b.id).cookedTotal - aggFor(a.id).cookedTotal));
+    else
+      arr.sort((a, b) => ((myEntry(b.id)?.rating || 0) - (myEntry(a.id)?.rating || 0)) || ((myEntry(b.id)?.cooked_count || 0) - (myEntry(a.id)?.cooked_count || 0)));
   } else if (activeSort === 'cooked') {
-    arr.sort((a, b) => (b.cooked_count - a.cooked_count) || (b.view_count - a.view_count));
+    if (activeMode === 'discover') arr.sort((a, b) => aggFor(b.id).cookedTotal - aggFor(a.id).cookedTotal);
+    else arr.sort((a, b) => (myEntry(b.id)?.cooked_count || 0) - (myEntry(a.id)?.cooked_count || 0));
   }
-  // 'newest': behold rekkefølgen fra databasen (created_at synkende)
+  // 'newest': behold created_at-rekkefølgen fra databasen
   return arr;
 }
 
@@ -1340,61 +1459,126 @@ function dotHtml(health, size) {
   return [1,2,3,4,5].map(i => '<div class="h-dot" style="width:' + size + 'px;height:' + size + 'px;' + (i <= health ? 'background:' + HEALTH_COLOR[health] : '') + '"></div>').join('');
 }
 
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── Kort ──────────────────────────────────────────────────────────────────────
+function cardHtml(r) {
+  const cm = CAT_META[r.cat] || CAT_META.vegetar;
+  const heroUrl = getHeroImage(r.id);
+  const imgHtml = heroUrl
+    ? '<img src="' + heroUrl + '" class="recipe-img" alt="' + esc(r.name) + '">'
+    : '<span class="emoji-fallback">' + (r.emoji || '🍽️') + '</span>';
+  const imgCount = (recipeImagesCache[r.id] || []).length;
+  const countBadge = imgCount > 1
+    ? '<span class="card-img-count"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' + imgCount + '</span>'
+    : '';
+  const agg = aggFor(r.id);
+  const avg = avgRating(r.id);
+  const e = myEntry(r.id);
+
+  let status = '';
+  if (activeMode === 'discover') {
+    if (inMyCookbook(r.id)) status = '<span class="card-status in">✓ I boka</span>';
+    else if (inMyToTry(r.id)) status = '<span class="card-status try">🧪 Vil prøve</span>';
+    else status = '<button class="card-status add" onclick="event.stopPropagation();quickAddToTry(\'' + r.id + '\')">+ Vil prøve</button>';
+  } else if (inMyToTry(r.id)) {
+    status = '<span class="card-status try">🧪 Uprøvd</span>';
+  }
+
+  const counts = activeMode === 'discover'
+    ? '<div class="card-counts">' + (agg.ratingCount ? '<span>⭐ ' + avg.toFixed(1) + '</span>' : '<span class="dim">—</span>') + (agg.cookedTotal ? '<span>🍳 ' + agg.cookedTotal + '</span>' : '') + '</div>'
+    : '<div class="card-counts">' + (e?.rating ? '<span>⭐ ' + e.rating + '</span>' : '') + (e?.cooked_count ? '<span>🍳 ' + e.cooked_count + '</span>' : '') + '</div>';
+
+  const author = activeMode === 'discover' ? '<div class="card-author">av ' + esc(r.author_name) + '</div>' : '';
+
+  return '<article class="card" onclick="openDetail(\'' + r.id + '\')" tabindex="0" role="button" aria-label="' + esc(r.name) + '">'
+    + '<div class="card-thumb" style="background:' + cm.bg + '">'
+    + imgHtml + countBadge + status
+    + '<button class="card-cam-btn" onclick="event.stopPropagation();openImgModal(\'' + r.id + '\')" title="Behandle bilder">'
+    + ICONS.camera + 'Bilder' + (imgCount > 0 ? ' (' + imgCount + ')' : '')
+    + '</button></div>'
+    + '<div class="card-body">'
+    + '<span class="cat-badge" style="background:' + cm.bg + ';color:' + cm.color + '">' + cm.label + '</span>'
+    + '<div class="card-title">' + esc(r.name) + '</div>'
+    + author
+    + '<div class="card-footer">'
+    + '<div style="display:flex;gap:3px">' + dotHtml(r.health, 7) + '</div>'
+    + counts
+    + '<div class="meta-tag">' + ICONS.clock + esc(r.time) + '</div>'
+    + '</div></div></article>';
+}
+
+function shelfHeader(title, sub) {
+  return '<div class="shelf-header"><span class="shelf-title">' + title + '</span>' + (sub ? '<span class="shelf-sub">' + sub + '</span>' : '') + '</div>';
+}
+function emptyState(title, sub) {
+  return '<div class="empty"><div style="font-size:36px">🍳</div><p style="margin-top:8px;font-weight:600">' + title + '</p>' + (sub ? '<p style="margin-top:4px;color:var(--text3);font-size:13px">' + sub + '</p>' : '') + '</div>';
+}
+
+async function quickAddToTry(id) {
+  try { await setEntryStatus(id, 'to_try'); render(); }
+  catch(e) { alert('Kunne ikke legge til: ' + e.message); }
+}
+
 // ─── Render ────────────────────────────────────────────────────────────────────
 function render() {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = recipes.filter(r => {
+  const list = recipes.filter(r => {
     if (activeCat !== 'alle' && r.cat !== activeCat) return false;
     if (activeHealth !== 'alle' && r.health !== activeHealth) return false;
     if (q && !r.name.toLowerCase().includes(q)) return false;
     return true;
   });
-  const sorted = sortForView(filtered);
   const grid = document.getElementById('recipeGrid');
-  if (!sorted.length) {
-    grid.innerHTML = '<div class="empty"><div style="font-size:36px">🔍</div><p style="margin-top:8px">Ingen oppskrifter funnet</p></div>';
+  let html = '';
+
+  if (activeMode === 'cookbook') {
+    const approved = sortForView(list.filter(r => inMyCookbook(r.id)));
+    const toTry = list.filter(r => inMyToTry(r.id));
+    if (!approved.length && !toTry.length) {
+      html = emptyState('Kokeboken din er tom', 'Gå til «🔍 Oppdag» for å finne oppskrifter å prøve, eller trykk «Ny oppskrift».');
+    } else {
+      if (toTry.length) {
+        html += shelfHeader('🧪 Vil prøve (' + toTry.length + ')', 'Lag dem og gi terning – da flyttes de inn i kokeboken.');
+        html += toTry.map(cardHtml).join('');
+      }
+      html += shelfHeader('📖 I kokeboken (' + approved.length + ')', '');
+      html += approved.length ? approved.map(cardHtml).join('')
+        : '<div class="empty" style="grid-column:1/-1"><p style="color:var(--text3);font-size:13px">Ingen godkjente ennå – lag noe fra «Vil prøve».</p></div>';
+    }
   } else {
-    grid.innerHTML = sorted.map(r => {
-      const cm = CAT_META[r.cat] || CAT_META.vegetar;
-      const heroUrl = getHeroImage(r.id);
-      const imgHtml = heroUrl
-        ? '<img src="' + heroUrl + '" class="recipe-img" alt="' + r.name + '">'
-        : '<span class="emoji-fallback">' + (r.emoji || '🍽️') + '</span>';
-      const imgCount = (recipeImagesCache[r.id] || []).length;
-      const countBadge = imgCount > 1
-        ? '<span class="card-img-count"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' + imgCount + '</span>'
-        : '';
-      return '<article class="card" onclick="openDetail(\'' + r.id + '\')" tabindex="0" role="button" aria-label="' + r.name + '">'
-        + '<div class="card-thumb" style="background:' + cm.bg + '">'
-        + imgHtml
-        + countBadge
-        + '<button class="card-cam-btn" onclick="event.stopPropagation();openImgModal(\'' + r.id + '\')" title="Behandle bilder">'
-        + ICONS.camera + 'Bilder' + (imgCount > 0 ? ' (' + imgCount + ')' : '')
-        + '</button></div>'
-        + '<div class="card-body">'
-        + '<span class="cat-badge" style="background:' + cm.bg + ';color:' + cm.color + '">' + cm.label + '</span>'
-        + '<div class="card-title">' + r.name + '</div>'
-        + '<div class="card-footer">'
-        + '<div style="display:flex;gap:3px">' + dotHtml(r.health, 7) + '</div>'
-        + '<div class="card-counts" title="' + r.view_count + ' visninger · laget ' + r.cooked_count + ' ganger">'
-        + '<span>👁 ' + r.view_count + '</span><span>🍳 ' + r.cooked_count + '</span>'
-        + '</div>'
-        + '<div class="meta-tag">' + ICONS.clock + r.time + '</div>'
-        + '</div></div></article>';
-    }).join('');
+    const sorted = sortForView(list);
+    html = sorted.length ? sorted.map(cardHtml).join('') : emptyState('Ingen oppskrifter funnet', '');
   }
-  const n = recipes.length;
-  const avg = n > 0 ? (recipes.reduce((s, r) => s + r.health, 0) / n).toFixed(1) : '–';
-  const cats = new Set(recipes.map(r => r.cat)).size;
-  const totalViews = recipes.reduce((s, r) => s + (r.view_count || 0), 0);
-  const totalCooked = recipes.reduce((s, r) => s + (r.cooked_count || 0), 0);
-  document.getElementById('statsRow').innerHTML =
-    '<div class="stat"><span class="stat-n">' + n + '</span><span class="stat-l">oppskrifter</span></div>'
-    + '<div class="stat"><span class="stat-n">' + cats + '</span><span class="stat-l">kategorier</span></div>'
-    + '<div class="stat"><span class="stat-n">' + avg + '/5</span><span class="stat-l">snitt sunnhet</span></div>'
-    + '<div class="stat"><span class="stat-n">' + totalViews + '</span><span class="stat-l">visninger</span></div>'
-    + '<div class="stat"><span class="stat-n">' + totalCooked + '</span><span class="stat-l">ganger laget</span></div>'
-    + '<button class="stat stat-btn" onclick="openStats()" title="Se statistikk"><span class="stat-n">📊</span><span class="stat-l">statistikk</span></button>';
+  grid.innerHTML = html;
+  updateStatsRow();
+}
+
+function updateStatsRow() {
+  const row = document.getElementById('statsRow');
+  const approvedN = recipes.filter(r => inMyCookbook(r.id)).length;
+  const toTryN = recipes.filter(r => inMyToTry(r.id)).length;
+  if (activeMode === 'cookbook') {
+    const rated = recipes.filter(r => myEntry(r.id)?.rating);
+    const avgMy = rated.length ? (rated.reduce((s, r) => s + myEntry(r.id).rating, 0) / rated.length).toFixed(1) : '–';
+    const myCooked = recipes.reduce((s, r) => s + (myEntry(r.id)?.cooked_count || 0), 0);
+    row.innerHTML =
+      '<div class="stat"><span class="stat-n">' + approvedN + '</span><span class="stat-l">i kokeboken</span></div>'
+      + '<div class="stat"><span class="stat-n">' + toTryN + '</span><span class="stat-l">vil prøve</span></div>'
+      + '<div class="stat"><span class="stat-n">' + avgMy + '</span><span class="stat-l">din snitt-terning</span></div>'
+      + '<div class="stat"><span class="stat-n">' + myCooked + '</span><span class="stat-l">ganger du har laget</span></div>'
+      + '<button class="stat stat-btn" onclick="openStats()" title="Se statistikk"><span class="stat-n">📊</span><span class="stat-l">statistikk</span></button>';
+  } else {
+    const contributors = new Set(recipes.map(r => r.author_name)).size;
+    const totalCooked = recipes.reduce((s, r) => s + aggFor(r.id).cookedTotal, 0);
+    const ratedCount = recipes.filter(r => aggFor(r.id).ratingCount).length;
+    row.innerHTML =
+      '<div class="stat"><span class="stat-n">' + recipes.length + '</span><span class="stat-l">oppskrifter totalt</span></div>'
+      + '<div class="stat"><span class="stat-n">' + contributors + '</span><span class="stat-l">bidragsytere</span></div>'
+      + '<div class="stat"><span class="stat-n">' + ratedCount + '</span><span class="stat-l">med terning</span></div>'
+      + '<div class="stat"><span class="stat-n">' + totalCooked + '</span><span class="stat-l">ganger laget totalt</span></div>'
+      + '<button class="stat stat-btn" onclick="openStats()" title="Se statistikk"><span class="stat-n">📊</span><span class="stat-l">statistikk</span></button>';
+  }
 }
 
 // ─── Visnings- og laget-telling ────────────────────────────────────────────────
@@ -1408,63 +1592,81 @@ function trackView(r) {
     .then(() => {}, e => console.warn('Visningstelling feilet:', e));
 }
 
+// Registrer at JEG lagde denne: øker min laget-teller og godkjenner
+// oppskriften (flytter den fra «Vil prøve» til kokeboken min).
 async function markCooked(id) {
   const r = recipes.find(x => x.id === id); if (!r) return;
-  r.cooked_count = (r.cooked_count || 0) + 1;
+  const cur = myEntry(id) || {};
+  const newCount = (cur.cooked_count || 0) + 1;
   const btn = document.getElementById('cookedBtn');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '🎉 Registrert! Denne er nå laget ' + r.cooked_count + ' ganger';
+    btn.innerHTML = '🎉 Registrert! Du har laget denne ' + newCount + ' ganger';
   }
   try {
-    await _supa.from('recipes').update({cooked_count: r.cooked_count}).eq('id', id);
+    const {data, error} = await withTimeout(
+      _supa.from('cookbook_entries').upsert(
+        {user_id: currentUser.id, recipe_id: id, status: 'approved',
+         cooked_count: newCount, rating: cur.rating ?? null},
+        {onConflict: 'user_id,recipe_id'}).select().single(),
+      10000);
+    if (error) throw error;
+    upsertLocalEntry(data);
+    // Be om terning hvis den ikke er gitt ennå
+    const rateBox = document.getElementById('ratingSliderWrap');
+    if (rateBox && !cur.rating) rateBox.classList.add('nudge');
   } catch(e) { console.warn('Laget-telling feilet:', e); }
   render();
 }
 
 // ─── Statistikk-modal ──────────────────────────────────────────────────────────
-function statBars(list, val, color) {
-  const max = Math.max(...list.map(val), 1);
+function statBars(list, val, color, fmt, maxOverride) {
+  const max = maxOverride || Math.max(...list.map(val), 1);
+  const show = fmt || (v => v);
   return list.map(r =>
-    '<div class="sbar-row" title="' + r.name.replace(/"/g, '&quot;') + ': ' + val(r) + '">'
+    '<div class="sbar-row" title="' + r.name.replace(/"/g, '&quot;') + ': ' + show(val(r)) + '">'
     + '<span class="sbar-name">' + (r.emoji || '') + ' ' + r.name + '</span>'
     + '<div class="sbar-track"><div class="sbar-fill" style="width:' + Math.round(val(r) / max * 100) + '%;background:' + color + '"></div></div>'
-    + '<span class="sbar-val">' + val(r) + '</span>'
+    + '<span class="sbar-val">' + show(val(r)) + '</span>'
     + '</div>').join('');
 }
+function statTile(n, l) { return '<div class="stat-tile"><div class="tile-n">' + n + '</div><div class="tile-l">' + l + '</div></div>'; }
+function statsEmpty(msg) { return '<p class="stats-empty">' + msg + '</p>'; }
 
 function openStats() {
-  const totV = recipes.reduce((s, r) => s + (r.view_count || 0), 0);
-  const totC = recipes.reduce((s, r) => s + (r.cooked_count || 0), 0);
-  const avgH = recipes.length ? (recipes.reduce((s, r) => s + r.health, 0) / recipes.length).toFixed(1) : '–';
+  const myApproved = recipes.filter(r => inMyCookbook(r.id));
+  const myRated = recipes.filter(r => myEntry(r.id)?.rating).sort((a, b) => myEntry(b.id).rating - myEntry(a.id).rating).slice(0, 10);
+  const myCooked = recipes.filter(r => myEntry(r.id)?.cooked_count).sort((a, b) => myEntry(b.id).cooked_count - myEntry(a.id).cooked_count).slice(0, 10);
+  const famFav = recipes.filter(r => aggFor(r.id).ratingCount).sort((a, b) => avgRating(b.id) - avgRating(a.id)).slice(0, 10);
+  const famCooked = recipes.filter(r => aggFor(r.id).cookedTotal).sort((a, b) => aggFor(b.id).cookedTotal - aggFor(a.id).cookedTotal).slice(0, 10);
   const topV = recipes.slice().sort((a, b) => b.view_count - a.view_count).filter(r => r.view_count > 0).slice(0, 10);
-  const topC = recipes.slice().sort((a, b) => b.cooked_count - a.cooked_count).filter(r => r.cooked_count > 0).slice(0, 10);
-  const catCount = {};
-  recipes.forEach(r => { catCount[r.cat] = (catCount[r.cat] || 0) + 1; });
-  const catList = Object.entries(catCount).sort((a, b) => b[1] - a[1]);
-  const catMax = Math.max(...catList.map(c => c[1]), 1);
+
+  const allRated = recipes.filter(r => aggFor(r.id).ratingCount);
+  const famAvg = allRated.length ? (allRated.reduce((s, r) => s + avgRating(r.id), 0) / allRated.length).toFixed(1) : '–';
+  const totCooked = recipes.reduce((s, r) => s + aggFor(r.id).cookedTotal, 0);
 
   document.getElementById('statsContent').innerHTML =
     '<div class="stat-tiles">'
-    + '<div class="stat-tile"><div class="tile-n">' + totV + '</div><div class="tile-l">👁 visninger totalt</div></div>'
-    + '<div class="stat-tile"><div class="tile-n">' + totC + '</div><div class="tile-l">🍳 ganger laget</div></div>'
-    + '<div class="stat-tile"><div class="tile-n">' + recipes.length + '</div><div class="tile-l">oppskrifter</div></div>'
-    + '<div class="stat-tile"><div class="tile-n">' + avgH + '/5</div><div class="tile-l">snitt sunnhet</div></div>'
+    + statTile(recipes.length, 'oppskrifter totalt')
+    + statTile(myApproved.length, '📖 i din kokebok')
+    + statTile(famAvg, '⭐ familiens snitt')
+    + statTile(totCooked, '🍳 laget totalt')
     + '</div>'
-    + '<div class="section-title">👁 Mest sett</div>'
-    + (topV.length ? statBars(topV, r => r.view_count, 'var(--accent)')
-        : '<p class="stats-empty">Ingen visninger registrert ennå — de telles fra nå av.</p>')
-    + '<div class="section-title" style="margin-top:18px">🍳 Mest laget</div>'
-    + (topC.length ? statBars(topC, r => r.cooked_count, 'var(--amber)')
-        : '<p class="stats-empty">Ingen registrert ennå — trykk «🍳 Vi lagde denne i dag!» inne på en oppskrift når dere har laget den.</p>')
-    + '<div class="section-title" style="margin-top:18px">Kategorier</div>'
-    + catList.map(([k, c]) => {
-        const cm = CAT_META[k] || CAT_META.vegetar;
-        return '<div class="sbar-row" title="' + cm.label + ': ' + c + '">'
-          + '<span class="sbar-name">' + cm.label + '</span>'
-          + '<div class="sbar-track"><div class="sbar-fill" style="width:' + Math.round(c / catMax * 100) + '%;background:' + cm.color + '"></div></div>'
-          + '<span class="sbar-val">' + c + '</span></div>';
-      }).join('');
+    + '<div class="section-title">⭐ Mine favoritter</div>'
+    + (myRated.length ? statBars(myRated, r => myEntry(r.id).rating, 'var(--accent)', v => v, 10)
+        : statsEmpty('Gi terning (1–10) på oppskriftene dine for å bygge din egen toppliste.'))
+    + '<div class="section-title" style="margin-top:18px">🍳 Mest laget av meg</div>'
+    + (myCooked.length ? statBars(myCooked, r => myEntry(r.id).cooked_count, 'var(--amber)')
+        : statsEmpty('Trykk «🍳 Vi lagde denne» når du lager noe.'))
+    + '<div class="section-title" style="margin-top:18px">👨‍👩‍👧‍👦 Familiens favoritter</div>'
+    + (famFav.length ? statBars(famFav, r => avgRating(r.id), 'var(--accent)', v => v.toFixed(1), 10)
+        : statsEmpty('Ingen terninger på tvers av brukere ennå.'))
+    + '<div class="section-title" style="margin-top:18px">🔥 Mest laget totalt</div>'
+    + (famCooked.length ? statBars(famCooked, r => aggFor(r.id).cookedTotal, 'var(--amber)')
+        : statsEmpty('Ingen registrert ennå.'))
+    + '<div class="section-title" style="margin-top:18px">👁 Mest sett</div>'
+    + (topV.length ? statBars(topV, r => r.view_count, 'var(--text3)')
+        : statsEmpty('Ingen visninger registrert ennå.'));
   document.getElementById('statsModal').classList.add('open');
 }
 
@@ -1651,6 +1853,10 @@ function openDetail(id) {
   _detailBaseServings = parseServings(r.yield);
   _detailKcalPerServing = r.kcal ? (parseInt(r.kcal.match(/\d+/)?.[0]) || 0) : 0;
   _detailScaleRatio = 1;
+  const e = myEntry(id);
+  const agg = aggFor(id);
+  const avg = avgRating(id);
+  const isAuthor = r.author_id === currentUser.id;
   const totalIngr = (r.ingr || []).reduce((s, g) => s + (g.items || []).length, 0);
   const ingrBullets = buildIngrHtml(r.ingr, 1);
 
@@ -1681,8 +1887,10 @@ function openDetail(id) {
     + (r.time ? '<div class="info-pill">' + ICONS.clock + r.time + '</div>' : '')
     + (r.yield ? '<div class="info-pill">' + ICONS.users + r.yield + '</div>' : '')
     + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
-    + '<div class="info-pill" title="Visninger">👁 ' + r.view_count + '</div>'
-    + (r.cooked_count > 0 ? '<div class="info-pill" title="Ganger laget">🍳 ' + r.cooked_count + '</div>' : '')
+    + '<div class="info-pill" title="Lagt til av">' + ICONS.users + esc(r.author_name) + '</div>'
+    + (agg.ratingCount ? '<div class="info-pill" title="Familiens snitt-terning">⭐ ' + avg.toFixed(1) + ' (' + agg.ratingCount + ')</div>' : '')
+    + (agg.cookedTotal ? '<div class="info-pill" title="Ganger laget totalt">🍳 ' + agg.cookedTotal + '</div>' : '')
+    + (r.source_url ? '<a class="info-pill source-link" href="' + esc(r.source_url) + '" target="_blank" rel="noopener">🔗 Se original</a>' : '')
     + '</div>'
     + '<div class="section-title ingr-header">'
     + 'Ingredienser' + (totalIngr ? ' (' + totalIngr + ')' : '')
@@ -1700,16 +1908,63 @@ function openDetail(id) {
     + (r.result ? '<div class="section-title">Resultat</div><p class="recipe-result">' + r.result + '</p>' : '')
     + (nutriItems.length ? '<div class="section-title">Næring per porsjon</div><ul class="nutri-list" id="nutriScaled">' + nutriItems.join('') + '</ul>' : '')
     + galleryHtml
-    + '<button class="cooked-btn" id="cookedBtn" onclick="markCooked(\'' + r.id + '\')">🍳 Vi lagde denne i dag!'
-    + (r.cooked_count > 0 ? ' <span class="cooked-badge">· laget ' + r.cooked_count + ' ganger før</span>' : '')
-    + '</button>'
+    + ratingCookedBox(r, e)
     + '<div class="detail-actions">'
-    + '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">Rediger</button>'
+    + (e ? '<button class="detail-action-btn" onclick="removeFromMyBook(\'' + r.id + '\')">Fjern fra min bok</button>' : '')
+    + (isAuthor ? '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">Rediger</button>' : '')
     + '<button class="detail-action-btn" onclick="openImgModal(\'' + r.id + '\')">Bilder</button>'
-    + '<button class="detail-action-btn danger" onclick="deleteRecipe(\'' + r.id + '\')">Slett</button>'
+    + (isAuthor ? '<button class="detail-action-btn danger" onclick="deleteRecipe(\'' + r.id + '\')">Slett</button>' : '')
     + '</div>'
     + '</div>';
   document.getElementById('detailModal').classList.add('open');
+}
+
+// Rating-slider (1–10) + «Vi lagde denne». Å rate eller lage godkjenner
+// oppskriften og flytter den fra «Vil prøve» til kokeboken.
+function ratingCookedBox(r, e) {
+  if (!e) {
+    return '<button class="cooked-btn" onclick="detailAddToTry(\'' + r.id + '\')">➕ Legg til i min kokebok</button>'
+      + '<p class="scale-hint" style="text-align:center">Ligger i den delte samlingen – legg den til for å prøve og gi terning.</p>';
+  }
+  const rv = e.rating || 0;
+  const myCooked = e.cooked_count || 0;
+  return '<div class="rating-box" id="ratingSliderWrap">'
+    + '<div class="rating-head">Hvor god var den? <span class="rating-val" id="myRatingVal">' + (rv || '–') + '</span><span class="rating-max"> / 10</span></div>'
+    + '<input type="range" class="rating-slider" min="1" max="10" step="1" value="' + (rv || 5) + '" '
+    +   'oninput="document.getElementById(\'myRatingVal\').textContent=this.value" '
+    +   'onchange="saveDetailRating(\'' + r.id + '\', this.value)">'
+    + '<div class="rating-scale"><span>1</span><span>5</span><span>10</span></div>'
+    + '</div>'
+    + '<button class="cooked-btn" id="cookedBtn" onclick="markCooked(\'' + r.id + '\')">🍳 Vi lagde denne i dag!'
+    +   (myCooked > 0 ? ' <span class="cooked-badge">· du har laget den ' + myCooked + ' ganger</span>' : '')
+    + '</button>'
+    + (e.status === 'to_try'
+        ? '<p class="scale-hint" style="text-align:center">🧪 Uprøvd – gi terning eller trykk «Vi lagde denne» for å flytte den til kokeboken.</p>'
+        : '');
+}
+
+async function detailAddToTry(id) {
+  try { await setEntryStatus(id, 'to_try'); openDetail(id); render(); }
+  catch(e) { alert('Kunne ikke legge til: ' + e.message); }
+}
+
+async function saveDetailRating(id, val) {
+  try {
+    await setMyRating(id, parseInt(val));
+    const wrap = document.getElementById('ratingSliderWrap');
+    if (wrap) wrap.classList.remove('nudge');
+    render(); // oppdater kort/hyller bak modalen (kan ha graduert til kokeboken)
+  } catch(e) { alert('Kunne ikke lagre terning: ' + e.message); }
+}
+
+async function removeFromMyBook(id) {
+  const r = recipes.find(x => x.id === id);
+  if (!confirm('Fjerne "' + (r?.name || '') + '" fra din kokebok?\n\nOppskriften finnes fortsatt i den delte samlingen.')) return;
+  try {
+    await removeEntry(id);
+    document.getElementById('detailModal').classList.remove('open');
+    render();
+  } catch(e) { alert('Kunne ikke fjerne: ' + e.message); }
 }
 
 // ─── Image Manager Modal ───────────────────────────────────────────────────────
@@ -1734,6 +1989,10 @@ function renderImgManager() {
   const grid = document.getElementById('imgManagerGrid');
 
   document.getElementById('imgModalTitle').textContent = '📷 ' + (recipe ? recipe.name : 'Bilder') + ' – ' + imgs.length + '/' + CONFIG.MAX_IMAGES_PER_RECIPE;
+
+  // «Nytt bilde fra kilden» vises kun når oppskriften har en kilde-URL
+  const srcBtn = document.getElementById('sourceImgBtn');
+  if (srcBtn) srcBtn.style.display = (recipe && recipe.source_url) ? 'block' : 'none';
 
   if (!imgs.length) {
     grid.innerHTML = '';
@@ -1996,6 +2255,57 @@ async function pickSuggestedImage(i) {
   }
 }
 
+// ─── Nytt bilde fra kilden (original/video) ────────────────────────────────────
+// Henter et ferskt bilde fra oppskriftens source_url. For Instagram-videoer
+// gir dette et nytt stillbilde av retten; for Facebook/web leses og:image på nytt.
+async function resolveSourceImage(url, onStatus) {
+  const resp = await withTimeout(
+    fetch('/.netlify/functions/fetch-url', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url})
+    }), 15000, 'Kilden svarte ikke');
+  let d = await resp.json();
+  if (d.error) throw new Error(d.error);
+  if (d.pending) { // Instagram via Apify — poll til ferdig
+    const deadline = Date.now() + 150000, t0 = Date.now();
+    while (d.pending) {
+      if (Date.now() > deadline) throw new Error('Hentingen tok for lang tid');
+      await new Promise(r => setTimeout(r, 3000));
+      if (onStatus) onStatus('Henter fra Instagram… (' + Math.round((Date.now() - t0) / 1000) + ' sek)');
+      const pr = await fetch('/.netlify/functions/apify-status', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({runId: d.runId, datasetId: d.datasetId})
+      });
+      const p = await pr.json();
+      if (p.error) throw new Error(p.error);
+      if (p.imageUrl || p.text) { d = p; break; }
+    }
+  }
+  return d.imageUrl || null;
+}
+
+async function newImageFromSource() {
+  const recipe = recipes.find(r => r.id === _imgRecipeId);
+  if (!recipe || !recipe.source_url) return;
+  const status = document.getElementById('imgAnalyzeStatus');
+  const btn = document.getElementById('sourceImgBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="img-spinner"></span>Henter fra kilden…'; }
+  status.textContent = 'Henter bilde fra originalposten…'; status.style.color = 'var(--text2)';
+  try {
+    const imageUrl = await resolveSourceImage(recipe.source_url, s => { status.textContent = s; });
+    if (!imageUrl) throw new Error('Fant ikke noe bilde i kilden');
+    const dataUrl = await fetchImageAsDataUrl(imageUrl);
+    const compressed = await compressImage(dataUrl, 1200, 0.85);
+    const imgs = recipeImagesCache[_imgRecipeId] || [];
+    await uploadNewImage(_imgRecipeId, compressed, 'Fra kilden', imgs.length === 0);
+    status.textContent = '✓ Bilde hentet fra kilden!'; status.style.color = 'var(--accent)';
+    renderImgManager(); render();
+  } catch(e) {
+    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '🔗 Nytt bilde fra kilden (original/video)'; }
+  }
+}
+
 // ─── Lightbox ──────────────────────────────────────────────────────────────────
 function openLightbox(url) {
   document.getElementById('imgLightboxImg').src = url;
@@ -2018,7 +2328,46 @@ document.addEventListener('keydown', e => {
 });
 
 const _style = document.createElement('style');
-_style.textContent = '@keyframes spin{to{transform:rotate(360deg)}} .hide-mobile{}@media(max-width:540px){.hide-mobile{display:none}}';
+_style.textContent = `
+@keyframes spin{to{transform:rotate(360deg)}}
+.hide-mobile{}@media(max-width:540px){.hide-mobile{display:none}}
+
+/* Modus-toggle: Min kokebok / Oppdag */
+.mode-bar{display:flex;gap:8px;max-width:1100px;margin:0 auto;padding:14px 24px 0}
+.mode-btn{flex:1;max-width:220px;padding:11px 14px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);font:600 14px 'DM Sans',sans-serif;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:6px}
+.mode-btn:hover{border-color:var(--accent);color:var(--accent)}
+.mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Import: skille mellom lim-inn og bilde */
+.import-or{text-align:center;font-size:12px;color:var(--text3);margin:14px 0 10px}
+
+/* Statusmerke på kort (oppe til venstre på thumb) */
+.card-status{position:absolute;top:8px;left:8px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:0;z-index:2;font-family:'DM Sans',sans-serif}
+.card-status.in{background:var(--accent);color:#fff}
+.card-status.try{background:var(--amber);color:#fff}
+.card-status.add{border:none;background:rgba(0,0,0,.62);color:#fff;cursor:pointer;transition:background .12s}
+.card-status.add:hover{background:var(--accent)}
+.card-author{font-size:11px;color:var(--text3);margin:2px 0 6px}
+.card-counts .dim{color:var(--text3);opacity:.6}
+
+/* Hyller i Min kokebok */
+.shelf-header{grid-column:1/-1;padding:16px 2px 4px;display:flex;flex-direction:column;gap:1px;background:var(--bg)}
+.shelf-title{font:600 15px 'Lora',serif;color:var(--text)}
+.shelf-sub{font-size:12px;color:var(--text3)}
+
+/* Rating-slider (1–10) */
+.rating-box{margin:16px 0 10px;padding:16px;background:var(--surface2);border:1px solid var(--border);transition:box-shadow .2s}
+.rating-box.nudge{box-shadow:0 0 0 2px var(--accent)}
+.rating-head{font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px}
+.rating-val{font:700 22px 'Lora',serif;color:var(--accent)}
+.rating-max{font-size:13px;color:var(--text3)}
+.rating-slider{width:100%;accent-color:var(--accent);height:26px;cursor:pointer}
+.rating-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Kildelenke som info-pill */
+a.info-pill.source-link{text-decoration:none;color:var(--accent);border-color:var(--accent)}
+a.info-pill.source-link:hover{background:var(--accent-bg)}
+`;
 document.head.appendChild(_style);
 
 async function init() {
