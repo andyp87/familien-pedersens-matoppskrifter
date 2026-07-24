@@ -42,17 +42,27 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .add-btn-header svg{width:14px;height:14px}
 
 /* HERO */
-.hero{background:var(--surface);border-bottom:1px solid var(--border);padding:28px 24px 22px}
+.hero{background:var(--surface);border-bottom:1px solid var(--border);padding:22px 24px 16px}
 .hero-inner{max-width:1100px;margin:0 auto}
-.hero h1{font-family:'Lora',serif;font-size:clamp(24px,3.5vw,36px);font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.2}
-.hero p{font-size:14px;color:var(--text2);margin-bottom:18px}
-.stats-row{display:flex;gap:24px;flex-wrap:wrap}
+.hero-greeting{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.hero h1{font-family:'Lora',serif;font-size:clamp(22px,3.5vw,36px);font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.2}
+.hero p{font-size:14px;color:var(--text2);margin-bottom:12px}
+/* Tallene er ETT stille varselsignal, ikke et dashbord — hele statistikken
+   bor i statistikkmodalen, ett trykk unna. */
+.stats-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hero-meta{font-size:13px;color:var(--text2)}
+.hero-meta b{font-family:'Lora',serif;color:var(--accent);font-weight:600;font-size:15px}
+.hero-stats-btn{font:500 12px 'DM Sans',sans-serif;background:none;border:1px solid var(--border2);color:var(--text2);padding:3px 10px;cursor:pointer;transition:all .12s}
+.hero-stats-btn:hover{border-color:var(--accent);color:var(--accent)}
 .stat{display:flex;align-items:baseline;gap:5px}
 .stat-n{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--accent)}
 .stat-l{font-size:12px;color:var(--text3)}
 
 /* FILTERS */
-.filters-bar{max-width:1100px;margin:18px auto 0;padding:0 24px}
+.filters-bar{max-width:1100px;margin:14px auto 0;padding:0 24px}
+.filter-toggle{display:none;align-items:center;gap:7px;font:500 13px 'DM Sans',sans-serif;background:var(--surface);border:1px solid var(--border2);color:var(--text2);padding:9px 14px;cursor:pointer;margin-bottom:8px;transition:all .12s}
+.filter-toggle.on{border-color:var(--accent);color:var(--accent)}
+#filterCount{color:var(--accent);font-weight:600}
 .filter-group{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
 .filter-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-right:4px;white-space:nowrap}
 .chip{font-size:12px;padding:4px 11px;border-radius:0;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
@@ -364,6 +374,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 <div class="hero">
   <div class="hero-inner">
+    <div class="hero-greeting" id="heroGreeting"></div>
     <h1>Familiens middager</h1>
     <p>Alle oppskrifter samlet på ett sted</p>
     <div class="stats-row" id="statsRow"></div>
@@ -380,17 +391,22 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     <span>⚠️ Legg inn API-nøkkel for å importere oppskrifter automatisk.</span>
     <button onclick="openSettings()">Sett opp nå</button>
   </div>
-  <div class="filter-group">
-    <span class="filter-label">Kategori</span>
-    <div id="catFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-  </div>
-  <div class="filter-group">
-    <span class="filter-label">Sunnhet</span>
-    <div id="healthFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-  </div>
-  <div class="filter-group">
-    <span class="filter-label">Sorter</span>
-    <div id="sortFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  <!-- Sortering står alltid synlig: å rangere «best likt / mest laget» er
+       hovedpoenget i Oppdag. Kategori/sunnhet ligger bak Filtrer-knappen. -->
+  <div class="sort-row" id="sortFilters"></div>
+  <button class="filter-toggle" id="filterToggle" onclick="toggleFilters()" aria-expanded="false" aria-controls="filterPanel">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+    Filtrer <span id="filterCount"></span>
+  </button>
+  <div id="filterPanel">
+    <div class="filter-group">
+      <span class="filter-label">Kategori</span>
+      <div id="catFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Sunnhet</span>
+      <div id="healthFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
   </div>
 </div>
 
@@ -486,6 +502,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="form-row"><label>Ingredienser (kommaseparert)</label><input type="text" id="f-ingr" placeholder="pasta, kjøttdeig, tomat, løk"></div>
       <div class="form-row"><label>Fremgangsmåte (ett steg per linje)</label><textarea id="f-steps" placeholder="Sett ovnen på 200°C.&#10;Stek løk og hvitløk..."></textarea></div>
       <div class="form-row"><label>Porsjoner</label><input type="text" id="f-yield" placeholder="4 porsjoner"></div>
+      <div class="form-row"><label>Kilde (lenke til original)</label><input type="text" id="f-source" placeholder="https://www.instagram.com/p/… – valgfritt"></div>
       <div class="form-btns">
         <button class="btn-cancel" onclick="closeAddModal()">Avbryt</button>
         <button class="btn-save" id="manualSaveBtn" onclick="saveManualRecipe()">Lagre oppskrift</button>
@@ -699,6 +716,7 @@ async function initAuth() {
 
 async function onLogin() {
   showApp();
+  setGreeting();
   await loadRecipesFromDB();
   checkKeyBanner();
   buildFilters();
@@ -1137,7 +1155,7 @@ function openAddModal() {
   document.querySelectorAll('.add-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
   document.getElementById('edit-recipe-id').value = '';
   document.getElementById('manualSaveBtn').textContent = 'Lagre oppskrift';
-  ['f-name','f-emoji','f-time','f-kcal','f-ingr','f-steps','f-yield'].forEach(id => document.getElementById(id).value = '');
+  ['f-name','f-emoji','f-time','f-kcal','f-ingr','f-steps','f-yield','f-source'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-health').value = 3;
   document.getElementById('h-out').textContent = 'Balansert';
   document.getElementById('addModal').classList.add('open');
@@ -1165,6 +1183,7 @@ function openEditModal(recipeId) {
   document.getElementById('f-ingr').value = ingrs;
   document.getElementById('f-steps').value = (r.steps || []).join('\n');
   document.getElementById('f-yield').value = r.yield || '';
+  document.getElementById('f-source').value = r.source_url || '';
   document.getElementById('manualSaveBtn').textContent = 'Lagre endringer';
   document.getElementById('addModal').classList.add('open');
 }
@@ -1440,6 +1459,7 @@ async function saveManualRecipe() {
     ingr: [{g:'',items:ingr}],
     steps: steps.length ? steps : ['Se beskrivelse.'],
     yield: document.getElementById('f-yield').value || '',
+    source_url: document.getElementById('f-source').value.trim() || null,
     protein: ''
   };
 
@@ -1508,6 +1528,12 @@ function buildFilters() {
       : [['popular','⭐ Mine favoritter'],['cooked','🍳 Mest laget av meg'],['newest','✨ Nyeste']];
     sf.innerHTML = SORTS.map(([k, label]) =>
       '<button class="chip' + (activeSort === k ? ' active' : '') + '" onclick="setSort(\'' + k + '\')">' + label + '</button>').join('');
+  }
+  // Antall aktive filtre vises på «Filtrer»-knappen (mobil)
+  const fc = document.getElementById('filterCount');
+  if (fc) {
+    const n = (activeCat !== 'alle' ? 1 : 0) + (activeHealth !== 'alle' ? 1 : 0);
+    fc.textContent = n ? '(' + n + ')' : '';
   }
 }
 function setCat(v) { activeCat = v; buildFilters(); render(); }
@@ -1640,31 +1666,48 @@ function render() {
   updateStatsRow();
 }
 
+// Én stille linje i stedet for et dashbord — detaljene bor i statistikkmodalen.
 function updateStatsRow() {
   const row = document.getElementById('statsRow');
-  const approvedN = recipes.filter(r => inMyCookbook(r.id)).length;
-  const toTryN = recipes.filter(r => inMyToTry(r.id)).length;
+  const parts = [];
   if (activeMode === 'cookbook') {
+    const approvedN = recipes.filter(r => inMyCookbook(r.id)).length;
+    const toTryN = recipes.filter(r => inMyToTry(r.id)).length;
     const rated = recipes.filter(r => myEntry(r.id)?.rating);
-    const avgMy = rated.length ? (rated.reduce((s, r) => s + myEntry(r.id).rating, 0) / rated.length).toFixed(1) : '–';
-    const myCooked = recipes.reduce((s, r) => s + (myEntry(r.id)?.cooked_count || 0), 0);
-    row.innerHTML =
-      '<div class="stat"><span class="stat-n">' + approvedN + '</span><span class="stat-l">i kokeboken</span></div>'
-      + '<div class="stat"><span class="stat-n">' + toTryN + '</span><span class="stat-l">vil prøve</span></div>'
-      + '<div class="stat"><span class="stat-n">' + avgMy + '</span><span class="stat-l">din snitt-terning</span></div>'
-      + '<div class="stat"><span class="stat-n">' + myCooked + '</span><span class="stat-l">ganger du har laget</span></div>'
-      + '<button class="stat stat-btn" onclick="openStats()" title="Se statistikk"><span class="stat-n">📊</span><span class="stat-l">statistikk</span></button>';
+    parts.push('<b>' + approvedN + '</b> i kokeboken');
+    if (toTryN) parts.push('<b>' + toTryN + '</b> vil prøve');
+    if (rated.length) {
+      const avgMy = (rated.reduce((s, r) => s + myEntry(r.id).rating, 0) / rated.length).toFixed(1);
+      parts.push('snitt <b>' + avgMy + '</b>');
+    }
   } else {
     const contributors = new Set(recipes.map(r => r.author_name)).size;
     const totalCooked = recipes.reduce((s, r) => s + aggFor(r.id).cookedTotal, 0);
-    const ratedCount = recipes.filter(r => aggFor(r.id).ratingCount).length;
-    row.innerHTML =
-      '<div class="stat"><span class="stat-n">' + recipes.length + '</span><span class="stat-l">oppskrifter totalt</span></div>'
-      + '<div class="stat"><span class="stat-n">' + contributors + '</span><span class="stat-l">bidragsytere</span></div>'
-      + '<div class="stat"><span class="stat-n">' + ratedCount + '</span><span class="stat-l">med terning</span></div>'
-      + '<div class="stat"><span class="stat-n">' + totalCooked + '</span><span class="stat-l">ganger laget totalt</span></div>'
-      + '<button class="stat stat-btn" onclick="openStats()" title="Se statistikk"><span class="stat-n">📊</span><span class="stat-l">statistikk</span></button>';
+    parts.push('<b>' + recipes.length + '</b> oppskrifter');
+    parts.push('<b>' + contributors + '</b> bidragsytere');
+    if (totalCooked) parts.push('<b>' + totalCooked + '</b> ganger laget');
   }
+  row.innerHTML = '<span class="hero-meta">' + parts.join(' · ') + '</span>'
+    + '<button class="hero-stats-btn" onclick="openStats()">📊 Statistikk</button>';
+}
+
+// Tidsriktig hilsen — appen skal føles som en velkomst, ikke et regneark.
+function setGreeting() {
+  const el = document.getElementById('heroGreeting');
+  if (!el) return;
+  const h = new Date().getHours();
+  const hilsen = h < 10 ? 'God morgen' : h < 16 ? 'God dag' : h < 22 ? 'God kveld' : 'God natt';
+  let navn = (currentUser?.email || '').split('@')[0].split('.')[0];
+  navn = navn ? navn.charAt(0).toUpperCase() + navn.slice(1) : '';
+  el.textContent = navn ? hilsen + ', ' + navn : hilsen;
+}
+
+function toggleFilters() {
+  const p = document.getElementById('filterPanel');
+  const b = document.getElementById('filterToggle');
+  const open = p.classList.toggle('open');
+  b.classList.toggle('on', open);
+  b.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
 // ─── Visnings- og laget-telling ────────────────────────────────────────────────
@@ -2017,9 +2060,12 @@ function ratingCookedBox(r, e) {
   return '<div class="rating-box" id="ratingSliderWrap">'
     + '<div class="rating-head">Hvor god var den? <span class="rating-val" id="myRatingVal">' + (rv || '–') + '</span><span class="rating-max"> / 10</span></div>'
     + '<input type="range" class="rating-slider" min="1" max="10" step="1" value="' + (rv || 5) + '" '
-    +   'oninput="document.getElementById(\'myRatingVal\').textContent=this.value" '
+    +   'list="ratingTicks" oninput="onRatingInput(this.value)" '
     +   'onchange="saveDetailRating(\'' + r.id + '\', this.value)">'
-    + '<div class="rating-scale"><span>1</span><span>5</span><span>10</span></div>'
+    + '<datalist id="ratingTicks">' + Array.from({length: 10}, (_, i) => '<option value="' + (i + 1) + '"></option>').join('') + '</datalist>'
+    + '<div class="rating-ticks">'
+    +   Array.from({length: 10}, (_, i) => '<span class="tick' + (rv === i + 1 ? ' on' : '') + '">' + (i + 1) + '</span>').join('')
+    + '</div>'
     + '</div>'
     + '<button class="cooked-btn" id="cookedBtn" onclick="markCooked(\'' + r.id + '\')">🍳 Vi lagde denne i dag!'
     +   (myCooked > 0 ? ' <span class="cooked-badge">· du har laget den ' + myCooked + ' ganger</span>' : '')
@@ -2027,6 +2073,13 @@ function ratingCookedBox(r, e) {
     + (e.status === 'to_try'
         ? '<p class="scale-hint" style="text-align:center">🧪 Uprøvd – gi terning eller trykk «Vi lagde denne» for å flytte den til kokeboken.</p>'
         : '');
+}
+
+// Oppdater tallet og marker hvilket trinn slideren står på
+function onRatingInput(v) {
+  const el = document.getElementById('myRatingVal');
+  if (el) el.textContent = v;
+  document.querySelectorAll('#ratingSliderWrap .tick').forEach((t, i) => t.classList.toggle('on', i + 1 === +v));
 }
 
 async function detailAddToTry(id) {
@@ -2453,6 +2506,42 @@ _style.textContent = `
 /* Kildelenke som info-pill */
 a.info-pill.source-link{text-decoration:none;color:var(--accent);border-color:var(--accent)}
 a.info-pill.source-link:hover{background:var(--accent-bg)}
+
+/* Sorteringsrad — alltid synlig, skyves sidelengs på smale skjermer */
+.sort-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+
+/* Terning 1–10 med tydelig stopp på hvert trinn */
+.rating-ticks{display:flex;margin-top:2px}
+.rating-ticks .tick{flex:1;text-align:center;font-size:10px;color:var(--text3);position:relative;padding-top:7px}
+.rating-ticks .tick::before{content:'';position:absolute;top:0;left:50%;width:1px;height:4px;background:var(--border2);transform:translateX(-50%)}
+.rating-ticks .tick.on{color:var(--accent);font-weight:700}
+.rating-ticks .tick.on::before{background:var(--accent);height:7px}
+
+/* Ingenting skal stikke utenfor skjermkanten — knapper må alltid være trykkbare */
+img,video{max-width:100%}
+.detail-actions{flex-wrap:wrap}
+.detail-action-btn{flex:1 1 auto;min-width:0}
+.modal-info{flex-wrap:wrap}
+
+@media(max-width:700px){
+  /* Maten først: filtrene ligger bak én knapp i stedet for seks rader chips */
+  .filter-toggle{display:inline-flex}
+  #filterPanel{display:none}
+  #filterPanel.open{display:block;padding-top:2px}
+  .sort-row{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+  .sort-row::-webkit-scrollbar{display:none}
+  .sort-row .chip{white-space:nowrap;flex:0 0 auto}
+  .hero{padding:18px 18px 14px}
+  .mode-bar{padding:12px 18px 0}
+  .filters-bar{padding:0 18px;margin-top:12px}
+  .main{margin:14px auto 60px;padding:0 18px}
+  .shelf-header{padding-top:12px}
+}
+@media(max-width:430px){
+  .mode-btn{font-size:13px;padding:10px 6px;gap:4px}
+  .hero-meta{font-size:12px}
+  .hero h1{font-size:21px}
+}
 `;
 document.head.appendChild(_style);
 
