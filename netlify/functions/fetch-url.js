@@ -1,3 +1,18 @@
+// SSRF-vern: blokker interne/private adresser (cloud-metadata, localhost osv.)
+function isBlockedHost(urlStr) {
+  try {
+    const h = new URL(urlStr).hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal') || h.endsWith('.localhost')) return true;
+    const m = h.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+    if (m) {
+      const a = +m[1], b = +m[2];
+      if (a === 0 || a === 127 || a === 10 || a === 169 && b === 254 || a === 192 && b === 168 || a === 172 && b >= 16 && b <= 31) return true;
+    }
+    if (h === '::1' || h.startsWith('fd') || h.startsWith('fc') || h.startsWith('fe80')) return true;
+    return false;
+  } catch (e) { return true; }
+}
+
 function decodeEntities(s) {
   return s
     .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
@@ -18,6 +33,9 @@ exports.handler = async function(event) {
   try { url = JSON.parse(event.body || '{}').url; } catch(e) {}
   if (!url || !/^https?:\/\//i.test(url)) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Ugyldig URL' }) };
+  }
+  if (isBlockedHost(url)) {
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'URL ikke tillatt' }) };
   }
 
   const isInstagram = /instagram\.com/i.test(url);

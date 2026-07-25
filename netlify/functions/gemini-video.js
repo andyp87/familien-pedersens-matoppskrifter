@@ -19,6 +19,20 @@ function json(body, status = 200) {
   };
 }
 
+function isBlockedHost(urlStr) {
+  try {
+    const h = new URL(urlStr).hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal') || h.endsWith('.localhost')) return true;
+    const m = h.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+    if (m) {
+      const a = +m[1], b = +m[2];
+      if (a === 0 || a === 127 || a === 10 || a === 169 && b === 254 || a === 192 && b === 168 || a === 172 && b >= 16 && b <= 31) return true;
+    }
+    if (h === '::1' || h.startsWith('fd') || h.startsWith('fc') || h.startsWith('fe80')) return true;
+    return false;
+  } catch (e) { return true; }
+}
+
 exports.handler = async function(event) {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' }, body: '' };
@@ -37,6 +51,7 @@ exports.handler = async function(event) {
   if (!videoUrl || !/^https?:\/\//i.test(videoUrl)) {
     return json({ error: 'Ugyldig videoUrl' });
   }
+  if (isBlockedHost(videoUrl)) return json({ error: 'URL ikke tillatt' });
 
   try {
     // 1) Hent videoen (funksjonen henter selv – går ikke gjennom Netlifys 6 MB-tak)

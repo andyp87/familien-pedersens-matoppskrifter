@@ -1,0 +1,17 @@
+# Midlertidig: Hindre Google-indeksering mens ny nettside bygges
+# FJERN disse linjene når ny nettside er klar!
+<IfModule mod_headers.c>
+Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>
+
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^robots\.txt$ - [L]
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress

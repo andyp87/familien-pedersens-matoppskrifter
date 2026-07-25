@@ -14,6 +14,7 @@ exports.handler = async function(event) {
   if (!url || !/^https?:\/\//i.test(url)) {
     return json({ error: 'Ugyldig URL' });
   }
+  if (isBlockedHost(url)) return json({ error: 'URL ikke tillatt' });
 
   try {
     const resp = await fetch(url, {
@@ -44,4 +45,21 @@ function json(body) {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     body: JSON.stringify(body)
   };
+}
+
+// SSRF-vern: blokker interne/private adresser så serveren ikke kan lures til
+// å hente cloud-metadata eller interne tjenester. (Merknad: dekker ikke
+// redirect-baserte omdirigeringer til private verter — se HANDOVER.)
+function isBlockedHost(urlStr) {
+  try {
+    const h = new URL(urlStr).hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal') || h.endsWith('.localhost')) return true;
+    const m = h.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+    if (m) {
+      const a = +m[1], b = +m[2];
+      if (a === 0 || a === 127 || a === 10 || a === 169 && b === 254 || a === 192 && b === 168 || a === 172 && b >= 16 && b <= 31) return true;
+    }
+    if (h === '::1' || h.startsWith('fd') || h.startsWith('fc') || h.startsWith('fe80')) return true;
+    return false;
+  } catch (e) { return true; }
 }

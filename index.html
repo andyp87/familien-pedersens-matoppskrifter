@@ -1421,8 +1421,8 @@ function showAiPreview(r) {
   document.getElementById('previewTitle').textContent = r.emoji + ' ' + r.name;
   document.getElementById('previewMeta').innerHTML =
     '<span class="preview-pill" style="background:' + cm.bg + ';color:' + cm.color + '">' + cm.label + '</span>' +
-    (r.time ? '<span class="preview-pill">' + r.time + '</span>' : '') +
-    (r.kcal ? '<span class="preview-pill">' + r.kcal + '</span>' : '') +
+    (r.time ? '<span class="preview-pill">' + esc(r.time) + '</span>' : '') +
+    (r.kcal ? '<span class="preview-pill">' + esc(r.kcal) + '</span>' : '') +
     '<span class="preview-pill">' + (HEALTH_LABEL[r.health] || 'Balansert') + '</span>';
   const allIngr = r.ingr.flatMap(g => g.items).slice(0, 6).join(', ') + (r.ingr.flatMap(g => g.items).length > 6 ? '...' : '');
   document.getElementById('previewIngr').textContent = 'Ingredienser: ' + allIngr;
@@ -1571,9 +1571,11 @@ function buildFilters() {
     if (cuisines.length) {
       cg.style.display = 'flex';
       const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+      // onclick-verdi: JS-escape (\ og ') FØR HTML-escape, så den er trygg i både
+      // attributt- og JS-streng-kontekst. Etiketten HTML-escapes med esc().
       document.getElementById('cuisineFilters').innerHTML =
         '<button class="chip' + (activeCuisine === 'alle' ? ' active' : '') + '" onclick="setCuisine(\'alle\')">Alle</button>'
-        + cuisines.map(c => '<button class="chip' + (activeCuisine === c ? ' active' : '') + '" onclick="setCuisine(\'' + c.replace(/'/g, "\\'") + '\')">' + cap(c) + '</button>').join('');
+        + cuisines.map(c => '<button class="chip' + (activeCuisine === c ? ' active' : '') + '" onclick="setCuisine(\'' + jsStr(c) + '\')">' + esc(cap(c)) + '</button>').join('');
     } else {
       cg.style.display = 'none';
     }
@@ -1630,14 +1632,16 @@ function dotHtml(health, size) {
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Trygg verdi inne i onclick="fn('…')": JS-escape (\ og ') FØR HTML-escape.
+function jsStr(s) { return esc(String(s == null ? '' : s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")); }
 
 // ─── Kort ──────────────────────────────────────────────────────────────────────
 function cardHtml(r) {
   const cm = CAT_META[r.cat] || CAT_META.vegetar;
   const heroUrl = getHeroImage(r.id);
   const imgHtml = heroUrl
-    ? '<img src="' + heroUrl + '" class="recipe-img" alt="' + esc(r.name) + '">'
-    : '<span class="emoji-fallback">' + (r.emoji || '🍽️') + '</span>';
+    ? '<img src="' + esc(heroUrl) + '" class="recipe-img" alt="' + esc(r.name) + '">'
+    : '<span class="emoji-fallback">' + esc(r.emoji || '🍽️') + '</span>';
   const imgCount = (recipeImagesCache[r.id] || []).length;
   const countBadge = imgCount > 1
     ? '<span class="card-img-count"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' + imgCount + '</span>'
@@ -1815,8 +1819,8 @@ function statBars(list, val, color, fmt, maxOverride) {
   const max = maxOverride || Math.max(...list.map(val), 1);
   const show = fmt || (v => v);
   return list.map(r =>
-    '<div class="sbar-row" title="' + r.name.replace(/"/g, '&quot;') + ': ' + show(val(r)) + '">'
-    + '<span class="sbar-name">' + (r.emoji || '') + ' ' + r.name + '</span>'
+    '<div class="sbar-row" title="' + esc(r.name) + ': ' + show(val(r)) + '">'
+    + '<span class="sbar-name">' + esc(r.emoji || '') + ' ' + esc(r.name) + '</span>'
     + '<div class="sbar-track"><div class="sbar-fill" style="width:' + Math.round(val(r) / max * 100) + '%;background:' + color + '"></div></div>'
     + '<span class="sbar-val">' + show(val(r)) + '</span>'
     + '</div>').join('');
@@ -1937,13 +1941,13 @@ function formatWholeItem(n) {
 function buildIngrHtml(ingr, ratio) {
   let idx = 0;
   return (ingr || []).map(g =>
-    (ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + g.g + '</div>' : '')
+    (ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + esc(g.g) + '</div>' : '')
     + '<ul class="ingr-list">' + (g.items||[]).map(i => {
         const my = idx++;
         const scalable = /(?<![\d/.,])(\d+(?:[.,]\d+)?)\s*(kg|g|dl|ml|liter|l|stk)\b/i.test(i);
         return '<li' + (scalable
           ? ' class="ingr-scalable" data-idx="' + my + '" onclick="openIngrScale(' + my + ')" title="Trykk for å skalere hele oppskriften ut fra denne mengden"'
-          : '') + '>' + scaleIngredientText(i, ratio) + '</li>';
+          : '') + '>' + esc(scaleIngredientText(i, ratio)) + '</li>';
       }).join('') + '</ul>'
   ).join('');
 }
@@ -2016,13 +2020,13 @@ function openDetail(id) {
   const heroUrl = getHeroImage(id);
 
   const ingrHtml = (r.ingr || []).map(g =>
-    (r.ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + g.g + '</div>' : '')
-    + '<div class="ingr-tags">' + (g.items || []).map(i => '<span class="ingr-tag">' + i + '</span>').join('') + '</div>'
+    (r.ingr.length > 1 && g.g ? '<div class="ingr-group-name">' + esc(g.g) + '</div>' : '')
+    + '<div class="ingr-tags">' + (g.items || []).map(i => '<span class="ingr-tag">' + esc(i) + '</span>').join('') + '</div>'
   ).join('');
 
   const heroContent = heroUrl
-    ? '<img src="' + heroUrl + '" class="hero-img" alt="' + r.name + '">'
-    : '<span class="emoji-over">' + (r.emoji || '🍽️') + '</span>';
+    ? '<img src="' + esc(heroUrl) + '" class="hero-img" alt="' + esc(r.name) + '">'
+    : '<span class="emoji-over">' + esc(r.emoji || '🍽️') + '</span>';
 
   // Gallery strip (shown when >1 image)
   let galleryHtml = '';
@@ -2031,9 +2035,9 @@ function openDetail(id) {
       + '<div class="section-title">Alle bilder (' + imgs.length + ')</div>'
       + '<div class="gallery-strip">'
       + imgs.map(img =>
-          '<div class="gallery-thumb' + (img.is_hero ? ' hero-img-thumb' : '') + '" onclick="openLightbox(\'' + img.url.replace(/'/g, "\\'") + '\')" title="' + (img.label || '') + '">'
-          + '<img src="' + img.url + '" alt="' + (img.label || '') + '">'
-          + (img.label ? '<span class="img-label-tip">' + img.label + '</span>' : '')
+          '<div class="gallery-thumb' + (img.is_hero ? ' hero-img-thumb' : '') + '" onclick="openLightbox(\'' + jsStr(img.url) + '\')" title="' + esc(img.label || '') + '">'
+          + '<img src="' + esc(img.url) + '" alt="' + esc(img.label || '') + '">'
+          + (img.label ? '<span class="img-label-tip">' + esc(img.label) + '</span>' : '')
           + '</div>'
         ).join('')
       + '</div></div>';
@@ -2055,13 +2059,13 @@ function openDetail(id) {
   const nutriItems = [];
   if (r.kcal) nutriItems.push(
     '<li>' + ICONS.flame
-    + '<span>' + r.kcal + ' per porsjon'
+    + '<span>' + esc(r.kcal) + ' per porsjon'
     + (totalKcal ? ' &nbsp;·&nbsp; <strong id="totalKcalVal">' + totalKcal.toLocaleString('nb-NO') + '</strong> kcal totalt' : '')
     + '</span></li>'
   );
-  if (r.protein) nutriItems.push('<li><strong>Protein:</strong> ' + r.protein + ' per porsjon</li>');
-  if (r.carbs) nutriItems.push('<li><strong>Karbohydrater:</strong> ' + r.carbs + ' per porsjon</li>');
-  if (r.fat) nutriItems.push('<li><strong>Fett:</strong> ' + r.fat + ' per porsjon</li>');
+  if (r.protein) nutriItems.push('<li><strong>Protein:</strong> ' + esc(r.protein) + ' per porsjon</li>');
+  if (r.carbs) nutriItems.push('<li><strong>Karbohydrater:</strong> ' + esc(r.carbs) + ' per porsjon</li>');
+  if (r.fat) nutriItems.push('<li><strong>Fett:</strong> ' + esc(r.fat) + ' per porsjon</li>');
 
   document.getElementById('detailContent').innerHTML =
     '<div class="modal-hero" style="background:' + cm.bg + '">'
@@ -2073,10 +2077,10 @@ function openDetail(id) {
     + '</button></div>'
     + '<div class="modal-body">'
     + '<span class="cat-badge" style="background:' + cm.bg + ';color:' + cm.color + ';margin-bottom:9px;display:inline-block">' + cm.label + '</span>'
-    + '<div class="modal-title">' + r.name + '</div>'
+    + '<div class="modal-title">' + esc(r.name) + '</div>'
     + '<div class="modal-info">'
-    + (r.time ? '<div class="info-pill">' + ICONS.clock + r.time + '</div>' : '')
-    + (r.yield ? '<div class="info-pill">' + ICONS.users + r.yield + '</div>' : '')
+    + (r.time ? '<div class="info-pill">' + ICONS.clock + esc(r.time) + '</div>' : '')
+    + (r.yield ? '<div class="info-pill">' + ICONS.users + esc(r.yield) + '</div>' : '')
     + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
     + '<div class="info-pill" title="Lagt til av">' + ICONS.users + esc(r.author_name) + '</div>'
     + (r.cuisine ? '<div class="info-pill" title="Kjøkken">🌍 ' + esc(r.cuisine) + '</div>' : '')
@@ -2097,8 +2101,8 @@ function openDetail(id) {
     + '<div class="scale-hint">Tips: trykk på en ingrediens for å skalere alt ut fra mengden du har</div>'
     + '<div id="ingrScaled">' + ingrBullets + '</div>'
     + '<div class="section-title">Fremgangsmåte</div>'
-    + '<ol class="steps-list">' + (r.steps || []).map((s, i) => '<li><span class="step-num">' + (i + 1) + '</span><span>' + s + '</span></li>').join('') + '</ol>'
-    + (r.result ? '<div class="section-title">Resultat</div><p class="recipe-result">' + r.result + '</p>' : '')
+    + '<ol class="steps-list">' + (r.steps || []).map((s, i) => '<li><span class="step-num">' + (i + 1) + '</span><span>' + esc(s) + '</span></li>').join('') + '</ol>'
+    + (r.result ? '<div class="section-title">Resultat</div><p class="recipe-result">' + esc(r.result) + '</p>' : '')
     + (nutriItems.length ? '<div class="section-title">Næring per porsjon</div><ul class="nutri-list" id="nutriScaled">' + nutriItems.join('') + '</ul>' : '')
     + galleryHtml
     + ratingCookedBox(r, e)
@@ -2202,14 +2206,14 @@ function renderImgManager() {
   } else {
     grid.innerHTML = imgs.map((img, i) =>
       '<div class="mgr-item' + (img.is_hero ? ' is-hero' : '') + '">'
-      + '<img src="' + img.url + '" alt="' + (img.label || 'Bilde ' + (i + 1)) + '" onclick="openLightbox(\'' + img.url.replace(/'/g, "\\'") + '\')">'
+      + '<img src="' + esc(img.url) + '" alt="' + esc(img.label || 'Bilde ' + (i + 1)) + '" onclick="openLightbox(\'' + jsStr(img.url) + '\')">'
       + '<div class="mgr-overlay">'
       + '<div class="mgr-top">'
-      + (img.is_hero ? '<span class="mgr-hero-chip">⭐ Forsidebilde</span>' : '<span class="mgr-hero-chip" style="color:rgba(255,255,255,.6)">' + (img.label ? img.label.substring(0, 18) : 'Bilde ' + (i + 1)) + '</span>')
+      + (img.is_hero ? '<span class="mgr-hero-chip">⭐ Forsidebilde</span>' : '<span class="mgr-hero-chip" style="color:rgba(255,255,255,.6)">' + esc(img.label ? img.label.substring(0, 18) : 'Bilde ' + (i + 1)) + '</span>')
       + '<button class="mgr-del" onclick="deleteImage(\'' + img.id + '\')" title="Slett">✕</button>'
       + '</div>'
       + '<div class="mgr-bottom">'
-      + '<span class="mgr-label-text">' + (img.label || '') + '</span>'
+      + '<span class="mgr-label-text">' + esc(img.label || '') + '</span>'
       + (!img.is_hero ? '<button class="mgr-set-hero" onclick="setHeroImage(\'' + img.id + '\')">⭐ Forside</button>' : '')
       + '</div>'
       + '</div></div>'
