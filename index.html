@@ -407,6 +407,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <span class="filter-label">Sunnhet</span>
       <div id="healthFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
+    <div class="filter-group" id="cuisineGroup" style="display:none">
+      <span class="filter-label">Kjøkken</span>
+      <div id="cuisineFilters" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
   </div>
 </div>
 
@@ -503,6 +507,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="form-row"><label>Fremgangsmåte (ett steg per linje)</label><textarea id="f-steps" placeholder="Sett ovnen på 200°C.&#10;Stek løk og hvitløk..."></textarea></div>
       <div class="form-row"><label>Porsjoner</label><input type="text" id="f-yield" placeholder="4 porsjoner"></div>
       <div class="form-row"><label>Kilde (lenke til original)</label><input type="text" id="f-source" placeholder="https://www.instagram.com/p/… – valgfritt"></div>
+      <div class="form-row" id="f-cuisine-row" style="display:none"><label>Kjøkken / nasjonalitet</label><input type="text" id="f-cuisine" placeholder="f.eks. italiensk, thai, norsk – valgfritt"></div>
+      <label class="private-toggle" id="f-private-row" style="display:none">
+        <input type="checkbox" id="f-private">
+        <span><b>🔒 Privat oppskrift</b> – kun du ser den. Del den senere når du er klar.</span>
+      </label>
       <div class="form-btns">
         <button class="btn-cancel" onclick="closeAddModal()">Avbryt</button>
         <button class="btn-save" id="manualSaveBtn" onclick="saveManualRecipe()">Lagre oppskrift</button>
@@ -697,7 +706,7 @@ let recipeImagesCache = {}; // { recipeId: [{id, url, label, is_hero, position, 
 let activeMode = 'cookbook'; // 'cookbook' (min bok) | 'discover' (delt pool)
 let myEntries = {};   // recipe_id -> { id, status, rating, cooked_count }
 let recipeAgg = {};   // recipe_id -> { ratingSum, ratingCount, cookedTotal, inBooks }
-let activeCat = 'alle', activeHealth = 'alle', activeSort = 'popular';
+let activeCat = 'alle', activeHealth = 'alle', activeSort = 'popular', activeCuisine = 'alle';
 let pendingAiRecipe = null;
 let pendingSourceImageUrl = null; // bilde fra kilden (IG-video/og:image) til forslag
 let pendingSourceUrl = null;      // kilde-URL fra import → lagres som source_url
@@ -824,11 +833,16 @@ function dbRowToRecipe(row) {
     source_url: row.source_url || null,
     author_name: row.author_name || 'Ukjent',
     author_id: row.user_id || null,
+    is_private: row.is_private || false,
+    cuisine: row.cuisine || '',
     created_at: row.created_at || null
   };
 }
 
 let allEntries = []; // rå bokføringer fra alle brukere (kilde for aggregater)
+// Oppdages fra dataene: er DB-migrasjonene kjørt? Funksjonene skjules til de er det,
+// så frontenden aldri skriver en kolonne som ikke finnes ennå.
+let CAPS = { private: false, cuisine: false };
 
 async function loadRecipesFromDB() {
   // Delt pool: alle oppskrifter + bilder, og ALLE bokføringer (for snitt/topplister)
@@ -838,6 +852,12 @@ async function loadRecipesFromDB() {
   ]);
 
   if (!recRes.error && recRes.data) {
+    // Oppdag hvilke migrasjoner som er kjørt (kolonner finnes i rådataene)
+    const sample = recRes.data[0];
+    if (sample) {
+      CAPS.private = Object.prototype.hasOwnProperty.call(sample, 'is_private');
+      CAPS.cuisine = Object.prototype.hasOwnProperty.call(sample, 'cuisine');
+    }
     recipes = recRes.data.map(dbRowToRecipe);
     recipeImagesCache = {};
     recRes.data.forEach(row => {
@@ -926,25 +946,29 @@ function getHeroImage(recipeId) {
 }
 
 async function addRecipeToDB(recipe) {
+  const payload = {
+    user_id: currentUser.id,
+    author_name: (currentUser.email || '').split('@')[0] || 'Ukjent',
+    name: recipe.name,
+    cat: recipe.cat || 'vegetar',
+    emoji: recipe.emoji || '🍽️',
+    time_str: recipe.time || '',
+    health: recipe.health || 3,
+    kcal: recipe.kcal || '',
+    ingr: recipe.ingr || [{g:'',items:[]}],
+    steps: recipe.steps || [],
+    yield_str: recipe.yield || '',
+    protein: recipe.protein || '',
+    carbs: recipe.carbs || '',
+    fat: recipe.fat || '',
+    result: recipe.result || '',
+    source_url: recipe.source_url || null
+  };
+  // Kun hvis migrasjonen er kjørt (kolonnen finnes) — ellers ville insert feilet
+  if (CAPS.private) payload.is_private = !!recipe.is_private;
+  if (CAPS.cuisine && recipe.cuisine) payload.cuisine = recipe.cuisine;
   const {data, error} = await withTimeout(
-    _supa.from('recipes').insert({
-      user_id: currentUser.id,
-      author_name: (currentUser.email || '').split('@')[0] || 'Ukjent',
-      name: recipe.name,
-      cat: recipe.cat || 'vegetar',
-      emoji: recipe.emoji || '🍽️',
-      time_str: recipe.time || '',
-      health: recipe.health || 3,
-      kcal: recipe.kcal || '',
-      ingr: recipe.ingr || [{g:'',items:[]}],
-      steps: recipe.steps || [],
-      yield_str: recipe.yield || '',
-      protein: recipe.protein || '',
-      carbs: recipe.carbs || '',
-      fat: recipe.fat || '',
-      result: recipe.result || '',
-      source_url: recipe.source_url || null
-    }).select().single(),
+    _supa.from('recipes').insert(payload).select().single(),
     10000
   );
   if (error) throw error;
@@ -971,6 +995,8 @@ async function updateRecipeInDB(id, fields) {
   if (fields.fat !== undefined) dbFields.fat = fields.fat;
   if (fields.result !== undefined) dbFields.result = fields.result;
   if (fields.source_url !== undefined) dbFields.source_url = fields.source_url;
+  if (CAPS.private && fields.is_private !== undefined) dbFields.is_private = !!fields.is_private;
+  if (CAPS.cuisine && fields.cuisine !== undefined) dbFields.cuisine = fields.cuisine;
   const {error} = await withTimeout(
     _supa.from('recipes').update(dbFields).eq('id', id),
     10000
@@ -1155,9 +1181,11 @@ function openAddModal() {
   document.querySelectorAll('.add-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
   document.getElementById('edit-recipe-id').value = '';
   document.getElementById('manualSaveBtn').textContent = 'Lagre oppskrift';
-  ['f-name','f-emoji','f-time','f-kcal','f-ingr','f-steps','f-yield','f-source'].forEach(id => document.getElementById(id).value = '');
+  ['f-name','f-emoji','f-time','f-kcal','f-ingr','f-steps','f-yield','f-source','f-cuisine'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-health').value = 3;
   document.getElementById('h-out').textContent = 'Balansert';
+  document.getElementById('f-private').checked = false;
+  syncOptionalFieldRows();
   document.getElementById('addModal').classList.add('open');
   // Rett til innliming: fokuser lim-feltet med én gang vinduet er åpent
   setTimeout(() => { const el = document.getElementById('aiInput'); if (el) el.focus(); }, 60);
@@ -1184,12 +1212,23 @@ function openEditModal(recipeId) {
   document.getElementById('f-steps').value = (r.steps || []).join('\n');
   document.getElementById('f-yield').value = r.yield || '';
   document.getElementById('f-source').value = r.source_url || '';
+  document.getElementById('f-cuisine').value = r.cuisine || '';
+  document.getElementById('f-private').checked = !!r.is_private;
+  syncOptionalFieldRows();
   document.getElementById('manualSaveBtn').textContent = 'Lagre endringer';
   document.getElementById('addModal').classList.add('open');
 }
 
 function closeAddModal() {
   document.getElementById('addModal').classList.remove('open');
+}
+
+// Vis kjøkken-/privat-feltene bare når DB-migrasjonene er kjørt
+function syncOptionalFieldRows() {
+  const c = document.getElementById('f-cuisine-row');
+  const p = document.getElementById('f-private-row');
+  if (c) c.style.display = CAPS.cuisine ? 'flex' : 'none';
+  if (p) p.style.display = CAPS.private ? 'flex' : 'none';
 }
 
 // ─── Recipe card image upload ──────────────────────────────────────────────────
@@ -1338,7 +1377,7 @@ async function analyzeRecipe() {
       (_recipeCardBase64 ? ' bilde og/eller' : '') + (textForClaude ? ' tekst' : '') +
       ' og trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' +
       (textForClaude ? 'Input:\n' + textForClaude + '\n\n' : '') +
-      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "img_query": "engelsk bildesøketekst som beskriver den ferdige retten, 2-5 ord, f.eks. creamy chicken pasta dish",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væsker (melk, fløte, olje o.l.) oppgis ALLTID med både dl/liter OG gram: "2 dl / 200 g melk", "1 dl / 100 g fløte". Skriv ALDRI bare "100 g fløte" uten dl-en. Vann kan oppgis kun i dl/liter\n- Bruk ALDRI brøker som 1/4, 3/4, 1/8 eller 2/3 — regn om til gram/dl i stedet. ENESTE unntak: "1/2" for hele råvarer som deles i to (f.eks. "1/2 lime", "1/2 sitron", "1/2 løk")\n- Alt målbart skal i g, kg, dl eller liter. ss (spiseskje) og ts (teskje) er kun lov for små mengder krydder, salt o.l.\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- stk kan brukes for hele enheter (egg, løk), gjerne med gram i parentes\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
+      'Returner dette JSON-formatet:\n{\n  "name": "Navn på oppskriften",\n  "cat": "en av: bakst, kjott, fisk, suppe, vegetar, dessert",\n  "emoji": "passende emoji",\n  "time": "tilberedningstid f.eks. 30 min",\n  "health": et tall 1-5 (1=usunt, 5=veldig sunt),\n  "kcal": "kalorier per porsjon f.eks. 350 kcal",\n  "yield": "antall porsjoner f.eks. 4 porsjoner",\n  "protein": "protein f.eks. 24g",\n  "carbs": "karbohydrater f.eks. 45g",\n  "fat": "fett f.eks. 12g",\n  "result": "1 setning om resultatet, f.eks. En smakfull kremet rett med sprø topping",\n  "cuisine": "kjøkken/nasjonalitet på norsk (ett ord), f.eks. italiensk, thai, norsk, meksikansk, indisk — eller tom streng hvis uklart",\n  "img_query": "engelsk bildesøketekst som beskriver den ferdige retten, 2-5 ord, f.eks. creamy chicken pasta dish",\n  "ingr": [{"g": "gruppenavn eller tom streng", "items": ["ingrediens 1", "ingrediens 2"]}],\n  "steps": ["Steg 1", "Steg 2"]\n}\n\nVIKTIGE REGLER FOR INGREDIENSER:\n- Mål alltid tørre ingredienser i gram (f.eks. "200 g mel", "150 g smør")\n- Væsker (melk, fløte, olje o.l.) oppgis ALLTID med både dl/liter OG gram: "2 dl / 200 g melk", "1 dl / 100 g fløte". Skriv ALDRI bare "100 g fløte" uten dl-en. Vann kan oppgis kun i dl/liter\n- Bruk ALDRI brøker som 1/4, 3/4, 1/8 eller 2/3 — regn om til gram/dl i stedet. ENESTE unntak: "1/2" for hele råvarer som deles i to (f.eks. "1/2 lime", "1/2 sitron", "1/2 løk")\n- Alt målbart skal i g, kg, dl eller liter. ss (spiseskje) og ts (teskje) er kun lov for små mengder krydder, salt o.l.\n- Bruk ALDRI engelske eller amerikanske måleenheter (ikke cups, oz, fl oz, lbs, tbsp, tsp, quart, pint, fahrenheit)\n- stk kan brukes for hele enheter (egg, løk), gjerne med gram i parentes\n- Hvis en råvare ikke finnes i norske butikker, legg til et norsk alternativ i parentes, f.eks. "miso-pasta (eller buljongpasta)"\n- Bruk norsk i alt innhold';
 
     content.push({type:'text', text: prompt});
 
@@ -1462,6 +1501,8 @@ async function saveManualRecipe() {
     steps: steps.length ? steps : ['Se beskrivelse.'],
     yield: document.getElementById('f-yield').value || '',
     source_url: document.getElementById('f-source').value.trim() || null,
+    cuisine: document.getElementById('f-cuisine').value.trim(),
+    is_private: document.getElementById('f-private').checked,
     protein: ''
   };
 
@@ -1523,6 +1564,20 @@ function buildFilters() {
   const hf = document.getElementById('healthFilters');
   hf.innerHTML = '<button class="chip' + (activeHealth === 'alle' ? ' active' : '') + '" onclick="setHealth(\'alle\')">Alle</button>'
     + [5,4,3,2,1].map(n => '<button class="chip' + (activeHealth === n ? ' active' : '') + '" onclick="setHealth(' + n + ')">' + HEALTH_LABEL[n] + '</button>').join('');
+  // Kjøkken/nasjonalitet — kun når migrasjonen er kjørt og noen oppskrifter er tagget
+  const cg = document.getElementById('cuisineGroup');
+  const cuisines = CAPS.cuisine ? [...new Set(recipes.map(r => (r.cuisine || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'nb')) : [];
+  if (cg) {
+    if (cuisines.length) {
+      cg.style.display = 'flex';
+      const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+      document.getElementById('cuisineFilters').innerHTML =
+        '<button class="chip' + (activeCuisine === 'alle' ? ' active' : '') + '" onclick="setCuisine(\'alle\')">Alle</button>'
+        + cuisines.map(c => '<button class="chip' + (activeCuisine === c ? ' active' : '') + '" onclick="setCuisine(\'' + c.replace(/'/g, "\\'") + '\')">' + cap(c) + '</button>').join('');
+    } else {
+      cg.style.display = 'none';
+    }
+  }
   const sf = document.getElementById('sortFilters');
   if (sf) {
     const SORTS = activeMode === 'discover'
@@ -1534,13 +1589,14 @@ function buildFilters() {
   // Antall aktive filtre vises på «Filtrer»-knappen (mobil)
   const fc = document.getElementById('filterCount');
   if (fc) {
-    const n = (activeCat !== 'alle' ? 1 : 0) + (activeHealth !== 'alle' ? 1 : 0);
+    const n = (activeCat !== 'alle' ? 1 : 0) + (activeHealth !== 'alle' ? 1 : 0) + (activeCuisine !== 'alle' ? 1 : 0);
     fc.textContent = n ? '(' + n + ')' : '';
   }
 }
 function setCat(v) { activeCat = v; buildFilters(); render(); }
 function setHealth(v) { activeHealth = v; buildFilters(); render(); }
 function setSort(v) { activeSort = v; buildFilters(); render(); }
+function setCuisine(v) { activeCuisine = v; buildFilters(); render(); }
 function setMode(m) {
   if (activeMode === m) return;
   activeMode = m;
@@ -1603,11 +1659,14 @@ function cardHtml(r) {
     ? '<div class="card-counts">' + (agg.ratingCount ? '<span>⭐ ' + avg.toFixed(1) + '</span>' : '<span class="dim">—</span>') + (agg.cookedTotal ? '<span>🍳 ' + agg.cookedTotal + '</span>' : '') + '</div>'
     : '<div class="card-counts">' + (e?.rating ? '<span>⭐ ' + e.rating + '</span>' : '') + (e?.cooked_count ? '<span>🍳 ' + e.cooked_count + '</span>' : '') + '</div>';
 
-  const author = activeMode === 'discover' ? '<div class="card-author">av ' + esc(r.author_name) + '</div>' : '';
+  const priv = r.is_private ? '<span class="card-private" title="Privat – kun du ser den">🔒</span>' : '';
+  const cuisineTag = r.cuisine ? '<span class="card-cuisine">' + esc(r.cuisine) + '</span>' : '';
+  const author = activeMode === 'discover' ? '<div class="card-author">av ' + esc(r.author_name) + cuisineTag + '</div>'
+    : (r.cuisine ? '<div class="card-author">' + cuisineTag + '</div>' : '');
 
   return '<article class="card" onclick="openDetail(\'' + r.id + '\')" tabindex="0" role="button" aria-label="' + esc(r.name) + '">'
     + '<div class="card-thumb" style="background:' + cm.bg + '">'
-    + imgHtml + countBadge + status
+    + imgHtml + countBadge + status + priv
     + '<button class="card-cam-btn" onclick="event.stopPropagation();openImgModal(\'' + r.id + '\')" title="Behandle bilder">'
     + ICONS.camera + 'Bilder' + (imgCount > 0 ? ' (' + imgCount + ')' : '')
     + '</button></div>'
@@ -1640,6 +1699,7 @@ function render() {
   const list = recipes.filter(r => {
     if (activeCat !== 'alle' && r.cat !== activeCat) return false;
     if (activeHealth !== 'alle' && r.health !== activeHealth) return false;
+    if (activeCuisine !== 'alle' && (r.cuisine || '').trim() !== activeCuisine) return false;
     if (q && !r.name.toLowerCase().includes(q)) return false;
     return true;
   });
@@ -2019,6 +2079,8 @@ function openDetail(id) {
     + (r.yield ? '<div class="info-pill">' + ICONS.users + r.yield + '</div>' : '')
     + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
     + '<div class="info-pill" title="Lagt til av">' + ICONS.users + esc(r.author_name) + '</div>'
+    + (r.cuisine ? '<div class="info-pill" title="Kjøkken">🌍 ' + esc(r.cuisine) + '</div>' : '')
+    + (r.is_private ? '<div class="info-pill" style="border-color:var(--amber);color:var(--amber)" title="Kun du ser denne">🔒 Privat</div>' : '')
     + (agg.ratingCount ? '<div class="info-pill" title="Familiens snitt-terning">⭐ ' + avg.toFixed(1) + ' (' + agg.ratingCount + ')</div>' : '')
     + (agg.cookedTotal ? '<div class="info-pill" title="Ganger laget totalt">🍳 ' + agg.cookedTotal + '</div>' : '')
     + (r.source_url ? '<a class="info-pill source-link" href="' + esc(r.source_url) + '" target="_blank" rel="noopener">🔗 Se original</a>' : '')
@@ -2508,6 +2570,16 @@ _style.textContent = `
 /* Kildelenke som info-pill */
 a.info-pill.source-link{text-decoration:none;color:var(--accent);border-color:var(--accent)}
 a.info-pill.source-link:hover{background:var(--accent-bg)}
+
+/* Privat-bryter i skjemaet */
+.private-toggle{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;cursor:pointer;font-size:13px;color:var(--text2);line-height:1.4}
+.private-toggle input{margin-top:2px;width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto}
+.private-toggle b{color:var(--text)}
+
+/* Privat-lås og kjøkken-merke på kort */
+.card-private{position:absolute;top:8px;right:8px;font-size:13px;background:rgba(0,0,0,.55);padding:3px 6px;z-index:2}
+.card-cuisine{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);border:1px solid var(--border2);padding:1px 6px;margin-left:6px}
+.card-author .card-cuisine{margin-left:0}
 
 /* Sorteringsrad — alltid synlig, skyves sidelengs på smale skjermer */
 .sort-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
