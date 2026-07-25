@@ -41,21 +41,30 @@ exports.handler = async function(event) {
       return json({ error: 'Fant ikke posten — er den offentlig? ' + (it && it.errorDescription || '') });
     }
 
+    // Felles parsing for Instagram (apify~instagram-scraper) og TikTok
+    // (clockworks~free-tiktok-scraper) — feltnavnene skiller seg, så vi
+    // prøver begge formene.
+    const caption = it.caption || it.text || '';
+    const author  = it.ownerFullName || it.ownerUsername || (it.authorMeta && (it.authorMeta.nickName || it.authorMeta.name)) || '';
     const parts = [];
-    if (it.caption) parts.push('BILDETEKST: ' + it.caption);
-    if (it.ownerFullName || it.ownerUsername) parts.push('KONTO: ' + (it.ownerFullName || '') + ' (@' + (it.ownerUsername || '') + ')');
+    if (caption) parts.push('BILDETEKST: ' + caption);
+    if (author)  parts.push('KONTO: ' + author);
     if (it.firstComment) parts.push('FØRSTE KOMMENTAR (ofte oppskriften): ' + it.firstComment);
     const text = parts.join('\n\n').slice(0, 14000);
 
-    // displayUrl er postens coverbilde — for videoer et stillbilde av retten.
-    // Frontenden bruker det som forslag til forsidebilde.
-    const imageUrl = it.displayUrl || (Array.isArray(it.images) && it.images.length ? it.images[0] : null);
+    // Coverbilde — for videoer et stillbilde av retten. Forslag til forsidebilde.
+    const imageUrl = it.displayUrl
+      || (Array.isArray(it.images) && it.images.length ? it.images[0] : null)
+      || (it.videoMeta && it.videoMeta.coverUrl) || null;
 
-    // videoUrl finnes for video-poster (reels). Brukes til å transkribere lyden
-    // når oppskriften ikke står i bildeteksten.
-    const videoUrl = it.videoUrl || null;
+    // Videolenke — brukes til å analysere/transkribere når oppskriften ikke
+    // står i teksten. Instagram gir videoUrl; TikTok kan gi mediaUrls eller
+    // videoMeta.downloadAddr (ikke garantert i gratis-versjonen).
+    const videoUrl = it.videoUrl
+      || (Array.isArray(it.mediaUrls) && it.mediaUrls.length ? it.mediaUrls[0] : null)
+      || (it.videoMeta && (it.videoMeta.downloadAddr || it.videoMeta.playAddr)) || null;
 
-    if (!text && !videoUrl) return json({ error: 'Posten hadde verken bildetekst eller video å hente oppskrift fra' });
+    if (!text && !videoUrl) return json({ error: 'Posten hadde verken tekst eller video å hente oppskrift fra' });
     return json({ text: text || '', imageUrl, videoUrl });
   } catch(e) {
     return json({ error: e.message });

@@ -22,6 +22,7 @@ exports.handler = async function(event) {
 
   const isInstagram = /instagram\.com/i.test(url);
   const isFacebook = /(facebook\.com|fb\.watch|fb\.com)/i.test(url);
+  const isTikTok = /(tiktok\.com|vm\.tiktok\.com)/i.test(url);
 
   try {
     if (isFacebook) {
@@ -75,6 +76,33 @@ exports.handler = async function(event) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ directUrls: [url], resultsType: 'posts', resultsLimit: 1 })
+      });
+      if (!startResp.ok) {
+        return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Apify svarte med feil: ' + startResp.status }) };
+      }
+      const run = (await startResp.json()).data;
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ pending: true, runId: run.id, datasetId: run.defaultDatasetId })
+      };
+    }
+
+    if (isTikTok) {
+      // TikTok via Apify (clockworks~free-tiktok-scraper). Samme poll-mønster
+      // som Instagram: start kjøringen her, frontenden poller apify-status.js.
+      // Gir bildetekst + coverbilde; videolenke er ikke garantert i gratis-
+      // versjonen, så video-analyse skjer kun hvis en lenke finnes.
+      const token = process.env.APIFY_TOKEN;
+      if (!token) {
+        return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'APIFY_TOKEN ikke konfigurert på serveren' }) };
+      }
+      const startResp = await fetch('https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ postURLs: [url], resultsPerPage: 1, shouldDownloadVideos: false, shouldDownloadCovers: false })
       });
       if (!startResp.ok) {
         return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
