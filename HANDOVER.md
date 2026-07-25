@@ -1,58 +1,90 @@
-# Handover: nineofive.no – Google Privacy Fix
+# HANDOVER — natt-økt 25. juli 2026 (autonom)
 
-## Problem
-Family recipe pages were appearing in Google search results when searching "Nineofive". The recipe site needed to be hidden from Google while the real film production company website (`nineofive.no`) is being built.
-
-**Critical constraint:** Do NOT delete or modify MX records or CNAME records that power `anders@nineofive.no` (Google Workspace email).
-
----
-
-## KEY DISCOVERY (2026-07-06): nineofive.no is served by NETLIFY, not one.com
-
-Verified via `curl -I` (`server: Netlify`) and DNS:
-
-- `nineofive.no` A record → `75.2.60.5` (Netlify load balancer)
-- `www.nineofive.no` CNAME → `incredible-duckanoo-ff2709.netlify.app`
-- MX records → Google Workspace (aspmx.l.google.com etc.) — **untouched, email works**
-- Nameservers: ns01/ns02.one.com (DNS is *managed* at one.com, but web traffic goes to Netlify)
-
-**Implications:**
-- The Netlify site auto-deploys from GitHub: `github.com/andyp87/familien-pedersens-matoppskrifter` (this repo). Pushing to `main` deploys the live site.
-- The one.com webspace (old 2013 WordPress install, `.htaccess`, uploaded robots.txt) is **not serving any web traffic** for nineofive.no. All File Manager work described below was harmless but ineffective. There was never any WordPress mystery — the recipe app at the root URL is simply this repo's `index.html` served by Netlify's SPA catch-all (`/* → /index.html` in `netlify.toml`).
-- The recipe app lives at the ROOT of nineofive.no (not under /kokebok/) — every URL serves it.
+Anders sov; jeg jobbet gjennom backlogen så langt jeg trygt kunne uten input.
+Alt under er **pushet til main og live på nineofive.no**, syntaks- og lokaltestet.
+Alt som rører databasen er bygget «capability-gated»: frontenden oppdager om en
+kolonne finnes og skjuler funksjonen + utelater kolonnen fra skriving til
+migrasjonen er kjørt — **ingenting kan knekke lagring i mellomtiden.**
 
 ---
 
-## The Actual Fix (deployed & verified 2026-07-06, commit 60ffc33)
+## ✅ Ferdig og verifisert i natt
 
-1. **`netlify.toml`**: added `[[headers]]` block serving `X-Robots-Tag: noindex, nofollow` on `/*`. Marked "Midlertidig / FJERN" — remove when the new site launches.
-2. **`index.html` + `capture.html`**: `<meta name="robots" content="noindex, nofollow">` committed and deployed (previously only local/one.com).
-3. **`robots.txt`**: deployed via the repo, now serves as plain text. Deliberately `Allow: /` — **no Disallow while de-indexing**, because Google must be able to crawl pages to see the noindex signal. A `Disallow` would leave stale results stuck in the index.
+### 1. TikTok-import (fungerer)
+- Lim inn en `tiktok.com`-lenke → samme flyt som Instagram (Apify + Claude).
+- Verifisert ende-til-ende live: `fetch-url.js` starter `clockworks~free-tiktok-scraper`,
+  `apify-status.js` parser tekst + coverbilde riktig.
+- **Begrensning:** gratis-TikTok-scraperen gir IKKE en videofil-URL, så TikTok
+  får **bildetekst + cover**, men video/lyd-analyse (Gemini/Whisper) hoppes over.
+  Å analysere selve TikTok-videoen krever en betalt Apify-actor eller annen
+  videokilde — **ta sammen senere** hvis vi trenger det.
 
-All three verified live:
-- `curl -I https://nineofive.no/` → `x-robots-tag: noindex, nofollow` ✅
-- `https://nineofive.no/robots.txt` → serves the real file ✅
-- Live HTML contains the robots meta tag ✅
+### 2. Private oppskrifter (kode klar — venter på migrasjon 03)
+- 🔒-bryter i skjema, lås-merke på kort/detalj. Skjult til migrasjon 03 er kjørt.
+- RLS i `db/migration-03-private-recipes.sql` skjuler private oppskrifter + bilder
+  for andre enn eier.
 
-Also fixed: git remote had an expired GitHub PAT embedded in the URL; replaced with clean URL + `gh` credential helper.
+### 3. Kjøkken/nasjonalitet-filter (kode klar — venter på migrasjon 04)
+- Claude tagger kjøkken automatisk ved import; filter-chips i Oppdag/kokebok;
+  felt i redigering. Skjult til migrasjon 04 er kjørt.
+
+### 4. Forside-redesign (fra kvelds-økten)
+- Mat vises på første skjerm; filtre bak «Filtrer»-knapp; terning 1–10 med
+  tydelige trinn; overflow-fiks på mobil.
+
+### 5. 🔒 SIKKERHETSGJENNOMGANG (du ba om denne)
+**Fant og FIKSET:**
+- **Lagret XSS (alvorlig, ny i flerbruker):** oppskriftsdata (navn, ingredienser,
+  steg, resultat, næring, forfatter, kjøkken, bildemerker, kjøkken-filterknapper)
+  ble lagt i innerHTML uten escaping. En bruker kunne legge skadelig kode i en
+  delt oppskrift som kjørte i *alle andres* nettlesere via Oppdag. Nå escapes alt
+  (`esc()`/`jsStr()`). Verifisert: payload i alle felt kjører ikke, vises som tekst.
+- **SSRF:** funksjonene som henter bruker-URL-er server-side blokkerer nå interne/
+  private/metadata-adresser (`isBlockedHost`). Offentlige CDN-er slipper gjennom.
+
+**GJENSTÅR — må vi ta sammen (trenger live-testing, derfor ikke gjort i natt):**
+- ⚠️ **Åpne, betalende proxy-endepunkter (viktigst).** `claude.js`, `transcribe.js`,
+  `gemini-video.js`, `fetch-url.js` har ingen innlogging — hvem som helst som
+  finner URL-en kan bruke våre API-nøkler (Anthropic/OpenAI/Gemini/Apify) gratis
+  og dra opp regningen. Fiks: verifiser Supabase-JWT i funksjonene + send token
+  fra frontenden. Litt risikabelt å deploye uovervåket (kan knekke import hvis
+  feil), så **dette er topp-prioritet å gjøre sammen.**
+- SSRF-vernet dekker ikke redirect-hopp til private verter (lav risiko).
+- `recipe_images`-RLS strammes i migrasjon 03 (fikser bilde-lekkasje for private).
 
 ---
 
-## What Still Needs to Happen
+## 📋 DU MÅ (i morgen, sammen med meg)
 
-### When the new film production company website is ready:
-1. The new site replaces this repo's deploy on Netlify (either a new Netlify site pointed at the domain, or replace the content of this deploy).
-2. Remove the temporary `[[headers]]` X-Robots-Tag block from `netlify.toml` so the new site can be indexed.
-3. Move the recipe app somewhere permanently noindexed — e.g. keep it on its `*.netlify.app` URL, a private subdomain, or behind Netlify password protection. If it stays under nineofive.no, keep the noindex meta tags.
-4. The old WordPress install on one.com webspace can be deleted whenever — it serves nothing. (Leave DNS MX/CNAME alone.)
+1. **Kjør migrasjon 03 + 04** i Supabase SQL Editor (samme sted som før), i denne
+   rekkefølgen. 03 endrer RLS — vi sjekker LIVE etterpå at appen fortsatt viser
+   alle delte oppskrifter og at en privat oppskrift kun vises for eier:
+   - `db/migration-03-private-recipes.sql`
+   - `db/migration-04-cuisine.sql`
+2. **Gemini-nøkkel:** har du lagt `GEMINI_API_KEY` i Netlify? (For Instagram-video-
+   analyse.) Uten den brukes Whisper-lyd som fallback (nøkkelen finnes).
+3. **Beslutning – varianter/«2.0»:** kun for *andres* oppskrifter, eller «ny
+   versjon» for alle? (Jeg heller mot kun andres.)
 
-### Optional — speed up de-indexing:
-Google Search Console (search.google.com/search-console) → "Fjerninger" (Removals) to request immediate removal of indexed nineofive.no URLs. Requires verifying domain ownership (DNS TXT record — safe, doesn't touch MX).
+*(Jeg fikk ikke lest iCloud-notatet ditt — det krever Apple-innlogging, som jeg
+ikke gjør. Jeg kan heller ikke huke av i notatene dine. Bruk lista over.)*
 
 ---
 
-## Access / Infrastructure
+## Gjenstår i backlogen (egne runder)
+3. 3 bildevalg fra video + «hent på nytt» · 4. Profiler · 5. Kommentarer ·
+8. Oppskrift-varianter (bygg m/ #5+#4) · 7. Brandet bekreftelses-e-post.
+Se full backlog i minnet (`prosjektstatus-kokebok`).
 
-- **Live hosting:** Netlify, site `incredible-duckanoo-ff2709`, auto-deploys from GitHub `andyp87/familien-pedersens-matoppskrifter` (main branch)
-- **DNS:** managed at one.com (ns01/ns02.one.com) — MX → Google Workspace, must not change
-- **one.com File Manager** (legacy, not serving web traffic): https://filemanager.one.com, login anders.martin.pedersen@gmail.com
+---
+---
+
+# (Historisk) Handover: nineofive.no – Google Privacy Fix
+
+Noindex-fiksen er fullført og verifisert (X-Robots-Tag + meta + robots.txt).
+Full beskrivelse ligger i git-historikken (commit før 25. juli). Kort:
+- nineofive.no serveres av **Netlify** (auto-deploy fra GitHub `andyp87/…`), ikke one.com.
+- `netlify.toml` har midlertidig `X-Robots-Tag: noindex` på `/*` — FJERNES når
+  filmproduksjonssiden er klar.
+- Rør ALDRI MX/CNAME for e-post (Google Workspace).
+- Åpen tråd: Search Console-verifisering venter på TXT-record hos one.com (krever din innlogging).
