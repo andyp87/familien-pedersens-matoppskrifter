@@ -2600,8 +2600,18 @@ img,video{max-width:100%}
 .detail-actions{flex-wrap:wrap}
 .detail-action-btn{flex:1 1 auto;min-width:0}
 .modal-info{flex-wrap:wrap}
+/* Ingen horisontal overflow i modalen; lange ord/URL-er brytes i stedet for å skyve bredden */
+.modal{overflow-x:hidden}
+.modal-body{overflow-wrap:break-word}
 
 @media(max-width:700px){
+  /* Detaljvisning som fullskjerm-ark: 'dvh' følger det SYNLIGE området, så man
+     når helt til topp og bunn selv når nettleserens linjer skjuler deler av 'vh'.
+     Trygg-sone i bunn så handlingsknappene ikke havner bak hjem-indikatoren. */
+  .modal-bg{padding:0;align-items:stretch}
+  .modal{max-width:100%;max-height:100vh;max-height:100dvh;height:100vh;height:100dvh}
+  .modal-body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px))}
+
   /* Maten først: filtrene ligger bak én knapp i stedet for seks rader chips */
   .filter-toggle{display:inline-flex}
   #filterPanel{display:none}
