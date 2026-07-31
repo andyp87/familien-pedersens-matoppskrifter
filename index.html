@@ -611,7 +611,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
         <div class="img-suggest-row" id="imgSuggestRow">
           <button class="btn-cancel" style="width:100%;font-size:13px" id="imgSuggestBtn" onclick="loadImgSuggestions()">✨ Foreslå bilder automatisk</button>
-          <button class="btn-cancel" style="width:100%;font-size:13px;margin-top:6px;display:none" id="sourceImgBtn" onclick="newImageFromSource()">🔗 Nytt bilde fra kilden (original/video)</button>
+          <button class="btn-cancel" style="width:100%;font-size:13px;margin-top:6px;display:none" id="sourceImgBtn" onclick="newImageFromSource()">🎬 Nytt bilde fra kilden</button>
           <div class="img-suggest-grid" id="imgSuggestGrid"></div>
         </div>
 
@@ -2478,6 +2478,8 @@ let _pendingUploadBase64 = null;
 function openImgModal(recipeId) {
   _imgRecipeId = recipeId;
   _pendingUploadBase64 = null;
+  _imgSourceVideoUrl = null;
+  window._imgSourceFrames = null;
   resetImgUploadPanel();
   renderImgManager();
   document.getElementById('imgModal').classList.add('open');
@@ -2826,7 +2828,8 @@ async function pickSuggestedImage(i) {
 // ─── Nytt bilde fra kilden (original/video) ────────────────────────────────────
 // Henter et ferskt bilde fra oppskriftens source_url. For Instagram-videoer
 // gir dette et nytt stillbilde av retten; for Facebook/web leses og:image på nytt.
-async function resolveSourceImage(url, onStatus) {
+// Henter cover-bilde OG direkte videolenke fra kilden (Instagram via Apify-poll)
+async function resolveSource(url, onStatus) {
   const resp = await withTimeout(
     fetch('/.netlify/functions/fetch-url', {
       method: 'POST', headers: await authHeaders(), body: JSON.stringify({url})
@@ -2838,39 +2841,92 @@ async function resolveSourceImage(url, onStatus) {
     while (d.pending) {
       if (Date.now() > deadline) throw new Error('Hentingen tok for lang tid');
       await new Promise(r => setTimeout(r, 3000));
-      if (onStatus) onStatus('Henter fra Instagram… (' + Math.round((Date.now() - t0) / 1000) + ' sek)');
+      if (onStatus) onStatus('Henter fra kilden… (' + Math.round((Date.now() - t0) / 1000) + ' sek)');
       const pr = await fetch('/.netlify/functions/apify-status', {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({runId: d.runId, datasetId: d.datasetId})
       });
       const p = await pr.json();
       if (p.error) throw new Error(p.error);
-      if (p.imageUrl || p.text) { d = p; break; }
+      if (p.imageUrl || p.videoUrl || p.text) { d = p; break; }
     }
   }
-  return d.imageUrl || null;
+  return {imageUrl: d.imageUrl || null, videoUrl: d.videoUrl || null};
 }
 
+let _imgSourceVideoUrl = null; // hurtigbufret videolenke så «Hent tre nye» slipper ny Apify-runde
 async function newImageFromSource() {
   const recipe = recipes.find(r => r.id === _imgRecipeId);
   if (!recipe || !recipe.source_url) return;
   const status = document.getElementById('imgAnalyzeStatus');
   const btn = document.getElementById('sourceImgBtn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="img-spinner"></span>Henter fra kilden…'; }
-  status.textContent = 'Henter bilde fra originalposten…'; status.style.color = 'var(--text2)';
+  status.textContent = 'Henter fra originalposten…'; status.style.color = 'var(--text2)';
+  document.getElementById('imgSuggestGrid').innerHTML = '';
   try {
-    const imageUrl = await resolveSourceImage(recipe.source_url, s => { status.textContent = s; });
-    if (!imageUrl) throw new Error('Fant ikke noe bilde i kilden');
-    const dataUrl = await fetchImageAsDataUrl(imageUrl);
-    const compressed = await compressImage(dataUrl, 1200, 0.85);
-    const imgs = recipeImagesCache[_imgRecipeId] || [];
-    await uploadNewImage(_imgRecipeId, compressed, 'Fra kilden', imgs.length === 0);
-    status.textContent = '✓ Bilde hentet fra kilden!'; status.style.color = 'var(--accent)';
-    renderImgManager(); render();
+    const {imageUrl, videoUrl} = await resolveSource(recipe.source_url, s => { status.textContent = s; });
+    _imgSourceVideoUrl = videoUrl;
+    if (videoUrl) {
+      // Video → tre stillbilder å velge mellom
+      await showSourceFrames();
+    } else if (imageUrl) {
+      // Ingen video (FB/nettside/TikTok) → hent det ene cover-bildet
+      status.textContent = 'Lagrer bilde…';
+      const dataUrl = await fetchImageAsDataUrl(imageUrl);
+      const compressed = await compressImage(dataUrl, 1200, 0.85);
+      const imgs = recipeImagesCache[_imgRecipeId] || [];
+      await uploadNewImage(_imgRecipeId, compressed, 'Fra kilden', imgs.length === 0);
+      status.textContent = '✓ Bilde hentet fra kilden!'; status.style.color = 'var(--accent)';
+      renderImgManager(); render();
+    } else {
+      throw new Error('Fant verken bilde eller video i kilden');
+    }
   } catch(e) {
     status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '🔗 Nytt bilde fra kilden (original/video)'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '🎬 Nytt bilde fra kilden'; }
+  }
+}
+
+// Klipp tre stillbilder fra kilde-videoen og vis dem å velge mellom (+ Hent tre nye)
+async function showSourceFrames() {
+  const status = document.getElementById('imgAnalyzeStatus');
+  const grid = document.getElementById('imgSuggestGrid');
+  if (!_imgSourceVideoUrl) return;
+  status.textContent = 'Klipper bilder fra videoen…'; status.style.color = 'var(--text2)';
+  grid.innerHTML = '';
+  try {
+    const frames = await extractVideoFrames(_imgSourceVideoUrl, 3);
+    if (!frames.length) throw new Error('Ingen bilder');
+    window._imgSourceFrames = frames;
+    status.textContent = 'Velg det peneste bildet av retten:'; status.style.color = 'var(--text2)';
+    grid.innerHTML = '<div class="frame-grid">'
+      + frames.map((f, i) => '<img class="frame-thumb" src="' + f + '" onclick="pickSourceFrame(' + i + ')" alt="Bilde ' + (i + 1) + '">').join('')
+      + '</div>'
+      + '<button class="btn-cancel" style="width:100%;font-size:13px;margin-top:7px" onclick="showSourceFrames()">🔄 Hent tre nye</button>';
+  } catch(e) {
+    // Instagram lot oss ikke lese videoen (CORS) — si fra ærlig
+    console.warn('Bilde-fra-video feilet:', e.message);
+    status.textContent = '⚠️ Fikk ikke lest bildepunktene fra videoen. Prøv «Foreslå bilder» eller last opp selv.';
+    status.style.color = 'var(--coral)';
+    grid.innerHTML = '';
+  }
+}
+
+async function pickSourceFrame(i) {
+  const frames = window._imgSourceFrames || [];
+  if (!frames[i] || !_imgRecipeId) return;
+  const status = document.getElementById('imgAnalyzeStatus');
+  status.textContent = 'Lagrer bildet…'; status.style.color = 'var(--text2)';
+  try {
+    const compressed = await compressImage(frames[i], 1200, 0.85);
+    const imgs = recipeImagesCache[_imgRecipeId] || [];
+    await uploadNewImage(_imgRecipeId, compressed, 'Fra videoen', imgs.length === 0);
+    status.textContent = '✓ Bilde lagt til!'; status.style.color = 'var(--accent)';
+    document.getElementById('imgSuggestGrid').innerHTML = '';
+    renderImgManager(); render();
+  } catch(e) {
+    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
   }
 }
 
