@@ -8,6 +8,8 @@
 // innenfor; svært lange videoer kan gi tidsavbrudd (502) — da faller importen
 // tilbake til ren lyd-transkribering (transcribe.js).
 
+const { getUser } = require('../lib/auth');
+
 const MODEL = 'gemini-2.0-flash';
 const MAX_BYTES = 18 * 1024 * 1024; // Gemini inline-grense ~20 MB (base64 er større enn rådata)
 
@@ -40,6 +42,9 @@ exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
+
+  const user = await getUser(event);
+  if (!user) return json({ error: 'Ikke innlogget' }, 401);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {

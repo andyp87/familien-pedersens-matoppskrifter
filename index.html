@@ -673,6 +673,14 @@ const ICONS = {
 const _supa = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// Header til server-funksjonene: sender brukerens Supabase-token, så funksjonene
+// kan avvise kall som ikke kommer fra en innlogget bruker (beskytter API-nøklene).
+async function authHeaders() {
+  const {data} = await _supa.auth.getSession();
+  const token = data?.session?.access_token || '';
+  return {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token};
+}
+
 function withTimeout(promise, ms = 10000, msg) {
   const errMsg = msg || 'Tidsavbrudd etter ' + (ms/1000) + 's – sjekk nettilkoblingen og prøv igjen';
   return Promise.race([
@@ -1293,7 +1301,7 @@ async function analyzeRecipe() {
       const fetchResp = await withTimeout(
         fetch('/.netlify/functions/fetch-url', {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
+          headers: await authHeaders(),
           body: JSON.stringify({url: input})
         }),
         15000, 'Siden svarte ikke – kopier oppskriftsteksten manuelt og lim inn'
@@ -1331,7 +1339,7 @@ async function analyzeRecipe() {
         try {
           const gResp = await withTimeout(
             fetch('/.netlify/functions/gemini-video', {
-              method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({videoUrl})
+              method: 'POST', headers: await authHeaders(), body: JSON.stringify({videoUrl})
             }),
             30000, 'Videoanalysen tok for lang tid – prøv igjen'
           );
@@ -1346,7 +1354,7 @@ async function analyzeRecipe() {
           try {
             const tResp = await withTimeout(
               fetch('/.netlify/functions/transcribe', {
-                method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({videoUrl})
+                method: 'POST', headers: await authHeaders(), body: JSON.stringify({videoUrl})
               }),
               30000, 'Videoanalysen tok for lang tid – prøv igjen'
             );
@@ -1389,7 +1397,7 @@ async function analyzeRecipe() {
       try {
         const resp = await withTimeout(
           fetch('/.netlify/functions/claude', {
-            method: 'POST', headers: {'Content-Type':'application/json'},
+            method: 'POST', headers: await authHeaders(),
             body: JSON.stringify({model: models[attempt - 1], max_tokens: 1500, messages:[{role:'user',content}]})
           }),
           30000, 'Claude svarte ikke i tide – prøv igjen'
@@ -2276,7 +2284,7 @@ async function analyzeStepImage() {
     const mtype = _pendingUploadBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
     const resp = await fetch('/.netlify/functions/claude', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: await authHeaders(),
       body: JSON.stringify({
         model: CONFIG.MODEL_LABEL,
         max_tokens: 80,
@@ -2338,7 +2346,7 @@ async function recalcNutrition(recipeId, recipe) {
     '{"kcal": "350 kcal", "protein": "24g", "carbs": "45g", "fat": "12g"}';
   const resp = await withTimeout(
     fetch('/.netlify/functions/claude', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method: 'POST', headers: await authHeaders(),
       body: JSON.stringify({model: CONFIG.MODEL_IMPORT, max_tokens: 200, messages: [{role:'user', content: prompt}]})
     }), 30000, 'Claude svarte ikke på næringsberegningen');
   if (!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || 'Feil: ' + resp.status); }
@@ -2419,7 +2427,7 @@ async function loadImgSuggestions() {
     if (getApiKey()) {
       try {
         const resp = await withTimeout(fetch('/.netlify/functions/claude', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
+          method: 'POST', headers: await authHeaders(),
           body: JSON.stringify({model: CONFIG.MODEL_LABEL, max_tokens: 30, messages: [{role:'user',
             content: 'Oversett dette rettnavnet til en kort engelsk bildesøketekst for et pent matbilde (2-5 ord). Returner KUN søketeksten: ' + recipe.name}]})
         }), 10000);
@@ -2468,7 +2476,7 @@ async function pickSuggestedImage(i) {
 async function resolveSourceImage(url, onStatus) {
   const resp = await withTimeout(
     fetch('/.netlify/functions/fetch-url', {
-      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url})
+      method: 'POST', headers: await authHeaders(), body: JSON.stringify({url})
     }), 15000, 'Kilden svarte ikke');
   let d = await resp.json();
   if (d.error) throw new Error(d.error);

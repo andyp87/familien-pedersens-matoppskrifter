@@ -1,6 +1,14 @@
+const { getUser } = require('../lib/auth');
+
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  // Krev innlogget bruker — ellers kan hvem som helst bruke Anthropic-nøkkelen vår.
+  const user = await getUser(event);
+  if (!user) {
+    return { statusCode: 401, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: { message: 'Ikke innlogget' } }) };
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

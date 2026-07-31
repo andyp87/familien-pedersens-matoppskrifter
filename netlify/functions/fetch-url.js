@@ -1,3 +1,5 @@
+const { getUser } = require('../lib/auth');
+
 // SSRF-vern: blokker interne/private adresser (cloud-metadata, localhost osv.)
 function isBlockedHost(urlStr) {
   try {
@@ -27,6 +29,11 @@ exports.handler = async function(event) {
   }
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  const user = await getUser(event);
+  if (!user) {
+    return { statusCode: 401, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Ikke innlogget' }) };
   }
 
   let url;

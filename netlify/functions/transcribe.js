@@ -6,6 +6,8 @@
 // Merk: Netlify-funksjoner har ~10 s tidsgrense. Korte reels (15–60 s) rekker
 // stort sett innenfor; svært lange videoer kan gi tidsavbrudd (502).
 
+const { getUser } = require('../lib/auth');
+
 const MAX_BYTES = 24 * 1024 * 1024; // Whisper tar maks 25 MB — hold oss under
 
 function json(body, status = 200) {
@@ -37,6 +39,9 @@ exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
+
+  const user = await getUser(event);
+  if (!user) return json({ error: 'Ikke innlogget' }, 401);
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
