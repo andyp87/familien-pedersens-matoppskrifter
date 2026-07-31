@@ -467,6 +467,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           <div class="ai-preview-title" id="previewTitle"></div>
           <div class="ai-preview-meta" id="previewMeta"></div>
           <div id="previewIngr" style="font-size:13px;color:var(--text2);margin-bottom:8px"></div>
+          <div id="framePicker" class="frame-picker" style="display:none"></div>
           <button class="ai-save-btn" onclick="saveAiRecipe()">✓ Legg til i kokeboken</button>
         </div>
       </div>
@@ -739,6 +740,8 @@ let activeCat = 'alle', activeHealth = 'alle', activeSort = 'popular', activeCui
 let pendingAiRecipe = null;
 let pendingSourceImageUrl = null; // bilde fra kilden (IG-video/og:image) til forslag
 let pendingSourceUrl = null;      // kilde-URL fra import → lagres som source_url
+let pendingVideoUrl = null;       // direkte videolenke (IG) → klippe ut stillbilder
+let pendingSelectedFrame = null;  // valgt stillbilde (data-URL) som skal bli forsidebilde
 let _recipeCardBase64 = null;
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
@@ -1478,6 +1481,8 @@ async function analyzeRecipe() {
   pendingAiRecipe = null;
   pendingSourceImageUrl = null;
   pendingSourceUrl = null;
+  pendingVideoUrl = null;
+  pendingSelectedFrame = null;
 
   try {
     // ── URL-henting ───────────────────────────────────────────────────────────
@@ -1524,6 +1529,7 @@ async function analyzeRecipe() {
 
       // Oppskriften i teksten? Hvis ikke, men det finnes en video → analyser videoen.
       const videoUrl = fetchData.videoUrl || null;
+      pendingVideoUrl = videoUrl; // brukes til å klippe ut stillbilder å velge mellom
       if (videoUrl && !looksLikeRecipe(textForClaude)) {
         let fromVideo = '';
         // 1) Gemini: SER + HØRER videoen (dekker både tale og tekst på skjermen)
@@ -1626,7 +1632,12 @@ function showAiPreview(r) {
     '<span class="preview-pill">' + (HEALTH_LABEL[r.health] || 'Balansert') + '</span>';
   const allIngr = r.ingr.flatMap(g => g.items).slice(0, 6).join(', ') + (r.ingr.flatMap(g => g.items).length > 6 ? '...' : '');
   document.getElementById('previewIngr').textContent = 'Ingredienser: ' + allIngr;
+  // Nullstill + skjul bildevelgeren; last tre bilder fra videoen hvis vi har en
+  const fp = document.getElementById('framePicker');
+  if (fp) { fp.style.display = 'none'; fp.innerHTML = ''; }
+  pendingSelectedFrame = null;
   document.getElementById('aiPreview').style.display = 'block';
+  if (pendingVideoUrl) loadFramePicker();
 }
 
 async function saveAiRecipe() {
@@ -1653,6 +1664,17 @@ async function saveAiRecipe() {
       } catch(imgErr) {
         console.warn('Klarte ikke lagre oppskriftsbilde:', imgErr.message);
       }
+    } else if (pendingSelectedFrame) {
+      // Brukeren valgte et stillbilde fra videoen
+      try {
+        if (status) { status.textContent = 'Lagrer valgt bilde…'; }
+        const compressed = await compressImage(pendingSelectedFrame, 1200, 0.85);
+        await uploadNewImage(saved.id, compressed, 'Fra videoen', true);
+        const hero = (recipeImagesCache[saved.id] || []).find(i => i.is_hero);
+        if (hero) saved.image_url = hero.url;
+      } catch(imgErr) {
+        console.warn('Klarte ikke lagre videobilde:', imgErr.message);
+      }
     } else {
       // Automatisk bildeforslag: kildens bilde (IG-video/og:image), ellers Pexels
       try {
@@ -1671,6 +1693,8 @@ async function saveAiRecipe() {
     pendingAiRecipe = null;
     pendingSourceImageUrl = null;
     pendingSourceUrl = null;
+    pendingVideoUrl = null;
+    pendingSelectedFrame = null;
     activeMode = 'cookbook'; activeSort = 'newest';
     buildFilters(); render();
   } catch(e) {
@@ -2642,6 +2666,70 @@ async function fetchImageAsDataUrl(url) {
   return d.dataUrl;
 }
 
+// ─── Stillbilder fra video (velg forsidebilde) ───────────────────────────────
+// Klipp `count` stillbilder ut av en video ved tilfeldige tidspunkt, rett i
+// nettleseren. Kaster hvis videoen ikke kan leses pga. CORS (tainted canvas) —
+// da faller importen tilbake til vanlig cover/Pexels-forslag.
+function extractVideoFrames(videoUrl, count) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous'; video.muted = true; video.playsInline = true; video.preload = 'auto';
+    const frames = []; let stamps = []; let idx = 0;
+    const to = setTimeout(() => fail(new Error('Tidsavbrudd')), 25000);
+    function cleanup() { clearTimeout(to); try { video.removeAttribute('src'); video.load(); } catch(e) {} }
+    function done() { cleanup(); resolve(frames); }
+    function fail(e) { cleanup(); reject(e instanceof Error ? e : new Error('Videofeil')); }
+    function seekNext() { if (idx >= stamps.length) return done(); video.currentTime = stamps[idx]; }
+    video.onloadedmetadata = () => {
+      const dur = video.duration;
+      if (!dur || !isFinite(dur)) return fail(new Error('Ukjent varighet'));
+      stamps = Array.from({length: count}, () => +((0.12 + Math.random() * 0.76) * dur).toFixed(2)).sort((a, b) => a - b);
+      seekNext();
+    };
+    video.onseeked = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = video.videoWidth || 720; c.height = video.videoHeight || 1280;
+        c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+        frames.push(c.toDataURL('image/jpeg', 0.85)); // kaster hvis canvas er «tainted»
+      } catch(e) { return fail(e); }
+      idx++; seekNext();
+    };
+    video.onerror = () => fail(new Error('Kunne ikke laste videoen'));
+    video.src = videoUrl;
+  });
+}
+
+// Hent og vis tre bilder fra videoen i importvinduet (+ «Hent tre nye»)
+async function loadFramePicker() {
+  const box = document.getElementById('framePicker');
+  if (!box || !pendingVideoUrl) return;
+  box.style.display = 'block';
+  box.innerHTML = '<div class="frame-picker-title"><span class="img-spinner"></span> Henter bilder fra videoen…</div>';
+  try {
+    const frames = await extractVideoFrames(pendingVideoUrl, 3);
+    if (!frames.length) throw new Error('Ingen bilder');
+    window._frameChoices = frames;
+    pendingSelectedFrame = frames[0]; // forhåndsvalgt
+    box.innerHTML = '<div class="frame-picker-title">🎬 Velg forsidebilde fra videoen</div>'
+      + '<div class="frame-grid">'
+      + frames.map((f, i) => '<img class="frame-thumb' + (i === 0 ? ' sel' : '') + '" src="' + f + '" onclick="pickFrame(' + i + ')" alt="Bilde ' + (i + 1) + '">').join('')
+      + '</div>'
+      + '<button class="btn-cancel frame-refresh" type="button" onclick="loadFramePicker()">🔄 Hent tre nye</button>';
+  } catch(e) {
+    console.warn('Bilde-fra-video feilet, bruker vanlig forslag:', e.message);
+    pendingSelectedFrame = null;
+    box.style.display = 'none'; // fall pent tilbake til cover/Pexels
+  }
+}
+
+function pickFrame(i) {
+  const frames = window._frameChoices || [];
+  if (!frames[i]) return;
+  pendingSelectedFrame = frames[i];
+  document.querySelectorAll('#framePicker .frame-thumb').forEach((el, j) => el.classList.toggle('sel', j === i));
+}
+
 async function searchImageCandidates(query) {
   const resp = await withTimeout(
     fetch('/.netlify/functions/search-image', {
@@ -2847,6 +2935,15 @@ _style.textContent = `
 /* Kildelenke som info-pill */
 a.info-pill.source-link{text-decoration:none;color:var(--accent);border-color:var(--accent)}
 a.info-pill.source-link:hover{background:var(--accent-bg)}
+
+/* Bildevelger fra video (import) */
+.frame-picker{margin:6px 0 12px;padding:12px;background:var(--surface2);border:1px solid var(--border)}
+.frame-picker-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.frame-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
+.frame-thumb{width:100%;aspect-ratio:1/1;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .12s;display:block}
+.frame-thumb:hover{border-color:var(--border2)}
+.frame-thumb.sel{border-color:var(--accent)}
+.frame-refresh{width:100%;font-size:13px}
 
 /* Kommentarer */
 .comments-list{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
