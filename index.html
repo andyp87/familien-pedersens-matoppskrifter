@@ -364,10 +364,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         <span>Ny oppskrift</span>
       </button>
-      <span class="hide-mobile" id="userEmailDisplay" style="font-size:12px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-      <button class="settings-btn" onclick="openSettings()" title="Innstillinger" aria-label="Innstillinger">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2"/></svg>
-      </button>
+      <button class="header-avatar-btn" id="headerAvatarBtn" onclick="openSettings()" title="Din profil og innstillinger" aria-label="Din profil"></button>
     </div>
   </div>
 </header>
@@ -528,6 +525,25 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <button class="modal-header-close" onclick="document.getElementById('settingsModal').classList.remove('open')">✕</button>
     </div>
     <div class="settings-body">
+      <div class="settings-section" id="profileSection" style="border:0;padding-top:0;margin-top:0;display:none">
+        <h3>Din profil</h3>
+        <div class="profile-edit">
+          <span id="profileEditAvatar"></span>
+          <div>
+            <label class="avatar-upload-btn">
+              <input type="file" accept="image/*" id="avatarInput" onchange="onAvatarSelected(this)" style="display:none">
+              📷 Bytt bilde
+            </label>
+            <div class="api-status" id="avatarStatus" style="text-align:left;margin-top:5px"></div>
+          </div>
+        </div>
+        <div class="api-input-row">
+          <input type="text" id="displayNameInput" placeholder="Visningsnavn (f.eks. Anders)" autocomplete="off" maxlength="40">
+          <button class="api-save-btn" onclick="saveProfile()">Lagre</button>
+        </div>
+        <div class="api-status" id="profileStatus"></div>
+      </div>
+
       <h3>Claude API-nøkkel</h3>
       <p>For å importere oppskrifter automatisk og analysere bilder. Lagres kun i din nettleser.</p>
       <div class="step-guide">
@@ -625,6 +641,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     </div>
     <div style="padding:16px 20px 24px" id="statsContent"></div>
   </div>
+</div>
+
+<!-- Profile view modal -->
+<div class="modal-bg" id="profileModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" id="profileContent"></div>
 </div>
 
 <!-- Lightbox -->
@@ -735,6 +756,7 @@ async function onLogin() {
   showApp();
   setGreeting();
   await loadRecipesFromDB();
+  renderHeaderAvatar();
   checkKeyBanner();
   buildFilters();
   render();
@@ -742,8 +764,15 @@ async function onLogin() {
 
 function showApp() {
   document.getElementById('authOverlay').style.display = 'none';
-  const el = document.getElementById('userEmailDisplay');
-  if (el) el.textContent = (currentUser?.email || '').split('@')[0];
+  renderHeaderAvatar();
+}
+
+// Avatar øverst til høyre — bilde hvis satt, ellers initialer fra navn/e-post
+function renderHeaderAvatar() {
+  const btn = document.getElementById('headerAvatarBtn');
+  if (!btn || !currentUser) return;
+  const name = profileName(currentUser.id, (currentUser.email || '').split('@')[0]);
+  btn.innerHTML = avatarHtml(currentUser.id, name, 30);
 }
 
 function showAuthScreen() {
@@ -850,14 +879,21 @@ function dbRowToRecipe(row) {
 let allEntries = []; // rå bokføringer fra alle brukere (kilde for aggregater)
 // Oppdages fra dataene: er DB-migrasjonene kjørt? Funksjonene skjules til de er det,
 // så frontenden aldri skriver en kolonne som ikke finnes ennå.
-let CAPS = { private: false, cuisine: false };
+let CAPS = { private: false, cuisine: false, profiles: false };
+let profileCache = {}; // user_id -> { display_name, avatar_url }
 
 async function loadRecipesFromDB() {
-  // Delt pool: alle oppskrifter + bilder, og ALLE bokføringer (for snitt/topplister)
-  const [recRes, entRes] = await Promise.all([
+  // Delt pool: alle oppskrifter + bilder, ALLE bokføringer, og profiler.
+  // profiles-tabellen finnes kanskje ikke ennå (migrasjon 05) — feiler stille.
+  const [recRes, entRes, profRes] = await Promise.all([
     _supa.from('recipes').select('*, recipe_images(*)').order('created_at', {ascending: false}),
-    _supa.from('cookbook_entries').select('*')
+    _supa.from('cookbook_entries').select('*'),
+    _supa.from('profiles').select('*')
   ]);
+
+  CAPS.profiles = !profRes.error;
+  profileCache = {};
+  if (!profRes.error && profRes.data) profRes.data.forEach(p => { profileCache[p.user_id] = p; });
 
   if (!recRes.error && recRes.data) {
     // Oppdag hvilke migrasjoner som er kjørt (kolonner finnes i rådataene)
@@ -900,6 +936,46 @@ function upsertLocalEntry(entry) {
 function removeLocalEntry(recipeId) {
   allEntries = allEntries.filter(e => !(e.user_id === currentUser.id && e.recipe_id === recipeId));
   rebuildEntryIndex();
+}
+
+// ─── Profiler ──────────────────────────────────────────────────────────────────
+function profileName(userId, fallback) {
+  const p = profileCache[userId];
+  return (p && p.display_name) ? p.display_name : (fallback || 'Ukjent');
+}
+function profileAvatar(userId) {
+  const p = profileCache[userId];
+  return (p && p.avatar_url) ? p.avatar_url : null;
+}
+function initials(name) {
+  const parts = String(name || '?').trim().split(/[\s.@]+/).filter(Boolean);
+  return ((parts[0] && parts[0][0] || '?') + (parts[1] && parts[1][0] || '')).toUpperCase();
+}
+// Liten avatar: bilde hvis satt, ellers en sirkel med initialer
+function avatarHtml(userId, name, size) {
+  const s = size || 22;
+  const url = profileAvatar(userId);
+  if (url) return '<span class="avatar" style="width:' + s + 'px;height:' + s + 'px"><img src="' + esc(url) + '" alt=""></span>';
+  return '<span class="avatar avatar-fallback" style="width:' + s + 'px;height:' + s + 'px;font-size:' + Math.round(s * 0.42) + 'px">' + esc(initials(name)) + '</span>';
+}
+
+async function uploadAvatar(dataUrl) {
+  const blob = dataUrlToBlob(dataUrl);
+  const path = 'avatars/' + currentUser.id + '_' + Date.now() + '.jpg';
+  const {error} = await withTimeout(
+    _supa.storage.from(CONFIG.STORAGE_BUCKET).upload(path, blob, {contentType: 'image/jpeg', upsert: true}), 15000);
+  if (error) throw error;
+  return _supa.storage.from(CONFIG.STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+async function saveMyProfile(displayName, avatarUrl) {
+  const payload = {user_id: currentUser.id, display_name: displayName};
+  if (avatarUrl !== undefined) payload.avatar_url = avatarUrl;
+  const {data, error} = await withTimeout(
+    _supa.from('profiles').upsert(payload, {onConflict: 'user_id'}).select().single(), 10000);
+  if (error) throw error;
+  profileCache[currentUser.id] = data;
+  return data;
 }
 
 // ─── Bokføring (cookbook_entries) ──────────────────────────────────────────────
@@ -1162,11 +1238,87 @@ function checkKeyBanner() {
   if (getApiKey()) { banner.classList.remove('show'); } else { banner.classList.add('show'); }
 }
 
+let _pendingAvatarUrl; // undefined = uendret, string/null = ny verdi som skal lagres
 function openSettings() {
   const ck = getApiKey(); if (ck) document.getElementById('apiKeyInput').value = ck;
   const emailEl = document.getElementById('settingsUserEmail');
   if (emailEl) emailEl.textContent = currentUser?.email || '';
+  // Profil-seksjonen vises kun når migrasjon 05 er kjørt
+  const ps = document.getElementById('profileSection');
+  if (ps) ps.style.display = CAPS.profiles ? 'block' : 'none';
+  if (CAPS.profiles) {
+    _pendingAvatarUrl = undefined;
+    document.getElementById('profileStatus').textContent = '';
+    document.getElementById('avatarStatus').textContent = '';
+    const fallback = (currentUser.email || '').split('@')[0];
+    document.getElementById('displayNameInput').value = profileCache[currentUser.id]?.display_name || '';
+    document.getElementById('displayNameInput').placeholder = 'Visningsnavn (f.eks. ' + (fallback.charAt(0).toUpperCase() + fallback.slice(1)) + ')';
+    document.getElementById('profileEditAvatar').innerHTML = avatarHtml(currentUser.id, profileName(currentUser.id, fallback), 64);
+  }
   document.getElementById('settingsModal').classList.add('open');
+}
+
+function onAvatarSelected(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const status = document.getElementById('avatarStatus');
+    status.textContent = 'Behandler bilde…'; status.style.color = 'var(--text2)';
+    try {
+      const compressed = await compressImage(e.target.result, 400, 0.85);
+      status.textContent = 'Laster opp…';
+      _pendingAvatarUrl = await uploadAvatar(compressed);
+      document.getElementById('profileEditAvatar').innerHTML =
+        '<span class="avatar" style="width:64px;height:64px"><img src="' + esc(_pendingAvatarUrl) + '" alt=""></span>';
+      status.textContent = '✓ Bilde klart – trykk Lagre'; status.style.color = 'var(--accent)';
+    } catch(err) {
+      status.textContent = '⚠️ ' + err.message; status.style.color = 'var(--coral)';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveProfile() {
+  const name = document.getElementById('displayNameInput').value.trim();
+  const status = document.getElementById('profileStatus');
+  status.textContent = 'Lagrer…'; status.style.color = 'var(--text2)';
+  try {
+    await saveMyProfile(name, _pendingAvatarUrl);
+    _pendingAvatarUrl = undefined;
+    renderHeaderAvatar();
+    render(); // forfatter-navn/-bilde oppdateres på kortene
+    status.textContent = '✓ Profil lagret!'; status.style.color = 'var(--accent)';
+  } catch(e) {
+    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
+  }
+}
+
+// Klikk på en bruker → se profilen deres og oppskriftene de har laget
+function openProfile(userId) {
+  if (!userId) return;
+  const isMe = userId === currentUser.id;
+  const fallback = isMe ? (currentUser.email || '').split('@')[0] : 'Ukjent';
+  const name = profileName(userId, fallback);
+  const theirRecipes = recipes.filter(r => r.author_id === userId);
+  const grid = theirRecipes.length
+    ? '<div class="grid">' + theirRecipes.map(cardHtml).join('') + '</div>'
+    : '<p class="stats-empty">Ingen delte oppskrifter ennå.</p>';
+  document.getElementById('profileContent').innerHTML =
+    '<div class="modal-header">'
+    + '<span class="modal-header-title">Profil</span>'
+    + '<button class="modal-header-close" onclick="document.getElementById(\'profileModal\').classList.remove(\'open\')">✕</button>'
+    + '</div>'
+    + '<div class="modal-body">'
+    + '<div class="profile-head">'
+    +   avatarHtml(userId, name, 84)
+    +   '<div class="profile-name">' + esc(name) + '</div>'
+    +   '<div class="profile-sub">' + theirRecipes.length + ' ' + (theirRecipes.length === 1 ? 'oppskrift' : 'oppskrifter') + (isMe ? ' · dette er deg' : '') + '</div>'
+    +   (isMe ? '<button class="detail-action-btn" style="max-width:220px" onclick="document.getElementById(\'profileModal\').classList.remove(\'open\');openSettings()">Rediger profil</button>' : '')
+    + '</div>'
+    + '<div class="section-title">Laget av ' + esc(name) + '</div>'
+    + grid
+    + '</div>';
+  document.getElementById('profileModal').classList.add('open');
 }
 
 // ─── Tabs ──────────────────────────────────────────────────────────────────────
@@ -1673,7 +1825,10 @@ function cardHtml(r) {
 
   const priv = r.is_private ? '<span class="card-private" title="Privat – kun du ser den">🔒</span>' : '';
   const cuisineTag = r.cuisine ? '<span class="card-cuisine">' + esc(r.cuisine) + '</span>' : '';
-  const author = activeMode === 'discover' ? '<div class="card-author">av ' + esc(r.author_name) + cuisineTag + '</div>'
+  const aName = profileName(r.author_id, r.author_name);
+  const author = activeMode === 'discover'
+    ? '<div class="card-author clickable" onclick="event.stopPropagation();openProfile(\'' + r.author_id + '\')">'
+        + avatarHtml(r.author_id, aName, 18) + '<span>' + esc(aName) + '</span>' + cuisineTag + '</div>'
     : (r.cuisine ? '<div class="card-author">' + cuisineTag + '</div>' : '');
 
   return '<article class="card" onclick="openDetail(\'' + r.id + '\')" tabindex="0" role="button" aria-label="' + esc(r.name) + '">'
@@ -2090,7 +2245,7 @@ function openDetail(id) {
     + (r.time ? '<div class="info-pill">' + ICONS.clock + esc(r.time) + '</div>' : '')
     + (r.yield ? '<div class="info-pill">' + ICONS.users + esc(r.yield) + '</div>' : '')
     + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
-    + '<div class="info-pill" title="Lagt til av">' + ICONS.users + esc(r.author_name) + '</div>'
+    + '<button class="author-pill-btn" title="Se profil" onclick="openProfile(\'' + r.author_id + '\')">' + avatarHtml(r.author_id, profileName(r.author_id, r.author_name), 20) + '<span>' + esc(profileName(r.author_id, r.author_name)) + '</span></button>'
     + (r.cuisine ? '<div class="info-pill" title="Kjøkken">🌍 ' + esc(r.cuisine) + '</div>' : '')
     + (r.is_private ? '<div class="info-pill" style="border-color:var(--amber);color:var(--amber)" title="Kun du ser denne">🔒 Privat</div>' : '')
     + (agg.ratingCount ? '<div class="info-pill" title="Familiens snitt-terning">⭐ ' + avg.toFixed(1) + ' (' + agg.ratingCount + ')</div>' : '')
@@ -2582,6 +2737,30 @@ _style.textContent = `
 /* Kildelenke som info-pill */
 a.info-pill.source-link{text-decoration:none;color:var(--accent);border-color:var(--accent)}
 a.info-pill.source-link:hover{background:var(--accent-bg)}
+
+/* Avatarer (profilbilde eller initialer) */
+.avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;flex:0 0 auto;background:var(--surface2);vertical-align:middle}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-fallback{background:var(--accent);color:#fff;font-weight:600;line-height:1}
+.header-avatar-btn{padding:0;border:1.5px solid var(--border2);background:var(--surface2);border-radius:50%;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:border-color .12s}
+.header-avatar-btn:hover{border-color:var(--accent)}
+.card-author{display:flex;align-items:center;gap:5px}
+.card-author.clickable{cursor:pointer}
+.card-author.clickable:hover{color:var(--accent)}
+.author-pill-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);padding:3px 10px 3px 3px;font:inherit;color:var(--text2);border-radius:999px}
+.author-pill-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Profil-redigering i innstillinger */
+.profile-edit{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.profile-edit .avatar{width:64px;height:64px;font-size:24px}
+.avatar-upload-btn{font:500 12px 'DM Sans',sans-serif;border:1px solid var(--border2);background:var(--surface);color:var(--text2);padding:6px 10px;cursor:pointer}
+.avatar-upload-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Profil-visning (klikk på en bruker) */
+.profile-head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0 18px;text-align:center}
+.profile-head .avatar{width:84px;height:84px;font-size:32px}
+.profile-name{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--text)}
+.profile-sub{font-size:13px;color:var(--text3)}
 
 /* Privat-bryter i skjemaet */
 .private-toggle{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);margin-bottom:12px;cursor:pointer;font-size:13px;color:var(--text2);line-height:1.4}
