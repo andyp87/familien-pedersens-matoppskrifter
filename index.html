@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Familiens oppskrifter – nineofve</title>
+<title>Kokeboka vår</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -338,7 +338,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--surface);border:1px solid var(--border2);padding:32px;width:100%;max-width:380px">
     <div style="font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">nine<span style="color:var(--accent)">of</span>ve 🍽</div>
-    <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5">Familiens oppskriftbok</div>
+    <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5">Kokeboka vår – oppskrifter vi deler</div>
     <input class="auth-input" type="email" id="authEmail" placeholder="E-postadresse" autocomplete="email">
     <input class="auth-input" type="password" id="authPassword" placeholder="Passord (minst 6 tegn)" autocomplete="current-password">
     <div class="auth-status" id="authStatus"></div>
@@ -350,7 +350,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 <header>
   <div class="header-inner">
-    <a class="logo" href="#">nine<span>of</span>ve 🍽</a>
+    <a class="logo" href="#">Koke<span>boka</span> 🍽</a>
     <div class="header-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" id="searchInput" placeholder="Søk etter oppskrift…" oninput="render()">
@@ -372,8 +372,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <div class="hero">
   <div class="hero-inner">
     <div class="hero-greeting" id="heroGreeting"></div>
-    <h1>Familiens middager</h1>
-    <p>Alle oppskrifter samlet på ett sted</p>
+    <h1>Kokeboka vår</h1>
+    <p>Oppskrifter vi deler</p>
     <div class="stats-row" id="statsRow"></div>
   </div>
 </div>
@@ -662,7 +662,7 @@ const CONFIG = {
   STORAGE_BUCKET: 'recipe-images',
   MAX_IMAGES_PER_RECIPE: 20,
   SITE_NAME: 'nineofve',
-  SITE_TITLE: 'Familiens middager',
+  SITE_TITLE: 'Kokeboka vår',
   // Claude models — import prøver Sonnet først (best kvalitet). Hvis Sonnet
   // tangerer Netlifys ~10 s funksjonsgrense og gir 502, tas et nytt forsøk
   // automatisk med den raskere Haiku (~4 s), så import aldri feiler helt.
@@ -872,6 +872,7 @@ function dbRowToRecipe(row) {
     author_id: row.user_id || null,
     is_private: row.is_private || false,
     cuisine: row.cuisine || '',
+    parent_recipe_id: row.parent_recipe_id || null,
     created_at: row.created_at || null
   };
 }
@@ -879,19 +880,21 @@ function dbRowToRecipe(row) {
 let allEntries = []; // rå bokføringer fra alle brukere (kilde for aggregater)
 // Oppdages fra dataene: er DB-migrasjonene kjørt? Funksjonene skjules til de er det,
 // så frontenden aldri skriver en kolonne som ikke finnes ennå.
-let CAPS = { private: false, cuisine: false, profiles: false };
+let CAPS = { private: false, cuisine: false, profiles: false, comments: false, variants: false };
 let profileCache = {}; // user_id -> { display_name, avatar_url }
 
 async function loadRecipesFromDB() {
   // Delt pool: alle oppskrifter + bilder, ALLE bokføringer, og profiler.
   // profiles-tabellen finnes kanskje ikke ennå (migrasjon 05) — feiler stille.
-  const [recRes, entRes, profRes] = await Promise.all([
+  const [recRes, entRes, profRes, comProbe] = await Promise.all([
     _supa.from('recipes').select('*, recipe_images(*)').order('created_at', {ascending: false}),
     _supa.from('cookbook_entries').select('*'),
-    _supa.from('profiles').select('*')
+    _supa.from('profiles').select('*'),
+    _supa.from('comments').select('id').limit(1)
   ]);
 
   CAPS.profiles = !profRes.error;
+  CAPS.comments = !comProbe.error;
   profileCache = {};
   if (!profRes.error && profRes.data) profRes.data.forEach(p => { profileCache[p.user_id] = p; });
 
@@ -901,6 +904,7 @@ async function loadRecipesFromDB() {
     if (sample) {
       CAPS.private = Object.prototype.hasOwnProperty.call(sample, 'is_private');
       CAPS.cuisine = Object.prototype.hasOwnProperty.call(sample, 'cuisine');
+      CAPS.variants = Object.prototype.hasOwnProperty.call(sample, 'parent_recipe_id');
     }
     recipes = recRes.data.map(dbRowToRecipe);
     recipeImagesCache = {};
@@ -978,6 +982,38 @@ async function saveMyProfile(displayName, avatarUrl) {
   return data;
 }
 
+// ─── Kommentarer ─────────────────────────────────────────────────────────────
+async function loadComments(recipeId) {
+  const {data, error} = await _supa.from('comments').select('*')
+    .eq('recipe_id', recipeId).order('created_at', {ascending: true});
+  return error ? [] : (data || []);
+}
+async function addComment(recipeId, body) {
+  const {data, error} = await withTimeout(
+    _supa.from('comments').insert({recipe_id: recipeId, user_id: currentUser.id, body}).select().single(), 10000);
+  if (error) throw error;
+  return data;
+}
+async function deleteComment(id) {
+  const {error} = await _supa.from('comments').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ─── Varianter («2.0») ───────────────────────────────────────────────────────
+function variantsOf(recipeId) { return recipes.filter(r => r.parent_recipe_id === recipeId); }
+
+// Lag en kopi av en annens oppskrift med mine endringer + auto-kommentar på originalen
+async function createVariant(originalId, recipe, changeNote) {
+  recipe.parent_recipe_id = originalId;
+  const saved = await addRecipeToDB(recipe);
+  recipes.unshift(saved);
+  if (CAPS.comments) {
+    const note = changeNote ? ('🔀 Lagde en variant: ' + changeNote) : '🔀 Lagde en variant av denne.';
+    try { await addComment(originalId, note); } catch(e) { console.warn('Auto-kommentar feilet:', e.message); }
+  }
+  return saved;
+}
+
 // ─── Bokføring (cookbook_entries) ──────────────────────────────────────────────
 function myEntry(id)      { return myEntries[id] || null; }
 function inMyCookbook(id) { return myEntries[id]?.status === 'approved'; }
@@ -1051,6 +1087,7 @@ async function addRecipeToDB(recipe) {
   // Kun hvis migrasjonen er kjørt (kolonnen finnes) — ellers ville insert feilet
   if (CAPS.private) payload.is_private = !!recipe.is_private;
   if (CAPS.cuisine && recipe.cuisine) payload.cuisine = recipe.cuisine;
+  if (CAPS.variants && recipe.parent_recipe_id) payload.parent_recipe_id = recipe.parent_recipe_id;
   const {data, error} = await withTimeout(
     _supa.from('recipes').insert(payload).select().single(),
     10000
@@ -1340,6 +1377,7 @@ function openAddModal() {
   document.getElementById('tab-manual').classList.remove('active');
   document.querySelectorAll('.add-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
   document.getElementById('edit-recipe-id').value = '';
+  _editVariantOf = null;
   document.getElementById('manualSaveBtn').textContent = 'Lagre oppskrift';
   ['f-name','f-emoji','f-time','f-kcal','f-ingr','f-steps','f-yield','f-source','f-cuisine'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-health').value = 3;
@@ -1351,11 +1389,13 @@ function openAddModal() {
   setTimeout(() => { const el = document.getElementById('aiInput'); if (el) el.focus(); }, 60);
 }
 
-function openEditModal(recipeId) {
+let _editVariantOf = null; // satt når vi lager en variant av en annens oppskrift
+function openEditModal(recipeId, asVariant) {
   const r = recipes.find(x => x.id === recipeId);
   if (!r) return;
+  _editVariantOf = asVariant ? recipeId : null;
   document.getElementById('detailModal').classList.remove('open');
-  document.getElementById('addModalTitle').textContent = 'Rediger oppskrift';
+  document.getElementById('addModalTitle').textContent = asVariant ? '🔀 Lag din versjon' : 'Rediger oppskrift';
   document.getElementById('addModalTabs').style.display = 'none';
   document.getElementById('tab-ai').classList.remove('active');
   document.getElementById('tab-manual').classList.add('active');
@@ -1375,7 +1415,7 @@ function openEditModal(recipeId) {
   document.getElementById('f-cuisine').value = r.cuisine || '';
   document.getElementById('f-private').checked = !!r.is_private;
   syncOptionalFieldRows();
-  document.getElementById('manualSaveBtn').textContent = 'Lagre endringer';
+  document.getElementById('manualSaveBtn').textContent = asVariant ? 'Lagre min versjon' : 'Lagre endringer';
   document.getElementById('addModal').classList.add('open');
 }
 
@@ -1533,7 +1573,7 @@ async function analyzeRecipe() {
       content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:compressed.split(',')[1]}});
     }
 
-    const prompt = 'Du er en assistent som hjelper en familie med å organisere oppskrifter.\n\nAnalyser følgende' +
+    const prompt = 'Du er en assistent som hjelper folk med å organisere oppskrifter.\n\nAnalyser følgende' +
       (_recipeCardBase64 ? ' bilde og/eller' : '') + (textForClaude ? ' tekst' : '') +
       ' og trekk ut oppskriftsinformasjon. Returner KUN gyldig JSON, ingen forklaring, ingen markdown.\n\n' +
       (textForClaude ? 'Input:\n' + textForClaude + '\n\n' : '') +
@@ -1668,7 +1708,13 @@ async function saveManualRecipe() {
 
   try {
     let savedId;
-    if (editId) {
+    if (_editVariantOf) {
+      // Lag en variant av en annens oppskrift + auto-kommentar på originalen
+      const note = (prompt('Hva endret du? (vises som kommentar under originalen)\nF.eks. «byttet fløte med kokosmelk»') || '').trim();
+      const saved = await createVariant(_editVariantOf, recipe, note);
+      savedId = saved.id;
+      _editVariantOf = null;
+    } else if (editId) {
       await updateRecipeInDB(editId, recipe);
       const idx = recipes.findIndex(r => r.id === editId);
       if (idx !== -1) recipes[idx] = Object.assign(recipes[idx], recipe);
@@ -1743,7 +1789,7 @@ function buildFilters() {
   const sf = document.getElementById('sortFilters');
   if (sf) {
     const SORTS = activeMode === 'discover'
-      ? [['popular','⭐ Familiens favoritter'],['cooked','🍳 Mest laget'],['newest','✨ Nyeste']]
+      ? [['popular','⭐ Mest likt'],['cooked','🍳 Mest laget'],['newest','✨ Nyeste']]
       : [['popular','⭐ Mine favoritter'],['cooked','🍳 Mest laget av meg'],['newest','✨ Nyeste']];
     sf.innerHTML = SORTS.map(([k, label]) =>
       '<button class="chip' + (activeSort === k ? ' active' : '') + '" onclick="setSort(\'' + k + '\')">' + label + '</button>').join('');
@@ -1765,9 +1811,9 @@ function setMode(m) {
   document.getElementById('modeCookbook').classList.toggle('active', m === 'cookbook');
   document.getElementById('modeDiscover').classList.toggle('active', m === 'discover');
   const h1 = document.querySelector('.hero h1'), p = document.querySelector('.hero p');
-  if (h1) h1.textContent = m === 'discover' ? 'Oppdag oppskrifter' : 'Min kokebok';
+  if (h1) h1.textContent = m === 'discover' ? 'Oppdag oppskrifter' : 'Kokeboka vår';
   if (p) p.textContent = m === 'discover'
-    ? 'Alle familiens oppskrifter – legg til dem du vil prøve'
+    ? 'Alle oppskriftene våre – legg til dem du vil prøve'
     : 'Dine godkjente oppskrifter og det du vil prøve';
   buildFilters(); render();
 }
@@ -2007,7 +2053,7 @@ function openStats() {
     '<div class="stat-tiles">'
     + statTile(recipes.length, 'oppskrifter totalt')
     + statTile(myApproved.length, '📖 i din kokebok')
-    + statTile(famAvg, '⭐ familiens snitt')
+    + statTile(famAvg, '⭐ snitt (alle)')
     + statTile(totCooked, '🍳 laget totalt')
     + '</div>'
     + '<div class="section-title">⭐ Mine favoritter</div>'
@@ -2016,7 +2062,7 @@ function openStats() {
     + '<div class="section-title" style="margin-top:18px">🍳 Mest laget av meg</div>'
     + (myCooked.length ? statBars(myCooked, r => myEntry(r.id).cooked_count, 'var(--amber)')
         : statsEmpty('Trykk «🍳 Vi lagde denne» når du lager noe.'))
-    + '<div class="section-title" style="margin-top:18px">👨‍👩‍👧‍👦 Familiens favoritter</div>'
+    + '<div class="section-title" style="margin-top:18px">⭐ Mest likt av alle</div>'
     + (famFav.length ? statBars(famFav, r => avgRating(r.id), 'var(--accent)', v => v.toFixed(1), 10)
         : statsEmpty('Ingen terninger på tvers av brukere ennå.'))
     + '<div class="section-title" style="margin-top:18px">🔥 Mest laget totalt</div>'
@@ -2248,7 +2294,7 @@ function openDetail(id) {
     + '<button class="author-pill-btn" title="Se profil" onclick="openProfile(\'' + r.author_id + '\')">' + avatarHtml(r.author_id, profileName(r.author_id, r.author_name), 20) + '<span>' + esc(profileName(r.author_id, r.author_name)) + '</span></button>'
     + (r.cuisine ? '<div class="info-pill" title="Kjøkken">🌍 ' + esc(r.cuisine) + '</div>' : '')
     + (r.is_private ? '<div class="info-pill" style="border-color:var(--amber);color:var(--amber)" title="Kun du ser denne">🔒 Privat</div>' : '')
-    + (agg.ratingCount ? '<div class="info-pill" title="Familiens snitt-terning">⭐ ' + avg.toFixed(1) + ' (' + agg.ratingCount + ')</div>' : '')
+    + (agg.ratingCount ? '<div class="info-pill" title="Snitt-terning fra alle">⭐ ' + avg.toFixed(1) + ' (' + agg.ratingCount + ')</div>' : '')
     + (agg.cookedTotal ? '<div class="info-pill" title="Ganger laget totalt">🍳 ' + agg.cookedTotal + '</div>' : '')
     + (r.source_url ? '<a class="info-pill source-link" href="' + esc(r.source_url) + '" target="_blank" rel="noopener">🔗 Se original</a>' : '')
     + '</div>'
@@ -2268,15 +2314,79 @@ function openDetail(id) {
     + (r.result ? '<div class="section-title">Resultat</div><p class="recipe-result">' + esc(r.result) + '</p>' : '')
     + (nutriItems.length ? '<div class="section-title">Næring per porsjon</div><ul class="nutri-list" id="nutriScaled">' + nutriItems.join('') + '</ul>' : '')
     + galleryHtml
+    + variantInfoHtml(r)
     + ratingCookedBox(r, e)
     + '<div class="detail-actions">'
     + (e ? '<button class="detail-action-btn" onclick="removeFromMyBook(\'' + r.id + '\')">Fjern fra min bok</button>' : '')
     + (isAuthor ? '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">Rediger</button>' : '')
+    + (!isAuthor && CAPS.variants ? '<button class="detail-action-btn" onclick="makeVariant(\'' + r.id + '\')" title="Lag din egen versjon">🔀 Lag din versjon</button>' : '')
     + '<button class="detail-action-btn" onclick="openImgModal(\'' + r.id + '\')">Bilder</button>'
     + (isAuthor ? '<button class="detail-action-btn danger" onclick="deleteRecipe(\'' + r.id + '\')">Slett</button>' : '')
     + '</div>'
+    + (CAPS.comments ? '<div class="section-title">💬 Kommentarer</div><div id="commentsList" class="comments-list"><p class="stats-empty">Laster…</p></div>'
+        + '<div class="comment-composer"><textarea id="commentInput" rows="2" placeholder="Skriv en kommentar…"></textarea>'
+        + '<button class="api-save-btn" onclick="submitComment(\'' + r.id + '\')">Send</button></div>' : '')
     + '</div>';
   document.getElementById('detailModal').classList.add('open');
+  if (CAPS.comments) renderComments(id);
+}
+
+// Variant-info: «Variant av X» + «N varianter av denne»
+function variantInfoHtml(r) {
+  if (!CAPS.variants) return '';
+  let html = '';
+  if (r.parent_recipe_id) {
+    const parent = recipes.find(x => x.id === r.parent_recipe_id);
+    if (parent) html += '<div class="variant-note">🔀 Din versjon – variant av <a onclick="openDetail(\'' + parent.id + '\')">' + esc(parent.name) + '</a></div>';
+  }
+  const vs = variantsOf(r.id);
+  if (vs.length) {
+    html += '<div class="variant-note">🔀 <b>' + vs.length + '</b> ' + (vs.length === 1 ? 'variant' : 'varianter') + ' av denne: '
+      + vs.map(v => '<a onclick="openDetail(\'' + v.id + '\')">' + esc(profileName(v.author_id, v.author_name)) + ' sin versjon</a>').join(' · ')
+      + '</div>';
+  }
+  return html;
+}
+
+// Last og vis kommentarer for en oppskrift
+async function renderComments(recipeId) {
+  const list = document.getElementById('commentsList');
+  if (!list) return;
+  const comments = await loadComments(recipeId);
+  if (!comments.length) { list.innerHTML = '<p class="stats-empty" style="text-align:left">Ingen kommentarer ennå – bli den første!</p>'; return; }
+  list.innerHTML = comments.map(c => {
+    const name = profileName(c.user_id, 'Ukjent');
+    const mine = c.user_id === currentUser.id;
+    return '<div class="comment">'
+      + avatarHtml(c.user_id, name, 26)
+      + '<div class="comment-body"><div class="comment-head"><span class="comment-name">' + esc(name) + '</span>'
+      +   (mine ? '<button class="comment-del" onclick="removeComment(\'' + c.id + '\', \'' + recipeId + '\')" title="Slett">✕</button>' : '')
+      + '</div><div class="comment-text">' + esc(c.body) + '</div></div></div>';
+  }).join('');
+}
+
+async function submitComment(recipeId) {
+  const input = document.getElementById('commentInput');
+  const body = (input.value || '').trim();
+  if (!body) return;
+  input.disabled = true;
+  try {
+    await addComment(recipeId, body);
+    input.value = '';
+    await renderComments(recipeId);
+  } catch(e) { alert('Kunne ikke sende kommentar: ' + e.message); }
+  finally { input.disabled = false; }
+}
+
+async function removeComment(id, recipeId) {
+  if (!confirm('Slette kommentaren?')) return;
+  try { await deleteComment(id); await renderComments(recipeId); }
+  catch(e) { alert('Kunne ikke slette: ' + e.message); }
+}
+
+// «Lag din versjon» – åpne redigering i variant-modus
+function makeVariant(recipeId) {
+  openEditModal(recipeId, true);
 }
 
 // Rating-slider (1–10) + «Vi lagde denne». Å rate eller lage godkjenner
@@ -2737,6 +2847,24 @@ _style.textContent = `
 /* Kildelenke som info-pill */
 a.info-pill.source-link{text-decoration:none;color:var(--accent);border-color:var(--accent)}
 a.info-pill.source-link:hover{background:var(--accent-bg)}
+
+/* Kommentarer */
+.comments-list{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.comment{display:flex;gap:9px;align-items:flex-start}
+.comment-body{flex:1;min-width:0}
+.comment-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.comment-name{font-weight:600;font-size:13px;color:var(--text)}
+.comment-text{font-size:14px;color:var(--text2);line-height:1.45;overflow-wrap:break-word}
+.comment-del{border:none;background:none;color:var(--text3);cursor:pointer;font-size:12px;padding:2px}
+.comment-del:hover{color:var(--coral)}
+.comment-composer{display:flex;gap:8px;align-items:flex-end}
+.comment-composer textarea{flex:1;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);font:inherit;font-size:14px;color:var(--text);resize:vertical;min-height:42px}
+.comment-composer textarea:focus{outline:none;border-color:var(--accent)}
+
+/* Variant-notis */
+.variant-note{font-size:13px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);padding:9px 12px;margin:12px 0}
+.variant-note a{color:var(--accent);cursor:pointer;text-decoration:none}
+.variant-note a:hover{text-decoration:underline}
 
 /* Avatarer (profilbilde eller initialer) */
 .avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;flex:0 0 auto;background:var(--surface2);vertical-align:middle}
