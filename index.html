@@ -706,6 +706,9 @@ const ICONS = {
 };
 
 // ─── Supabase ─────────────────────────────────────────────────────────────────
+// Må leses FØR klienten opprettes: supabase-js konsumerer url-hashen (og kan rekke
+// å sende PASSWORD_RECOVERY-hendelsen) før lytteren i initAuth er registrert.
+const _cameFromRecovery = /type=recovery/.test(location.hash);
 const _supa = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -761,7 +764,7 @@ let _recipeCardBase64 = null;
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 async function initAuth() {
   const {data:{session}} = await _supa.auth.getSession();
-  if (session) { currentUser = session.user; await onLogin(); }
+  if (session) { currentUser = session.user; await onLogin(); if (_cameFromRecovery) showPwReset(); }
   else { showAuthScreen(); }
   _supa.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) { currentUser = session.user; await onLogin(); }
