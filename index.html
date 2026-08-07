@@ -765,7 +765,15 @@ let _recipeCardBase64 = null;
 async function initAuth() {
   const {data:{session}} = await _supa.auth.getSession();
   if (session) { currentUser = session.user; await onLogin(); if (_cameFromRecovery) showPwReset(); }
-  else { showAuthScreen(); }
+  else {
+    showAuthScreen();
+    // Kom via «Glemt passord»-lenke, men lenken var brukt/utløpt → ingen innlogging
+    if (_cameFromRecovery) {
+      const st = document.getElementById('authStatus');
+      st.innerHTML = '⚠️ <b>Lenken var utløpt eller allerede brukt.</b><br>Fyll inn e-posten din og trykk «Glemt passord?» for å få en ny.';
+      st.className = 'auth-status err';
+    }
+  }
   _supa.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) { currentUser = session.user; await onLogin(); }
     else if (event === 'PASSWORD_RECOVERY' && session) {
@@ -896,20 +904,34 @@ async function submitNewPassword() {
   const status = document.getElementById('pwResetStatus');
   if (pw.length < 6) { status.textContent = 'Passordet må ha minst 6 tegn.'; status.className = 'auth-status err'; return; }
   if (pw !== pw2) { status.textContent = 'Passordene er ikke like – prøv igjen.'; status.className = 'auth-status err'; return; }
+  // Mobiltastatur legger ofte på et usynlig mellomrom – da blir passordet umulig å skrive inn siden
+  if (pw !== pw.trim()) { status.textContent = 'Passordet starter eller slutter med et mellomrom – fjern det (mobiltastatur legger ofte på et usynlig mellomrom).'; status.className = 'auth-status err'; return; }
   const btn = document.getElementById('pwResetBtn');
   btn.disabled = true; btn.textContent = 'Lagrer…';
+  const email = (currentUser && currentUser.email) || '';
   const {error} = await _supa.auth.updateUser({password: pw});
-  btn.disabled = false; btn.textContent = 'Lagre nytt passord';
   if (error) {
+    btn.disabled = false; btn.textContent = 'Lagre nytt passord';
     let msg = error.message;
-    if (/different from the old/i.test(msg)) msg = 'Det nye passordet må være forskjellig fra det gamle.';
+    if (/session|not authenticated|jwt/i.test(msg)) msg = '<b>Lenken var utløpt eller allerede brukt</b>, så passordet ble IKKE endret. Lukk denne, fyll inn e-posten din og trykk «Glemt passord?» for en ny lenke – bruk den med én gang.';
+    else if (/different from the old/i.test(msg)) msg = 'Det nye passordet må være forskjellig fra det gamle.';
     else if (/at least 6/i.test(msg)) msg = 'Passordet må ha minst 6 tegn.';
-    status.textContent = '⚠️ ' + msg; status.className = 'auth-status err';
+    status.innerHTML = '⚠️ ' + msg; status.className = 'auth-status err';
+    return;
+  }
+  // Sjekk at passordet FAKTISK virker, så ingen blir låst ute av en falsk suksessmelding
+  status.textContent = 'Kontrollerer at det nye passordet virker…';
+  const {error: verifyError} = email ? await _supa.auth.signInWithPassword({email, password: pw}) : {error: null};
+  btn.disabled = false; btn.textContent = 'Lagre nytt passord';
+  if (verifyError) {
+    status.innerHTML = '⚠️ Passordet ble lagret, men <b>innlogging med det virket ikke</b> ved test. Prøv å sette det på nytt, eller be om en ny lenke.';
+    status.className = 'auth-status err';
     return;
   }
   document.getElementById('pwResetNew').value = ''; document.getElementById('pwResetRepeat').value = '';
-  status.textContent = '✓ Passordet er oppdatert!'; status.className = 'auth-status ok';
-  setTimeout(hidePwReset, 1500);
+  status.innerHTML = '<b>✓ Passordet er oppdatert og testet!</b><br>Du kan nå logge inn med ' + esc(email) + ' og det nye passordet.';
+  status.className = 'auth-status ok';
+  setTimeout(hidePwReset, 3000);
 }
 
 async function signOut() {
