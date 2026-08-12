@@ -683,7 +683,8 @@ const CONFIG = {
   // automatisk med den raskere Haiku (~4 s), så import aldri feiler helt.
   MODEL_IMPORT: 'claude-sonnet-4-5',
   MODEL_IMPORT_FALLBACK: 'claude-haiku-4-5-20251001',
-  MODEL_LABEL: 'claude-haiku-4-5-20251001'
+  MODEL_LABEL: 'claude-haiku-4-5-20251001',
+  MODEL_VISION: 'claude-opus-5'   // ser på stillbildene og velger det beste matbildet
 };
 
 const CAT_META = {
@@ -2758,15 +2759,72 @@ async function fetchImageAsDataUrl(url) {
 }
 
 // ─── Stillbilder fra video (velg forsidebilde) ───────────────────────────────
-// Klipp `count` stillbilder ut av en video ved tilfeldige tidspunkt, rett i
-// nettleseren. Kaster hvis videoen ikke kan leses pga. CORS (tainted canvas) —
-// da faller importen tilbake til vanlig cover/Pexels-forslag.
-function extractVideoFrames(videoUrl, count) {
+// Tidligere klippet vi 3 bilder på TILFELDIGE tidspunkt — det ga uskarpe bilder
+// av hender, halvferdig mat og tekst-overlay. Nå: klipp mange kandidater jevnt
+// fordelt, mål bildekvaliteten lokalt (skarphet/lys/farge + fjern duplikater),
+// og la Claude SE de beste og rangere hvilke som viser den ferdige retten.
+const FRAME_POOL = 12;      // kandidater vi klipper ut av videoen
+const FRAME_SHORTLIST = 6;  // de beste sendes til Claude for innholdsvurdering
+const FRAME_SHOW = 3;       // antall som vises til brukeren om gangen
+
+// Mål på ett stillbilde, regnet ut på en liten 64px-kopi (raskt).
+// Kaster hvis canvas er «tainted» (CORS) — da kan vi ikke lese videoen i det hele tatt.
+function frameMetrics(video) {
+  const vw = video.videoWidth || 720, vh = video.videoHeight || 1280;
+  const sw = 64, sh = Math.max(24, Math.round(64 * vh / vw));
+  const c = document.createElement('canvas');
+  c.width = sw; c.height = sh;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(video, 0, 0, sw, sh);
+  const d = ctx.getImageData(0, 0, sw, sh).data;
+  const gray = new Float32Array(sw * sh);
+  let bsum = 0, ssum = 0;
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const y = 0.299 * r + 0.587 * g + 0.114 * b;
+    gray[p] = y; bsum += y;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    ssum += mx ? (mx - mn) / mx : 0;   // metning ≈ «ser det ut som mat, ikke grå gryte»
+  }
+  const bright = bsum / gray.length;
+  // Laplacian-varians = skarphet. Lav verdi = uskarpt eller bevegelsessløret.
+  let lsum = 0, lsq = 0, n = 0;
+  for (let y = 1; y < sh - 1; y++) {
+    for (let x = 1; x < sw - 1; x++) {
+      const i = y * sw + x;
+      const l = 4 * gray[i] - gray[i - 1] - gray[i + 1] - gray[i - sw] - gray[i + sw];
+      lsum += l; lsq += l * l; n++;
+    }
+  }
+  const sharp = n ? Math.max(0, (lsq / n) - Math.pow(lsum / n, 2)) : 0;
+  // 8×8-hash for å luke ut nesten identiske bilder
+  const hash = new Uint8Array(64);
+  const bw = sw / 8, bh = sh / 8;
+  const blocks = new Float32Array(64);
+  for (let by = 0; by < 8; by++) {
+    for (let bx = 0; bx < 8; bx++) {
+      let s = 0, k = 0;
+      for (let y = Math.floor(by * bh); y < Math.floor((by + 1) * bh); y++) {
+        for (let x = Math.floor(bx * bw); x < Math.floor((bx + 1) * bw); x++) { s += gray[y * sw + x]; k++; }
+      }
+      blocks[by * 8 + bx] = k ? s / k : 0;
+    }
+  }
+  let bmean = 0; for (let i = 0; i < 64; i++) bmean += blocks[i]; bmean /= 64;
+  for (let i = 0; i < 64; i++) hash[i] = blocks[i] > bmean ? 1 : 0;
+  return {sharp, bright, sat: ssum / gray.length, hash};
+}
+
+function hashDistance(a, b) { let d = 0; for (let i = 0; i < 64; i++) if (a[i] !== b[i]) d++; return d; }
+
+// Klipp ut kandidater jevnt fordelt over videoen. `round` forskyver tidspunktene
+// litt, så «hent nye» faktisk gir andre bilder når puljen er brukt opp.
+function extractFrameCandidates(videoUrl, count, round) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
     video.crossOrigin = 'anonymous'; video.muted = true; video.playsInline = true; video.preload = 'auto';
     const frames = []; let stamps = []; let idx = 0;
-    const to = setTimeout(() => fail(new Error('Tidsavbrudd')), 25000);
+    const to = setTimeout(() => fail(new Error('Tidsavbrudd')), 40000);
     function cleanup() { clearTimeout(to); try { video.removeAttribute('src'); video.load(); } catch(e) {} }
     function done() { cleanup(); resolve(frames); }
     function fail(e) { cleanup(); reject(e instanceof Error ? e : new Error('Videofeil')); }
@@ -2774,15 +2832,23 @@ function extractVideoFrames(videoUrl, count) {
     video.onloadedmetadata = () => {
       const dur = video.duration;
       if (!dur || !isFinite(dur)) return fail(new Error('Ukjent varighet'));
-      stamps = Array.from({length: count}, () => +((0.12 + Math.random() * 0.76) * dur).toFixed(2)).sort((a, b) => a - b);
+      // Hopp over de første 10 % (intro/tittelkort) og siste 5 %
+      const lo = 0.10, hi = 0.95, step = (hi - lo) / count;
+      stamps = Array.from({length: count}, (_, i) => {
+        const frac = Math.min(hi, lo + step * (i + 0.5) + (round % 3) * step * 0.33);
+        return +(frac * dur).toFixed(2);
+      });
       seekNext();
     };
     video.onseeked = () => {
       try {
+        const m = frameMetrics(video);                       // kaster hvis «tainted»
+        const vw = video.videoWidth || 720, vh = video.videoHeight || 1280;
+        const scale = Math.min(1, 1080 / Math.max(vw, vh));   // hold minnebruken nede
         const c = document.createElement('canvas');
-        c.width = video.videoWidth || 720; c.height = video.videoHeight || 1280;
+        c.width = Math.round(vw * scale); c.height = Math.round(vh * scale);
         c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
-        frames.push(c.toDataURL('image/jpeg', 0.85)); // kaster hvis canvas er «tainted»
+        frames.push({full: c.toDataURL('image/jpeg', 0.85), t: stamps[idx], m});
       } catch(e) { return fail(e); }
       idx++; seekNext();
     };
@@ -2791,27 +2857,131 @@ function extractVideoFrames(videoUrl, count) {
   });
 }
 
-// Hent og vis tre bilder fra videoen i importvinduet (+ «Hent tre nye»)
+// Lokal rangering: normaliser målingene innenfor puljen og fjern duplikater.
+function rankFramesLocally(frames) {
+  const span = (key) => {
+    const vals = frames.map(f => f.m[key]);
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    return (v) => (hi > lo ? (v - lo) / (hi - lo) : 0.5);
+  };
+  const nSharp = span('sharp'), nSat = span('sat');
+  frames.forEach(f => {
+    // Straff for veldig mørke og utbrente bilder (ideal rundt 120)
+    const brightScore = Math.max(0, 1 - Math.abs(f.m.bright - 120) / 120);
+    f.score = 0.50 * nSharp(f.m.sharp) + 0.30 * nSat(f.m.sat) + 0.20 * brightScore;
+  });
+  const sorted = frames.slice().sort((a, b) => b.score - a.score);
+  const kept = [], dropped = [];
+  for (const f of sorted) {
+    if (kept.some(k => hashDistance(k.m.hash, f.m.hash) <= 6)) dropped.push(f);  // nesten samme bilde
+    else kept.push(f);
+  }
+  // Helt flate bilder får samme «fingeravtrykk» og kan luke ut hverandre — legg
+  // tilbake de forkastede (dårligst sist) så vi aldri får for få å velge mellom.
+  return kept.length >= FRAME_SHORTLIST ? kept : kept.concat(dropped);
+}
+
+// La Claude SE bildene og rangere hvilke som funker som forsidebilde.
+// Returnerer null hvis noe feiler — da beholder vi den lokale rekkefølgen.
+async function rankFramesWithClaude(frames) {
+  const shortlist = frames.slice(0, FRAME_SHORTLIST);
+  if (shortlist.length < 2) return null;
+  const content = [];
+  shortlist.forEach((f, i) => {
+    content.push({type: 'text', text: 'Bilde ' + (i + 1) + ':'});
+    content.push({type: 'image', source: {
+      type: 'base64', media_type: 'image/jpeg',
+      data: String(f.small || f.full).replace(/^data:image\/[a-z]+;base64,/, '')
+    }});
+  });
+  content.push({type: 'text', text:
+    'Dette er ' + shortlist.length + ' stillbilder fra en matlagingsvideo. Velg hvilke som fungerer '
+    + 'best som FORSIDEBILDE for oppskriften.\n\n'
+    + 'Foretrekk sterkt: den ferdige retten anrettet på tallerken/i serveringsfat, maten fyller bildet, '
+    + 'skarpt og appetittvekkende.\n'
+    + 'Unngå sterkt: hender, armer eller personer i bildet, ansikter eller noen som spiser, rå eller '
+    + 'halvferdige ingredienser, tomme gryter og kjeler, uskarpe eller mørke bilder, bilder der tekst '
+    + 'dekker maten, rot på kjøkkenbenken.\n\n'
+    + 'Svar KUN med JSON, ingen forklaring utenfor: {"ranked":[1,2,3,...]} der ranked er ALLE '
+    + 'bildenumrene sortert med det beste først.'});
+  try {
+    const resp = await withTimeout(
+      fetch('/.netlify/functions/claude', {
+        method: 'POST', headers: await authHeaders(),
+        body: JSON.stringify({
+          model: CONFIG.MODEL_VISION,
+          max_tokens: 2000,
+          output_config: {effort: 'low'},
+          messages: [{role: 'user', content}]
+        })
+      }), 22000, 'Bildevurderingen tok for lang tid');
+    if (!resp.ok) throw new Error('Serverfeil (' + resp.status + ')');
+    const data = await resp.json();
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    const json = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+    const order = (json.ranked || []).map(n => shortlist[Number(n) - 1]).filter(Boolean);
+    if (!order.length) return null;
+    // Claudes rekkefølge først, så resten av puljen som reserve
+    return order.concat(frames.filter(f => !order.includes(f)));
+  } catch(e) {
+    console.warn('[BILDEVALG] Claude-rangering feilet, bruker lokal rangering:', e.message);
+    return null;
+  }
+}
+
+// Hele kjeden: klipp ut → mål kvalitet → la Claude vurdere innholdet.
+// Returnerer {frames: [...], ai: bool}.
+async function buildFramePool(videoUrl, round) {
+  const raw = await extractFrameCandidates(videoUrl, FRAME_POOL, round || 0);
+  if (!raw.length) throw new Error('Ingen bilder');
+  const ranked = rankFramesLocally(raw);
+  // Små kopier til Claude — nok detalj til å se hva som er på bildet, lite å laste opp
+  for (const f of ranked.slice(0, FRAME_SHORTLIST)) {
+    try { f.small = await compressImage(f.full, 512, 0.6); } catch(e) { f.small = f.full; }
+  }
+  const byClaude = await rankFramesWithClaude(ranked);
+  return {frames: byClaude || ranked, ai: !!byClaude};
+}
+
+// Hent og vis de tre beste bildene fra videoen i importvinduet (+ «Hent tre nye»)
+let _framePool = [], _frameShown = 0, _frameRound = 0, _frameAI = false;
+
 async function loadFramePicker() {
   const box = document.getElementById('framePicker');
   if (!box || !pendingVideoUrl) return;
   box.style.display = 'block';
-  box.innerHTML = '<div class="frame-picker-title"><span class="img-spinner"></span> Henter bilder fra videoen…</div>';
+  box.innerHTML = '<div class="frame-picker-title"><span class="img-spinner"></span> Finner det peneste matbildet i videoen…</div>';
   try {
-    const frames = await extractVideoFrames(pendingVideoUrl, 3);
-    if (!frames.length) throw new Error('Ingen bilder');
-    window._frameChoices = frames;
-    pendingSelectedFrame = frames[0]; // forhåndsvalgt
-    box.innerHTML = '<div class="frame-picker-title">🎬 Velg forsidebilde fra videoen</div>'
-      + '<div class="frame-grid">'
-      + frames.map((f, i) => '<img class="frame-thumb' + (i === 0 ? ' sel' : '') + '" src="' + f + '" onclick="pickFrame(' + i + ')" alt="Bilde ' + (i + 1) + '">').join('')
-      + '</div>'
-      + '<button class="btn-cancel frame-refresh" type="button" onclick="loadFramePicker()">🔄 Hent tre nye</button>';
+    const res = await buildFramePool(pendingVideoUrl, _frameRound);
+    _framePool = res.frames; _frameAI = res.ai; _frameShown = 0;
+    renderFramePicker();
   } catch(e) {
     console.warn('Bilde-fra-video feilet, bruker vanlig forslag:', e.message);
     pendingSelectedFrame = null;
     box.style.display = 'none'; // fall pent tilbake til cover/Pexels
   }
+}
+
+// Vis neste tre i den rangerte puljen. Når puljen er tom: klipp en ny runde.
+async function nextFramePage() {
+  if (_frameShown + FRAME_SHOW >= _framePool.length) { _frameRound++; return loadFramePicker(); }
+  _frameShown += FRAME_SHOW;
+  renderFramePicker();
+}
+
+function renderFramePicker() {
+  const box = document.getElementById('framePicker');
+  const shown = _framePool.slice(_frameShown, _frameShown + FRAME_SHOW);
+  if (!shown.length) { box.style.display = 'none'; return; }
+  window._frameChoices = shown.map(f => f.full);
+  pendingSelectedFrame = shown[0].full; // beste er forhåndsvalgt
+  const left = Math.max(0, _framePool.length - (_frameShown + FRAME_SHOW));
+  box.innerHTML = '<div class="frame-picker-title">🎬 ' + (_frameAI ? 'Claude har valgt de beste bildene av retten' : 'Velg forsidebilde fra videoen') + '</div>'
+    + '<div class="frame-grid">'
+    + shown.map((f, i) => '<img class="frame-thumb' + (i === 0 ? ' sel' : '') + '" src="' + f.full + '" onclick="pickFrame(' + i + ')" alt="Bilde ' + (i + 1) + '">').join('')
+    + '</div>'
+    + '<button class="btn-cancel frame-refresh" type="button" onclick="nextFramePage()">🔄 '
+    + (left > 0 ? 'Vis tre andre' : 'Hent tre nye') + '</button>';
 }
 
 function pickFrame(i) {
@@ -2977,22 +3147,19 @@ async function newImageFromSource() {
   }
 }
 
-// Klipp tre stillbilder fra kilde-videoen og vis dem å velge mellom (+ Hent tre nye)
+// Finn de beste stillbildene i kilde-videoen og vis dem å velge mellom
+let _srcPool = [], _srcShown = 0, _srcRound = 0, _srcAI = false;
+
 async function showSourceFrames() {
   const status = document.getElementById('imgAnalyzeStatus');
   const grid = document.getElementById('imgSuggestGrid');
   if (!_imgSourceVideoUrl) return;
-  status.textContent = 'Klipper bilder fra videoen…'; status.style.color = 'var(--text2)';
+  status.textContent = 'Finner det peneste matbildet i videoen…'; status.style.color = 'var(--text2)';
   grid.innerHTML = '';
   try {
-    const frames = await extractVideoFrames(_imgSourceVideoUrl, 3);
-    if (!frames.length) throw new Error('Ingen bilder');
-    window._imgSourceFrames = frames;
-    status.textContent = 'Velg det peneste bildet av retten:'; status.style.color = 'var(--text2)';
-    grid.innerHTML = '<div class="frame-grid">'
-      + frames.map((f, i) => '<img class="frame-thumb" src="' + f + '" onclick="pickSourceFrame(' + i + ')" alt="Bilde ' + (i + 1) + '">').join('')
-      + '</div>'
-      + '<button class="btn-cancel" style="width:100%;font-size:13px;margin-top:7px" onclick="showSourceFrames()">🔄 Hent tre nye</button>';
+    const res = await buildFramePool(_imgSourceVideoUrl, _srcRound);
+    _srcPool = res.frames; _srcAI = res.ai; _srcShown = 0;
+    renderSourceFrames();
   } catch(e) {
     // Instagram lot oss ikke lese videoen (CORS) — si fra ærlig
     console.warn('Bilde-fra-video feilet:', e.message);
@@ -3000,6 +3167,28 @@ async function showSourceFrames() {
     status.style.color = 'var(--coral)';
     grid.innerHTML = '';
   }
+}
+
+async function nextSourceFramePage() {
+  if (_srcShown + FRAME_SHOW >= _srcPool.length) { _srcRound++; return showSourceFrames(); }
+  _srcShown += FRAME_SHOW;
+  renderSourceFrames();
+}
+
+function renderSourceFrames() {
+  const status = document.getElementById('imgAnalyzeStatus');
+  const grid = document.getElementById('imgSuggestGrid');
+  const shown = _srcPool.slice(_srcShown, _srcShown + FRAME_SHOW);
+  if (!shown.length) { grid.innerHTML = ''; return; }
+  window._imgSourceFrames = shown.map(f => f.full);
+  const left = Math.max(0, _srcPool.length - (_srcShown + FRAME_SHOW));
+  status.textContent = _srcAI ? 'Claude har valgt de beste bildene av retten:' : 'Velg det peneste bildet av retten:';
+  status.style.color = 'var(--text2)';
+  grid.innerHTML = '<div class="frame-grid">'
+    + shown.map((f, i) => '<img class="frame-thumb" src="' + f.full + '" onclick="pickSourceFrame(' + i + ')" alt="Bilde ' + (i + 1) + '">').join('')
+    + '</div>'
+    + '<button class="btn-cancel" style="width:100%;font-size:13px;margin-top:7px" onclick="nextSourceFramePage()">🔄 '
+    + (left > 0 ? 'Vis tre andre' : 'Hent tre nye') + '</button>';
 }
 
 async function pickSourceFrame(i) {
