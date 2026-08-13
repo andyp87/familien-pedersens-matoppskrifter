@@ -8,6 +8,13 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
+# Kokeboka bor på /kokebok — SPA-fallback for alle stier under den.
+[[redirects]]
+  from = "/kokebok/*"
+  to = "/kokebok/index.html"
+  status = 200
+
+# Alt annet lander på bedriftssiden på roten.
 [[redirects]]
   from = "/*"
   to = "/index.html"
