@@ -26,13 +26,15 @@
 # må ligge før SPA-fallbackene nedenfor.
 [[redirects]]
   from = "/sok/a7k2m9"
-  to = "https://casting-studio-no.andersen.chatgpt.site/sok/rolle/a7k2m9"
+  # Last appskallet fra roten. Den synlige Nineofive-stien beholdes i
+  # nettleseren, og Castport velger riktig søknadsvisning fra den stien.
+  to = "https://casting-studio-no.andersen.chatgpt.site/"
   status = 200
   force = true
 
 [[redirects]]
   from = "/sok/a7k2m9/"
-  to = "https://casting-studio-no.andersen.chatgpt.site/sok/rolle/a7k2m9"
+  to = "https://casting-studio-no.andersen.chatgpt.site/"
   status = 200
   force = true
 
