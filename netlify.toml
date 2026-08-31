@@ -8,16 +8,30 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
-# Skjult offentlig inngang til Castport. Rekkefølgen er viktig: disse
-# proxyreglene må ligge før SPA-fallbackene nedenfor.
+# Privat inngang til Castport Studio. Selve innloggingen håndteres av den
+# beskyttede Castport-tjenesten; ingen søkerdata lagres på Nineofive-siden.
 [[redirects]]
   from = "/castport"
-  to = "https://casting-studio-no.andersen.chatgpt.site/sok/rolle/a7k2m9"
+  to = "/castport/index.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/castport/"
+  to = "/castport/index.html"
+  status = 200
+  force = true
+
+# Offentlig, ulistet søkerlenke. Rekkefølgen er viktig: disse proxyreglene
+# må ligge før SPA-fallbackene nedenfor.
+[[redirects]]
+  from = "/sok/a7k2m9"
+  to = "https://casting-studio-no.andersen.chatgpt.site/sok/rolle/a7k2m9"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sok/a7k2m9/"
   to = "https://casting-studio-no.andersen.chatgpt.site/sok/rolle/a7k2m9"
   status = 200
   force = true
