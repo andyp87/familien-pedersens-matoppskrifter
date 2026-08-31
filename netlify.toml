@@ -8,6 +8,38 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
+# Skjult offentlig inngang til Castport. Rekkefølgen er viktig: disse
+# proxyreglene må ligge før SPA-fallbackene nedenfor.
+[[redirects]]
+  from = "/castport"
+  to = "https://casting-studio-no.andersen.chatgpt.site/sok/rolle/a7k2m9"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/castport/"
+  to = "https://casting-studio-no.andersen.chatgpt.site/sok/rolle/a7k2m9"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/assets/*"
+  to = "https://casting-studio-no.andersen.chatgpt.site/assets/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://casting-studio-no.andersen.chatgpt.site/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/cdn-cgi/*"
+  to = "https://casting-studio-no.andersen.chatgpt.site/cdn-cgi/:splat"
+  status = 200
+  force = true
+
 # Kokeboka bor på /kokebok — SPA-fallback for alle stier under den.
 [[redirects]]
   from = "/kokebok/*"
