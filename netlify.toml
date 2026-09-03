@@ -1,4 +1,8 @@
 [build]
+  # VIKTIG: serverfunksjonene i denne mappa driver hele Instagram/TikTok-importen
+  # (fetch-url, apify-status, claude, gemini-video, transcribe, fetch-image,
+  # search-image). Deploy ALLTID fra full GitHub-bygging — en manuell/delvis
+  # netlify-deploy uten denne mappa gjør at importen svarer 404 og dør.
   functions = "netlify/functions"
 
 # Midlertidig: hindre Google-indeksering mens ny nettside bygges.
