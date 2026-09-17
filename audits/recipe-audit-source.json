@@ -1,0 +1,2183 @@
+{
+  "exported_at": "2026-08-31T09:27:26.253Z",
+  "count": 45,
+  "recipes": [
+    {
+      "author": "Anders",
+      "gallery_images": [
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/2376b599-1c23-4f3e-859e-6898ab42085a/1787914336925.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/2376b599-1c23-4f3e-859e-6898ab42085a/1787914353901.jpg"
+      ],
+      "id": "2376b599-1c23-4f3e-859e-6898ab42085a",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/2376b599-1c23-4f3e-859e-6898ab42085a/1787914353901.jpg",
+      "info": [
+        "2-4 timer",
+        "mange porsjoner",
+        "Balansert",
+        "🌍 meksikansk"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "1",
+            "3-1",
+            "5 kg oksekjøtt (kjøttkjaker)",
+            "1-1",
+            "5 kg oksehaleskjøtt eller kortkjøtt",
+            "3 tørkede Ancho-chillier",
+            "6 tørkede Guajillo-chillier",
+            "1-2 Chipotle-chillier i adobo + 1-2 ss adobo-saus",
+            "2 store tomater",
+            "stekt eller grillet til mørt",
+            "4 hele nellikker",
+            "1/2 ts spiseskje kuminfrø",
+            "1/2 ts sort pepper",
+            "2",
+            "4 dl / 240 ml vann",
+            "2 fedd hvitløk",
+            "1 ts meksikansk oregano",
+            "1/2 ts merian",
+            "3 hvite løk",
+            "skåret",
+            "1 kanelstang",
+            "2 dl eplemost-eddik",
+            "Salt",
+            "Majstortillas",
+            "Oaxaca-ost (eller mozzarella)",
+            "Koriander (frisk)",
+            "Majstortillas",
+            "Limekiler"
+          ]
+        }
+      ],
+      "name": "Birria tacos",
+      "result": "Saftige okse-tacos med rik chilisaus og sprø tortillas.",
+      "source_url": "",
+      "steps": [
+        "Forbered chilliene. Tørk i panne i 1-2 minutter. Legg i bolle og dekk med kokende vann mens du forbereder resten.",
+        "Hakk løk og tomater i halvdeler og tørrkokstekk på grill eller i panne til lett brent. Bland med hvitløk.",
+        "Tørrkokstekk hele nellikker, kuminfrø og sort pepper i panne i cirka ett minutt for å få frem smaken. Overfør krydder og urter til bolle og separer oregano og majoram.",
+        "Tilsett oregano, majoram og eddik til blender sammen med de tørkede og grillede tomater og løk. Bland til glatt saus og tilsett vann hvis nødvendig.",
+        "Tilsett all gjenværende tørrkokstekt krydder til blandet mikstur og hell over kjøttet. Dekk og mariner i kjøleskapet minst 4 timer, helst over natten.",
+        "Neste dag tilsett kjøttet og marinade pluss 6 dl vann (eller oksekraft) og bring til koking. Dekk og reduser varmen og la det småkoke i cirka 2-4 timer til kjøttet er mørt og faller fra beinet.",
+        "Ta ut kjøttet og riv det i små biter, fjern alle ben. Legg i bolle og skje over noe kraft for å holde det fuktig.",
+        "Varm maistore tortillas på grillplate eller støpejernspanne. Dyp en varm tortilla i fettlaget på toppen av brøden og plasser på grillen. Topp med noe revet kjøtt, Oaxaca-ost, hvite løk og koriander. Brettes til taco og stekkes 1-2 minutter per side til sprø. Gjenta med gjenværende tortillas og kjøtt.",
+        "Serveres med skål med consommé for dipping, toppes med koriander og hakket hvit løk.",
+        "Serveres med limekiler på siden."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "64a115ed-86cb-4baf-8e44-b794118a9d1d",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/64a115ed-86cb-4baf-8e44-b794118a9d1d/1787767153426.jpg",
+      "info": [
+        "15 min",
+        "1 porsjon",
+        "Veldig sunt",
+        "🌍 skandinavisk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "2 stk egg",
+            "2 små håndfull hakket kål",
+            "2 ss revet ost",
+            "3 ss cottage cheese 1",
+            "5 %",
+            "pesto",
+            "1 tomat",
+            "1/2 avocado"
+          ]
+        }
+      ],
+      "name": "Proteinrike vafler med hytteost og grønnsaker",
+      "result": "Næringsrike og mettende vafler med kremet hytteostfyll",
+      "source_url": "https://www.instagram.com/reel/Db5ZzwstHZd/?igsi=ZXpkMmMyanM1YzZs",
+      "steps": [
+        "Bland egg, hakket kål og revet ost sammen i en bolle.",
+        "Stek blandingen i vaffeljern til vafflene er gylne og ferdige.",
+        "Bland hytteost med pesto.",
+        "Topp vafflene med hytteostblandingen, skivede tomater og avocado."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "75e97f3f-e845-45a8-a145-f3acf73ec449",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/75e97f3f-e845-45a8-a145-f3acf73ec449/1787721766462.jpg",
+      "info": [
+        "30 min",
+        "1 porsjon",
+        "Sunt",
+        "🌍 italiensk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "Bunn",
+          "items": [
+            "55 g cottage cheese",
+            "80 g flytende eggehvite",
+            "42 g hvetemel (glutenfri fungerer også)",
+            "10 g kokosmel",
+            "1 ts bakepulver",
+            "Oregano",
+            "Hvitløkspulver",
+            "Chiliflak"
+          ]
+        },
+        {
+          "group": "Topping",
+          "items": [
+            "80 g marinara-saus",
+            "55 g mozzarella (melkefri fungerer også)",
+            "Fersk basilikum"
+          ]
+        }
+      ],
+      "name": "Proteinrik Pizza",
+      "result": "En sprø hjemmelaget pizza med høyt proteininnhold som er mettende og smakfull",
+      "source_url": "https://www.instagram.com/reel/Dbp8F4xyd7C/?igsi=MXN0em5mNnRta3g0bA==",
+      "steps": [
+        "Forvarm ovnen til 180°C.",
+        "Bland alle ingrediensene til bunnen sammen med en gaffel.",
+        "Hell røren ut på en bakepapirkledd stekepanne og spre ut til en sirkel. Røren vil se tynn ut, men det er slik det skal være.",
+        "Stek i 10 minutter, løft forsiktig bunnen av bakepapir og legg tilbake.",
+        "Legg på marinara-saus og mozzarella, stek i ytterligere 10 minutter til osten bobler og kantene er sprø.",
+        "Topp med fersk basilikum, del i skiver og server."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "1ea92ba8-e591-45c7-a03e-bea805fdc3eb",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/1ea92ba8-e591-45c7-a03e-bea805fdc3eb/1787720927666.jpg",
+      "info": [
+        "60 min",
+        "4 porsjoner",
+        "Sunt",
+        "🌍 meksikansk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "Hovedingredienser",
+          "items": [
+            "4 stk søtpoteter",
+            "680 g lettkvernet storfekjøtt (93/7)"
+          ]
+        },
+        {
+          "group": "Krydder til kjøttdeig",
+          "items": [
+            "2 ts chilipulver",
+            "2 ts hvitløkspulver",
+            "1 ts spisskummen",
+            "salt og pepper etter smak"
+          ]
+        },
+        {
+          "group": "Street corn",
+          "items": [
+            "300 g maiskorn",
+            "150 g gresk yoghurt, lettere variant, naturell",
+            "60 g lett majones",
+            "60 g cotija-ost (eller feta)",
+            "1/2 rødløk",
+            "1 stk stor jalapeño",
+            "2 stk lime, safta",
+            "fersk koriander",
+            "1 ts chilipulver",
+            "salt etter smak",
+            "tajin etter smak"
+          ]
+        }
+      ],
+      "name": "Street Corn Sweet Potato Bowl",
+      "result": "En mettende og smakfull bowl med søtpotet, krydret kjøttdeig og kremet street corn-topping",
+      "source_url": "https://www.instagram.com/reel/DadGpdwq5od/?igsi=MWpoenNjZGJodWN3cA==",
+      "steps": [
+        "Sett ovnen på 220°C.",
+        "Stikk hull i søtpotetene med en gaffel og bak dem i ovnen i 45 minutter til de er møre.",
+        "Stek kjøttdeigen i en panne og krydre med chilipulver, hvitløkspulver, spisskummen, salt og pepper.",
+        "Finhakk rødløk, jalapeño og koriander.",
+        "Bland sammen maiskorn, gresk yoghurt, lett majones, cotija-ost, rødløk, jalapeño, limesaft, koriander, chilipulver, salt og tajin til street corn-blandingen.",
+        "Del de ferdigstekte søtpotetene på langs og topp med kjøttdeig og street corn-blandingen.",
+        "Server umiddelbart og nyt bowlen varm."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "055191e6-9fc6-42fe-932c-28dc54f7fec2",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/055191e6-9fc6-42fe-932c-28dc54f7fec2/1787645636664.jpg",
+      "info": [
+        "25 min",
+        "6 stk",
+        "Sunt",
+        "🌍 amerikansk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "70 g eple, finhakket",
+            "1 stk stort egg",
+            "1 ss kokosolje, smeltet",
+            "1 ts malt kanel",
+            "1/4 ts bakepulver",
+            "25 g havregryn",
+            "25 g rismel",
+            "15 g vaniljeproteinpulver (valgfritt, til dryss)",
+            "vann til dryss"
+          ]
+        }
+      ],
+      "name": "Sunne eplefritèrs",
+      "result": "Bakstekte eplefritèrs uten sukker og gluten, med valgfri proteinglasur",
+      "source_url": "https://www.instagram.com/reel/DcHzuGiPuBh/?igsi=anpmZzE2amVldXg3",
+      "steps": [
+        "Forvarm ovnen til 190°C eller 180°C varmluft.",
+        "Visp sammen egg og smeltet kokosolje.",
+        "Finhakk eplet og rør det inn i eggblandingen.",
+        "Tilsett kanel, havregryn, rismel og bakepulver. Bland til det er kombinert.",
+        "Legg bakepapir på en stekeplate og skje ut hauge spiseskjeer av røren til å danne fritèrs.",
+        "Stek i 12-14 minutter til de er gylne og gjennomstekte.",
+        "Bland proteinpulver med litt vann til det er jevnt og rennende, og dryss over de avkjølte fritèrsene."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "002497fa-1e1e-4364-957d-83ef9f087a7c",
+      "image_url": "",
+      "info": [
+        "45 min",
+        "8 porsjoner",
+        "Sunt",
+        "🌍 amerikansk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "Deig",
+          "items": [
+            "300 g brødmel",
+            "1 1/2 ts bakepulver",
+            "1/2 ts natron",
+            "50 g søtstoff",
+            "1 klype salt",
+            "400 g gresk yoghurt 0% fett",
+            "1 eggeplomme"
+          ]
+        },
+        {
+          "group": "Fyll",
+          "items": [
+            "30 g lett smør, smeltet",
+            "30-50 g brun stevia",
+            "Kanel, rikelig"
+          ]
+        },
+        {
+          "group": "Til forming",
+          "items": [
+            "15 g lett smør til smøring"
+          ]
+        },
+        {
+          "group": "Proteinglasur",
+          "items": [
+            "45 g lett kremost",
+            "45 g proteinpulver",
+            "1 ts vaniljeekstrakt",
+            "Søtstoff etter smak",
+            "Vann etter behov"
+          ]
+        }
+      ],
+      "name": "Proteinrike kanelboller",
+      "result": "Saftige kanelboller med høyt proteininnhold som smaker som ekte bakervare",
+      "source_url": "https://www.instagram.com/reel/DcTJaZKSj5Y/?igsi=cGdtYTlyYmt5NDNx",
+      "steps": [
+        "Bland mel, bakepulver, natron, søtstoff og salt i en bolle",
+        "Tilsett gresk yoghurt og eggeplomme, og kna til en jevn deig",
+        "Kjevle deigen ut til et rektangel",
+        "Pensle med smeltet smør og dryss over kanel og brun stevia",
+        "Rull deigen stramt sammen og skjær i 8 skiver",
+        "Legg bollene i en smurt ildfast form",
+        "Stek i ovnen på 180°C i 25-30 minutter",
+        "Bland ingrediensene til glasuren og tilsett vann til ønsket konsistens",
+        "Smør glasuren over de varme bollene før servering"
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "2ad0cf5e-7a96-49f7-8677-24d1e20b1ad8",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/2ad0cf5e-7a96-49f7-8677-24d1e20b1ad8/1787309474023.jpg",
+      "info": [
+        "35 min",
+        "4 porsjoner",
+        "Balansert",
+        "🌍 asiatisk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "Fyll",
+          "items": [
+            "450 g kjøttdeig (kylling eller svinekjøtt)",
+            "50 g vårløk, hakket",
+            "6 fedd hvitløk, finhakket",
+            "3 ss soyasaus",
+            "1 ss riseddik",
+            "1 ss ristet sesamolje",
+            "2 ss chili crunch (eller chiliflak i olje)",
+            "1 ss fersk ingefær, revet",
+            "1 ss østerssaus"
+          ]
+        },
+        {
+          "group": "Øvrig",
+          "items": [
+            "18-24 stk wonton- eller dumplingark",
+            "2 ss kyllingbuljong (eller vann)"
+          ]
+        },
+        {
+          "group": "Pynt",
+          "items": [
+            "Soyasaus",
+            "Chili crunch",
+            "Vårløk, skiveskåret",
+            "Sesamfrø"
+          ]
+        }
+      ],
+      "name": "Viral Dumpling Lasagne",
+      "result": "En fusjon av dumplings og lasagne med saftig kjøttfyll og myke wontonark",
+      "source_url": "https://www.instagram.com/reel/DbyrasPy-dc/?igsi=Mnh0eHR1ZXl3YjBw",
+      "steps": [
+        "Bland kjøttdeigen med vårløk, hvitløk, soyasaus, riseddik, sesamolje, chili crunch, ingefær og østerssaus i en bolle. Bland forsiktig med hendene til alt er kombinert.",
+        "Sett opp en dampkoker over en gryte med svakt kokende vann. Hvis du ikke har dampkoker, bruk et varmebestandig stativ i en stor gryte. Sjekk at en 20x20 cm form passer inni og at lokket kan lukkes helt. Hold vannet under formen.",
+        "Dypp hvert wontonark raskt i vann i 1-2 sekunder, legg deretter et lag i bunnen av formen. Bruk 6 ark per lag. Overlapp dem slik at hele bunnen dekkes - overlappingen holder lasagnen sammen.",
+        "Fordel et tynt lag kjøttfyll over arkene. Gjenta med wontonark og kjøtt til alt er brukt opp. Lag 4 lag, eller tilpass til din form. Avslutt med et lag wontonark, hell deretter kyllingbuljongen jevnt over toppen.",
+        "Plasser formen forsiktig i dampkokeren, dekk til og damp i 20-22 minutter ved svak koking. Ta ut når kjøttet er gjennomstekt og toppen er blank.",
+        "Topp med soyasaus, rikelig chili crunch, skiveskåret vårløk og sesamfrø. Skjær opp som lasagne og server."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "310a1b4e-c67f-414f-b58e-d75f2f455d47",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/310a1b4e-c67f-414f-b58e-d75f2f455d47/1787262289610.jpg",
+      "info": [
+        "30 min",
+        "1 porsjon",
+        "Sunt",
+        "🌍 amerikansk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "225 g kyllingkjøttdeig (bryst)",
+            "1 ts hvitløkspulver",
+            "1 ts italiensk krydderblanding",
+            "salt og pepper",
+            "60 g tomatsaus/passata",
+            "35 g lett mozzarella",
+            "25 g parmesan",
+            "1/2 ts avokadoolje eller matolje spray"
+          ]
+        }
+      ],
+      "name": "Proteinrik Pizza Pocket med Kyllingbunn",
+      "result": "En sprø pizza pocket med kyllingkjøtt som bunn, fylt med ost og tomatsaus",
+      "source_url": "https://www.instagram.com/reel/Db-kzmOyC_1/?igsh=MXUwamhwcjQ1MHU1cw==",
+      "steps": [
+        "Forvarm ovnen til 200°C og dekk en stekepanne med bakepapir.",
+        "Brett ut kyllingkjøttdeigen til en tynn oval form og krydre med hvitløkspulver, italiensk krydderblanding, salt og pepper.",
+        "Fordel tomatsausen og mozzarellaen på den ene halvdelen, og la det være litt plass rundt kantene.",
+        "Bruk bakepapir til å brette den andre halvdelen over, og press kantene sammen for å forsegle.",
+        "Dryss parmesanen over toppen og trykk den forsiktig ned i kyllingen.",
+        "Spray lett med olje og stek i ovnen i ca 20 minutter, eller til kyllingen når 74°C innvendig.",
+        "Overfør til en ren stekepanne og grill i noen minutter til den er gyllen og sprø."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "79093d64-8586-41ad-90fe-204cb94f90d6",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/79093d64-8586-41ad-90fe-204cb94f90d6/1787169182721.jpg",
+      "info": [
+        "10 min",
+        "8 porsjoner",
+        "Sunt",
+        "🌍 amerikansk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "220 g gresk yoghurt 0%",
+            "40 g Nando's Peri Peri majones (eller annen chilimajones)",
+            "60 g tomatkelchup",
+            "30 g Dijon sennep",
+            "15 g munkefrukt søtstoff (eller annet søtstoff)",
+            "2 stk syltede agurker, plus agurkjuice",
+            "hvitløkssalt eller hvitløkspulver, etter smak"
+          ]
+        }
+      ],
+      "name": "High Protein Big Mac Saus",
+      "result": "En kremet, proteinrik saus som løfter kjøtt og ris til neste nivå",
+      "source_url": "https://www.instagram.com/reel/DcM9VHPT-el/?igsh=dmcxZHlsa3FsZ2k4",
+      "steps": [
+        "Tilsett de syltede agurkene og agurkjuice i en blender eller foodprosessor og blend til helt glatt. Dette forhindrer agurkbiter i å tette flaskeåpningen.",
+        "Tilsett de resterende ingrediensene.",
+        "Blend til sausen er glatt og kremet.",
+        "Smak til og juster krydder eller agurkjuice etter behov.",
+        "Hell over i en squeeze-flaske eller lufttett beholder.",
+        "Sett i kjøleskapet i minst 30 minutter før servering."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "169bffee-9104-4e29-a426-dba1e3a0f038",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/169bffee-9104-4e29-a426-dba1e3a0f038/1786548788496.jpg",
+      "info": [
+        "35 min",
+        "4-6 porsjoner",
+        "Sunt",
+        "🌍 asiatisk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "Hovedingredienser",
+          "items": [
+            "1 brun løk, finhakket",
+            "4 fedd hvitløk, presset",
+            "1 hode brokkoli, delt i buketter",
+            "400 g søtpotet, gresskar eller hokkaido, kuttet i terninger",
+            "1 håndfull babymais",
+            "150 g frosne eller ferske erter",
+            "300 g fast hvit fisk uten bein og skinn (torsk, sei eller hyse), kuttet i terninger"
+          ]
+        },
+        {
+          "group": "Krydder og saus",
+          "items": [
+            "1 ts ingefær, malt",
+            "1 ts gurkemeie",
+            "1 ts garam masala",
+            "1 ss sesamolje",
+            "2-3 lime",
+            "1 boks / 400 g kokosmelk, full fett",
+            "Soyasaus eller tamari etter smak",
+            "4 dl / 400 g kylling-, grønnsaks- eller fiskebuljong",
+            "Olivenolje",
+            "Litt hvetemel",
+            "Havsaltflak eller urtesalt"
+          ]
+        }
+      ],
+      "name": "Lime- og kokoskarri med fisk",
+      "result": "En mild og spennende kokoskarri med fisk, grønnsaker og frisk lime",
+      "source_url": "https://www.instagram.com/reel/C2HdifBrCxN/?igsh=enFwYXg4OGg0ODA0",
+      "steps": [
+        "Varm sesamolje og olivenolje i en gryte eller stor stekepanne, og stek løk og hvitløk til det er gjennomsiktig.",
+        "Tilsett alle tørre krydder og stek i noen minutter, deretter tilsett alle grønnsakene unntatt brokkoli og erter. Hvis du bruker fersk mais kan du tilsette den nå.",
+        "Hell i buljong, kokosmelk, saften fra 2 lime og litt tamari eller soyasaus for smak.",
+        "Sett på lokk og la det koke på middels til høy varme til grønnsakene er gjennomkokt og sausen tykner (ca. 15-20 min).",
+        "I mellomtiden, vend fisken i litt mel og salt, og stek gyllenbrun i en panne.",
+        "Når væsken i gryten har tyknet litt, tilsett fisken, ertene og brokkoli og la det småkoke i ytterligere 10 minutter.",
+        "Smak til med mer soy, lime eller krydder etter behov.",
+        "Server med ris eller som den er."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "cc3e7a71-c572-4f28-9130-96c21af29c4a",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/cc3e7a71-c572-4f28-9130-96c21af29c4a/1786041582914.jpg",
+      "info": [
+        "20 min",
+        "4 porsjoner",
+        "Balansert",
+        "🌍 asiatisk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "Kjøttdeig",
+          "items": [
+            "600 g kjøttdeig av storfe",
+            "1 ss olivenolje",
+            "2 fedd hvitløk, finhakket",
+            "1 ss fersk ingefær, revet",
+            "1 ts maisstivelse (maizena)",
+            "2 ss vann"
+          ]
+        },
+        {
+          "group": "Saus",
+          "items": [
+            "1 ss soyasaus",
+            "1 ss riseddik",
+            "1 ts brunt sukker",
+            "3 ss hoisinsaus"
+          ]
+        },
+        {
+          "group": "Agurksalat",
+          "items": [
+            "1 stk agurk, i tynne bånd",
+            "1/2 rødløk, i tynne skiver",
+            "1 stk lime, saften av",
+            "1 bunt koriander, grovhakket"
+          ]
+        },
+        {
+          "group": "Til servering",
+          "items": [
+            "3 dl / 240 g jasminris (tørr vekt)",
+            "2 ss sesamfrø"
+          ]
+        }
+      ],
+      "name": "Sticky kjøttdeig med ris",
+      "result": "Sprøstekt kjøttdeig i sticky hoisinsaus med frisk agurksalat og ris.",
+      "source_url": "https://oda.com/no/recipes/5034-silje-feiring-sticky-kjottdeig-med-ris/",
+      "steps": [
+        "Tilbered ris etter anvisning på pakken.",
+        "Bland alle ingrediensene til sausen i en bolle. Rør sammen maisstivelse og vann i en liten kopp.",
+        "Skjær agurken i tynne bånd med en potetskreller, kutt rødløk i tynne skiver og grovhakk koriander. Bland sammen i en bolle og smak til med limesaft og salt.",
+        "Varm olje i en stor stekepanne på høy varme. Ha i kjøttdeigen og fordel den utover pannen. La den steke uten å røre i 5–6 minutter, til den får en brun og karamellisert overflate. Del den deretter opp med en stekespade og stek videre i 1–2 minutter.",
+        "Tilsett finhakket hvitløk og ingefær, og stek i 30 sekunder. Hell over sausen og la den småkoke i 1–2 minutter. Rør inn maisstivelseblandingen og la sausen tykne i 30–60 sekunder, til den klistrer seg godt til kjøttdeigen.",
+        "Server med ris, agurksalat og topp med sesamfrø. Tilsett chiliflak eller litt sriracha ved servering hvis du ønsker retten sterkere."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "326aa2a0-840a-48d4-a720-1b1fb43e923d",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/326aa2a0-840a-48d4-a720-1b1fb43e923d/1786770278309.jpg",
+      "info": [
+        "2 timer",
+        "6-8 porsjoner",
+        "Litt usunt",
+        "🌍 italiensk"
+      ],
+      "ingredients": [
+        {
+          "group": "Hovedingredienser",
+          "items": [
+            "1 kg ragu",
+            "420 g passata (valgfritt)",
+            "1 pakke lasagneplater",
+            "Fersk basilikum",
+            "180 g fior di latte (tørket mozzarella i terninger)",
+            "Parmigiano Reggiano",
+            "1 stor fersk mozzarellaball"
+          ]
+        },
+        {
+          "group": "Béchamel",
+          "items": [
+            "1 liter melk",
+            "70 g mel",
+            "70 g smør",
+            "Muskatnøtt, revet"
+          ]
+        }
+      ],
+      "name": "Lasagne",
+      "result": "En rik, hectic, kjøttfull og ostefylt italiensk lasagne med kremet béchamelsaus",
+      "source_url": "",
+      "steps": [
+        "Forvarm ovnen til 200°C.",
+        "Lag béchamelsausen: Smelt smøret i en kasserolle over middels lav varme. Tilsett melet og visp konstant i et par minutter. Hell i en liten mengde av den kalde melken i sausen og fortsett å viske til kombinert. Gjenta til all melk er brukt.",
+        "Riv i muskatnøtten og skru opp varmen til middels høy. Visp konstant til sausen tykner nok til å dekke baksiden av en skje. Dekk og hold på lav varme til klar til bruk.",
+        "Lag raguen etter oppskrift på forrige side, og kok i 1 time mindre. Hvis du bruker rester, varm opp raguen og tilsett passataen. Rør og varm til kombinert, lag en tynnere ragu for å hjelpe til med å koke lasagneplatene.",
+        "Monter lasagnen: Start med et tynt lag béchamel etterfulgt av et tynt lag ragu på bunnen av formen (21 cm × 32 cm). Legg lasagneplater oppå. Legg på et nytt lag ragu, béchamel, og fordel basilikumblader. Dryss over revet mozzarella og riv over litt Parmigiano Reggiano. Gjenta til du når toppen av formen.",
+        "På siste lag, legg på ragu, béchamel, basilikumblader, og dekk med fior di latte (tørket mozzarella).",
+        "Legg folie over toppen av lasagnen for første halvdel av steketiden for å forhindre at osten brenner.",
+        "Stek i ovnen i ca. 40 minutter til 1 time, til toppen er sprø og kantene bobler.",
+        "Hvil i 5-10 minutter før servering."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "31d2e8da-ab1a-4ffd-9ca2-020233e98bd3",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/31d2e8da-ab1a-4ffd-9ca2-020233e98bd3/1785991665218.jpg",
+      "info": [
+        "4 timer 30 min",
+        "stor batch",
+        "Litt usunt",
+        "🌍 italiensk"
+      ],
+      "ingredients": [
+        {
+          "group": "Soffritto",
+          "items": [
+            "2 selleristenger, fint hakket",
+            "2 gulrot, fint hakket",
+            "1 løk, grovt hakket"
+          ]
+        },
+        {
+          "group": "Ragu",
+          "items": [
+            "1 helt hvitløk, halvert og bakeroste med salt",
+            "400 g storfekjøtt (eller bedre)",
+            "200 g svinekjøtt (fjern hud og hakk fint)",
+            "120 g pancetta hakket i biter",
+            "2 ts hakket tomat",
+            "680 g passata",
+            "120 g / 2 dl tørrød vin",
+            "120 g / 2 ts italiensk oregano",
+            "140 g / 2 ts tomatpasta",
+            "800 ml sterk storfekjøttbuljong",
+            "salt",
+            "nykvern svart pepper",
+            "fersk basilikum",
+            "smør til avslutning"
+          ]
+        }
+      ],
+      "name": "Ragu",
+      "result": "En dyp og rik, langeksokt kjøttsaus som passer perfekt til pasta og kan portjoneres og fryses.",
+      "source_url": "",
+      "steps": [
+        "Hakk selleri, gulrot og løk i små, jevnstore terninger.",
+        "Hakk pancetta i små biter og legg på en stor, kald stekepanne. Stekk over medium varme til fetten blir sprø. Fjern pancettaen og sett den til side.",
+        "I gjenværende pancettafett, legg soffritto-ingrediensene i stekepannen over medium-høy varme. Stekk til løken blir gjennomsiktig, og røre av og til (ca. 10-12 minutter). Tilsett hvitløk og stekk til det dufter. Tilsett storfekjøtt, svinekjøtt og pancetta.",
+        "Stekk til alt vannet har fordampet, kjøttet er brunt, og en mørk bunn har dannet seg på pannen. Du skal høre en tørr sprøing når kjøttet er klart, noe som tar ca. 10-15 minutter.",
+        "Tilsett rødvin for å avglasere pannen. Bruk en treske for å skrape av alle de brune bitene som har dannet seg på bunnen av pannen. Kokk til vinen er redusert til det halve.",
+        "Tilsett tomatpasta og kokk i ca. 1 minutt, rør ofte. Tilsett oregano, storfekjøttbuljong, hakket tomat, passata, salt, svart pepper og den kokte pancettaen. Bring blandingen til en lett koking og simrer i 4 timer, rør av og til.",
+        "Smak på seasoning og juster etter behov. Roer inn den hakkede petersilien og en knytting smør før servering."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "019016e4-1aa7-4f6d-9261-3c16b6c1e829",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/019016e4-1aa7-4f6d-9261-3c16b6c1e829/1785528971167.jpg",
+      "info": [
+        "25 min",
+        "1 porsjon",
+        "Balansert",
+        "🌍 internasjonal",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "60 g selvhevende mel (eller 60 g hvetemel + 1/2 ts bakepulver)",
+            "50 g cottage cheese",
+            "15 g feta",
+            "15 g tomat, terning",
+            "1 ts frisk basilikum"
+          ]
+        }
+      ],
+      "name": "Air Fryer Feta & Tomato Cottage Cheese Bread",
+      "result": "Et luftig og saftig ostebåd med feta og tomat",
+      "source_url": "https://www.instagram.com/p/DbHcFeSTVJN/",
+      "steps": [
+        "Bland alle ingredienser i en bolle til det blir en deig.",
+        "Form til en liten rund brødform med hendene. Hvis deigen er for klissete, tilsett litt ekstra mel.",
+        "Skjær et kryss på toppen med en skarp kniv.",
+        "Stekeovn: 180°C i 20 minutter, eller tradisjonell ovn: 180°C i 35 minutter.",
+        "Hvis midten ikke er gjennomstekt, snu brødet og stek i ytterligere 3–5 minutter.",
+        "Skjær i skiver og server."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "50bead51-f5d3-44a7-be34-5a1469eb75fb",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/50bead51-f5d3-44a7-be34-5a1469eb75fb/1785000945895.jpg",
+      "info": [
+        "10 min + hvile over natten",
+        "1 glass (ca. 3-5 dl)",
+        "Litt usunt",
+        "🌍 amerikansk",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "1-2 stk rød eller grønn chili",
+            "4 båter hvitløk",
+            "1 liten rødløk",
+            "100 g honning"
+          ]
+        }
+      ],
+      "name": "Hot Honey",
+      "result": "En søt og sterk fermentert honningsaus perfekt til grillmat og grønnsaker",
+      "source_url": "https://www.instagram.com/reel/DaIrySuAAPe/?igsh=MWFpbmZydm55anIxbA==",
+      "steps": [
+        "Skjær rødløk, hvitløk og chili i så tynne skiver du klarer. Hvis du ønsker en mindre sterk smak, fjern frøene i chilien.",
+        "Legg rødløk, hvitløk og chili i et rent syltetøyglass (ca. 3-5 dl volum). Sterilisér det gjerne først med kokende vann for økt holdbarhet.",
+        "Hell over honning til det dekker ingrediensene fullstendig.",
+        "Rør forsiktig for å fjerne luftbobler. Ha på litt mer honning ved behov så grønnsakene er dekket av honning.",
+        "Ha på lokk og sett glasset i et romtemperert sted et par timer, gjerne over natten.",
+        "Grønnsakene og honningen vil begynne å fermentere og du vil raskt få en deilig tyntflytende saus når vannet trekker ut av grønnsakene og blander seg med honningen. Hvis grønnsakene er i tykkere skiver kan det trenge en dag ekstra.",
+        "Oppbevar chillihonningen i kjøleskap. Den holder i 1-2 uker."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "c1e29b00-37ad-4dd9-88c2-92226bcf87bc",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c1e29b00-37ad-4dd9-88c2-92226bcf87bc/1784923975563.jpg",
+      "info": [
+        "45 min",
+        "4 porsjoner",
+        "Balansert",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "Fyll",
+          "items": [
+            "400 g svinekjøttdeig",
+            "2 stilker sitrongress, finhakket",
+            "2 fedd hvitløk, presset",
+            "1 ss fiskesaus",
+            "1 ts sesamolje",
+            "1 ts soyasaus",
+            "1/2 ts pepper",
+            "2 vårløk, finhakket"
+          ]
+        },
+        {
+          "group": "Dumpling",
+          "items": [
+            "30 stk dumpling- eller wonton-ark",
+            "3 dl / 300 g vann (til koking)",
+            "3 ss nøytral olje (til steking)"
+          ]
+        },
+        {
+          "group": "Servering",
+          "items": [
+            "Soyasaus",
+            "Chiliolje",
+            "Vårløk, hakket",
+            "Sesamfrø"
+          ]
+        }
+      ],
+      "name": "Smashed Lemongrass Pork Dumplings",
+      "result": "Sprø dumplings med smakfull sitrongress-svinekjøttfyll uten alt krøllarbeidet",
+      "source_url": "https://www.facebook.com/share/r/1EoFVEubS6/?mibextid=wwXIfr",
+      "steps": [
+        "Bland svinekjøttdeig, sitrongress, hvitløk, fiskesaus, sesamolje, soyasaus, pepper og vårløk i en bolle.",
+        "Legg en klatt fyll i midten av hvert dumpling-ark. Ikke brett dem - bare la fyllet ligge åpent på arket.",
+        "Varm olje i en stor stekepanne. Legg dumplings med fyllet opp i pannen.",
+        "Bruk en stekespade eller bunnen av et glass til å trykke hver dumpling flat mot pannen.",
+        "Stek til bunnen er gyllenbrun og sprø, ca 2-3 minutter.",
+        "Hell oppi vann, dekk pannen med lokk og la dampkoke til vannet er fordampet og dumplings er gjennomstekt, ca 5-7 minutter.",
+        "Server umiddelbart med soyasaus, chiliolje, vårløk og sesamfrø."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/e02f7485-f02e-427d-be31-005243a12ad6/1784914095919.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/e02f7485-f02e-427d-be31-005243a12ad6/1784914116799.jpg"
+      ],
+      "id": "e02f7485-f02e-427d-be31-005243a12ad6",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/e02f7485-f02e-427d-be31-005243a12ad6/1784914116799.jpg",
+      "info": [
+        "60 min",
+        "4 porsjoner",
+        "Veldig sunt",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "4 laksefileter à 150 g",
+            "4 egg",
+            "200 g eggehvite",
+            "200 g cottage cheese, lavfett",
+            "100 g gresk fetaost",
+            "100 g baby spinat",
+            "150 g cherrytomater",
+            "100 g rødløk",
+            "3 fedd hvitløk, presset",
+            "1 sitron (juice og skall)",
+            "2 ss frisk dill",
+            "salt og pepper"
+          ]
+        }
+      ],
+      "name": "Middelhavsinspirert laksegrateng",
+      "result": "En proteinrik og smakfull laksegrateng med feta, spinat og egg",
+      "source_url": "https://www.instagram.com/reel/DZ_Vm2NTeoT/?igsh=Z2hmM2YyanNlcTBl",
+      "steps": [
+        "Forvarm ovnen til 180°C.",
+        "Visp sammen egg, eggehvite og cottage cheese i en stor ildfast form.",
+        "Rør inn baby spinat, cherrytomater, rødløk og hvitløk.",
+        "Smul fetaosten utover i formen.",
+        "Plasser laksefiletene oppå blandingen.",
+        "Krydre med dill, sitronskal, salt og pepper.",
+        "Stek i ovnen i 40-60 minutter til laksen og eggene er gjennomstekt og laksen flaker lett med gaffel.",
+        "Ta ut av ovnen og dryss over sitronjuice.",
+        "Del i 4 porsjoner og server."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "54f7be14-e160-4357-af8e-1b7b111fd353",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/54f7be14-e160-4357-af8e-1b7b111fd353/1784916683651.jpg",
+      "info": [
+        "45 min",
+        "4 porsjoner",
+        "Balansert",
+        "⭐ 10.0 (1)",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "300 g chorizo, skåret i skiver",
+            "2 stk (300 g) rød paprika, i terninger",
+            "1 stk (150 g) gul paprika, i terninger",
+            "2 stk (300 g) løk, hakket",
+            "3 fedd hvitløk, finhakket",
+            "400 g hermetiske kikerter, avsilt",
+            "400 g hermetiske hakkede tomater",
+            "2 dl / 200 g grønnsakskraft",
+            "2 ss olivenolje",
+            "1 ts røkt paprikapulver",
+            "1 ts spiskummen",
+            "1/2 ts chilipulver",
+            "Flaksalt og sort pepper",
+            "Frisk persille til pynt"
+          ]
+        }
+      ],
+      "name": "Paprikagryte med kikerter og chorizo",
+      "result": "En smakfull og mettende gryte med røkt chorizo, myke kikerter og søt paprika i en rik tomatsaus",
+      "source_url": "https://trinesmatblogg.no/recipe/paprikagryte-med-kikerter-og-chorizo/",
+      "steps": [
+        "Varm opp olivenolje i en stor gryte på middels varme. Stek chorizoskivene til de får farge, ca 3-4 minutter. Ta ut og legg til side.",
+        "Stek løk og paprika i samme gryte til de mykner, ca 5-6 minutter. Tilsett hvitløk og stek i 1 minutt til.",
+        "Rør inn paprikapulver, spiskummen og chilipulver. La kryddrene freses i 30 sekunder.",
+        "Hell i hakkede tomater og grønnsakskraft. Bring til kok og la småkoke i 15 minutter.",
+        "Tilsett kikerter og chorizo. La gryten småkoke i ytterligere 10 minutter til sausen tykner.",
+        "Smak til med salt og pepper. Topp med frisk persille og server med godt brød eller ris."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "19465502-822b-44ae-be71-63574c01f632",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/19465502-822b-44ae-be71-63574c01f632/1780816228853.png",
+      "info": [
+        "20 min",
+        "12 pannekaker",
+        "Balansert",
+        "⭐ 8.0 (1)",
+        "🍳 2"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "480 g cottage cheese",
+            "4 stk egg (frittgående)",
+            "1 ts vaniljeekstrakt",
+            "7 g bakepulver",
+            "150 g mel"
+          ]
+        }
+      ],
+      "name": "Cottage Cheese Pancakes",
+      "result": "Luftige proteinrike pannekaker med mild smak — myk inni og gyllen utenpå.",
+      "source_url": "",
+      "steps": [
+        "Bland alle ingredienser sammen i en stor bolle (du kan gjerne mikse cottage cheese først hvis du ikke liker teksturen)",
+        "Rør godt til alt er kombinert",
+        "Varm opp en stekepanne med god belegg eller bruk ekstra olje på middels varme og begynn å helle pannekakene på pannen (jeg brukte muffinsringer, men det er ikke nødvendig - hvis du bruker dem, må du spraye hver enkelt)",
+        "La hver side koke til den er gyllen brun (vanligvis ca 3 minutter på hver side)",
+        "Stable pannekakene og topp med smør og enten sirup eller honning",
+        "Nyt!"
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "c2107ef5-96d6-41d0-b671-125e70986b19",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c2107ef5-96d6-41d0-b671-125e70986b19/1784755229757.jpg",
+      "info": [
+        "30 min",
+        "4 porsjoner",
+        "Sunt",
+        "⭐ 8.0 (1)",
+        "🍳 1"
+      ],
+      "ingredients": [
+        {
+          "group": "Poteter",
+          "items": [
+            "800 g poteter",
+            "1 klype havsalt",
+            "6 ss olivenolje, extra virgin",
+            "100 g parmesan, revet",
+            "2 ss hel pepper"
+          ]
+        },
+        {
+          "group": "Fisk",
+          "items": [
+            "4 stk fersk torskefilet uten skinn (ca. 800 g)",
+            "2 ss olivenolje, extra virgin",
+            "1 stk appelsin, i skiver",
+            "1 håndfull fersk basilikum",
+            "1 håndfull frisk dill",
+            "1 stk appelsin, saft og skall"
+          ]
+        },
+        {
+          "group": "Ruccolasalat",
+          "items": [
+            "70 g ruccula",
+            "1 stk fennikel, revet",
+            "1 klype pepper",
+            "2 ss olivenolje",
+            "1 klype havsalt"
+          ]
+        }
+      ],
+      "name": "Cacio e pepe-poteter med fisk",
+      "result": "Italiensk-inspirerte poteter med ost og pepper, servert med ovnsbakt torskefilet med appelsin",
+      "source_url": "",
+      "steps": [
+        "Forvarm ovnen til 180 grader.",
+        "Bland sammen appelsinssaft, appelsinskall, olivenolje, salt, pepper, hakket dill og basilikum.",
+        "Kok opp vann med litt salt i en kjele og legg i potetene. La de koke til de er møre, ca 15-20 minutter.",
+        "Mens potetene koker legger du fisken i en ildfast form og pensler over appelsinblandingen. Legg skiver av appelsin rundt i formen. Sett i ovnen og stek i 10-15 minutter.",
+        "Mens fisken er i ovnen og potetene koker blander du sammen salaten.",
+        "Kvern pepper og riv parmesanen til potetene.",
+        "Når potetene er ferdig heller du av vannet og legger de tilbake i kjelen. Tilsett olje, revet parmesan og halvparten av pepperet. Bland godt til osten er smeltet. Smak til med salt.",
+        "Server poteter med fisk og en grønn salat."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "472d86a7-a9c1-4b1c-83f6-9416b946aa98",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/472d86a7-a9c1-4b1c-83f6-9416b946aa98/1784826859872.jpg",
+      "info": [
+        "20 min",
+        "4 porsjoner",
+        "Sunt",
+        "⭐ 5.0 (1)",
+        "🍳 1",
+        "🔗 Se original"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "500 g tomater",
+            "1 stk løk",
+            "2 stk jalapeño",
+            "2 fedd hvitløk",
+            "1 dl / 100 g vann",
+            "1 ss olivenolje",
+            "1 ts salt",
+            "1/2 lime"
+          ]
+        }
+      ],
+      "name": "Salsa Roja",
+      "result": "En klassisk meksikansk rød salsa med frisk smak og fin krydring",
+      "source_url": "https://www.instagram.com/reel/DWJ7iBvu-Tn/?igsh=MTJ3dGgwd2FrNnBwZw==",
+      "steps": [
+        "Varm en tørr panne på middels høy varme. Legg i tomater, løk, jalapeño og hvitløk med skallet på.",
+        "Stek i ca 10 minutter til grønnsakene får mørke flekker og blir myke.",
+        "Fjern skallet fra hvitløken og del tomatene i mindre biter om nødvendig.",
+        "Bland alt sammen i en blender med vann, olivenolje og salt til ønsket konsistens.",
+        "Smak til med limesaft og eventuelt mer salt. Server straks eller oppbevar i kjøleskap."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "d5826dbe-d7f8-4a7a-956e-e5e2fb0c7744",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/d5826dbe-d7f8-4a7a-956e-e5e2fb0c7744/1780813863398.jpg",
+      "info": [
+        "25 min",
+        "4 porsjoner",
+        "Sunt",
+        "🍳 1"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "500 g kjøttdeig",
+            "1 stk egg",
+            "30 g havregryn",
+            "1 stk løk (ca. 100 g), finhakket",
+            "100 g cottage cheese",
+            "1 ts salt",
+            "1/2 ts pepper",
+            "1/2 ts muskat, revet",
+            "1 ss smør eller olje til steking"
+          ]
+        }
+      ],
+      "name": "Saftige kjøttkaker",
+      "result": "Saftige og smakfulle kjøttkaker med kremet cottage cheese som gir ekstra mørhet.",
+      "source_url": "",
+      "steps": [
+        "Bland 30 g havregryn med et par spiseskjeer vann og la det stå i fem minutter, så det suger til seg væske og binder farsen.",
+        "Ha 500 g kjøttdeig, 1 egg, den bløtlagte havren, 1 løk finhakket, 100 g cottage cheese, 1 ts salt, 0.5 ts pepper og 0.3 ts muskat revet i en bolle. Rør godt sammen til en jevn fars.",
+        "Form farsen til kjøttkaker eller boller med fuktige hender. Litt mindre størrelse til guttene, så blir de raskere gjennomstekt.",
+        "Varm 1 ss smør eller olje i en stekepanne på middels varme. Stek kakene i fire til fem minutter på hver side til de er gjennomstekte og gyldne.",
+        "Server til guttene med kokte poteter eller pasta og revet ost, gjerne med ketchup. Til de voksne med stor råkostsalat av hvitkål, isbergsalat og tomat, med dressing av cottage cheese rørt med sennep, salt og pepper."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "35c98e41-4fad-4efd-90bd-b6489252a4f5",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/35c98e41-4fad-4efd-90bd-b6489252a4f5/1784794410365.jpg",
+      "info": [
+        "30 min",
+        "4 porsjoner",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "800 g nypoteter",
+            "2 ss dijonsennep",
+            "2 ss sherryeddik",
+            "1 dl / 90 g solsikkeolje",
+            "1 stk sjalottløk",
+            "2 stk vårløk",
+            "50 g friske urter (gressløk, persille, dill, kjørvel)",
+            "salt",
+            "kvernet pepper"
+          ]
+        }
+      ],
+      "name": "Potetsalat med sennepsdressing",
+      "result": "En frisk og kremete potetsalat med syrlig sennepsdressing og aromatiske urter",
+      "source_url": "",
+      "steps": [
+        "Finhakk sjalottløk og vårløk. Hakk urtene, for eksempel gressløk, persille, dill, kjørvel.",
+        "Visp sammen sennep, eddik, en god klype salt og litt kvernet pepper. Tilsett oljen i en tynn stråle under kraftig visping. Dressingen skal tykne omtrent som en majones.",
+        "Vask og kok potetene møre i godt saltet vann. Hell av vannet, damp potetene tørre og la de avkjøles noe (de kan eventuelt avkjøles helt hvis potetsalaten skal serveres kald).",
+        "Bland sammen poteter, sjalottløk, vårløk, urter og dressingen."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "1fcc6ed6-ec19-4c07-8c41-7109b2d4b5ec",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/1fcc6ed6-ec19-4c07-8c41-7109b2d4b5ec/1784794341367.jpg",
+      "info": [
+        "1 t 20 min",
+        "4 porsjoner",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "Fisk",
+          "items": [
+            "500 g hvit fisk (torsk eller sei)",
+            "2 ts gurkemeie",
+            "1 ts spisskummen",
+            "1 ts paprikapulver",
+            "Salt og pepper",
+            "2 ss olivenolje"
+          ]
+        },
+        {
+          "group": "Salsa",
+          "items": [
+            "200 g tomater, hakket",
+            "1 stk rødløk, finhakket",
+            "1 stk jalapeño, finhakket",
+            "1/2 bunt koriander, hakket",
+            "1 stk lime, juice",
+            "Salt etter smak"
+          ]
+        },
+        {
+          "group": "Limesaus",
+          "items": [
+            "1,5 dl / 150 g rømme",
+            "1 stk lime, juice og skall",
+            "1 fedd hvitløk, presset",
+            "Salt og pepper"
+          ]
+        },
+        {
+          "group": "Servering",
+          "items": [
+            "8 stk små tortillalefser",
+            "100 g hodekål, fintstrimlede",
+            "1 stk avokado, skiver",
+            "Limebåter"
+          ]
+        }
+      ],
+      "name": "Peruansk Fisketaco",
+      "result": "Sprø fisketaco med frisk salsa og kremet limesaus",
+      "source_url": "",
+      "steps": [
+        "Bland gurkemeie, spisskummen, paprikapulver, salt og pepper. Gni krydderblandingen inn i fisken og la den marinere i 30-60 minutter.",
+        "Bland alle ingrediensene til salsaen i en bolle og sett kaldt.",
+        "Bland rømme, limejuice, limeskall, hvitløk, salt og pepper til en jevn saus. Sett kaldt.",
+        "Varm olje i en stekepanne på middels høy varme. Stek fisken 3-4 minutter på hver side til den er gjennomstekt. Ta av varmen og del fisken i store biter.",
+        "Varm tortillalefser raskt på en tørr panne eller over flammen.",
+        "Legg hodekål i bunnen av hver tortilla, topp med fisk, salsa, avokado og limesaus. Server med limebåter."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "91b82614-c7cb-412d-9b4d-f3dce2918d73",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/91b82614-c7cb-412d-9b4d-f3dce2918d73/1784794281938.jpg",
+      "info": [
+        "1 time 30 min",
+        "8 brød",
+        "Litt usunt"
+      ],
+      "ingredients": [
+        {
+          "group": "Nanbrød",
+          "items": [
+            "1000 g hvetemel",
+            "4 ts salt",
+            "2 ts bakepulver",
+            "370 g gresk yoghurt naturell",
+            "4 ss nøytral olje",
+            "3,6 dl / 360 g varm melk"
+          ]
+        },
+        {
+          "group": "Gjærstarter",
+          "items": [
+            "4 ts tørrgjær",
+            "2 ts sukker",
+            "120 ml varmt vann"
+          ]
+        },
+        {
+          "group": "Topping",
+          "items": [
+            "2 stk hvitløk",
+            "2 håndfull fersk koriander",
+            "200 g smør"
+          ]
+        }
+      ],
+      "name": "Nanbrød",
+      "result": "Myke, luftige nanbrød med hvitløkssmør og frisk koriander",
+      "source_url": "",
+      "steps": [
+        "Start med å lage gjærstarteren. Hell tørrgjær, sukker og medium varmt vann i en liten bolle. Rør rundt og ta plastfolie på toppen. La stå i ca 10 minutter til det blir skummete på toppen. Hvis det ikke skjer noe så virker ikke gjæren og du må gjøre dette på nytt.",
+        "Mål opp de tørre ingrediensen og bland godt sammen. Mål opp yoghurt og bland sammen med melet. Du vil nå få en litt 'sand konsistens' på deigen.",
+        "Varm opp melken og tilsett melken, gjærstarteren og oljen til melet. Bland godt sammen og elt deigen i ca 5 minutter så du får en glatt og smidig deig.",
+        "Finn frem en kjele og smelt smør. Tilsett godt med knust hvitløk og smelt på lav varme. La stå på lav varme til brødene er ferdig. Da får smøret en veldig god smak av hvitløk.",
+        "Legg deigen i en bolle smurt med litt olje og dekk med plast. La heve i 1 time.",
+        "Del opp i 8 like deigemner og rull som boller. Bruk en kjevle og lag avlange brød. Du kan kjevle inn litt koriander i noen av brødene.",
+        "Stek i en tørr og varm jernpanne. Stek i 3-4 minutter på hver side. Når det begynner å bli bobler i deigen er den klar til å snu rundt for å steke på andre siden.",
+        "Pensle de ferdige nanbrødene med hvitløkssmør og strø over litt frisk koriander."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "df3decbc-31ef-4fb9-96d7-682b4fd3fe9c",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/df3decbc-31ef-4fb9-96d7-682b4fd3fe9c/1784794187547.jpg",
+      "info": [
+        "1 time 10 min",
+        "10 porsjoner",
+        "Litt usunt"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "3 stk veldig modne bananer (middels/store)",
+            "113 g usalta smør, romtemperert",
+            "150 g sukker",
+            "2 stk egg, lett pisket",
+            "190 g hvetemel",
+            "1 ts natron",
+            "1/2 ts salt",
+            "1/2 ts vaniljeekstrakt",
+            "120 g valnøtter",
+            "80 g rosiner"
+          ]
+        }
+      ],
+      "name": "Saftig banankake med valnøtter",
+      "result": "En saftig og smakfull banankake med sprø valnøtter og søte rosiner",
+      "source_url": "",
+      "steps": [
+        "Forvarm ovnen til 175°C. Smør og mel en brødform (ca 23 x 13 x 7 cm).",
+        "Rist valnøttene lett på en panne under kontinuerlig omrøring så de ikke brenner. Hakk grovt og avkjøl til romtemperatur.",
+        "Rør sammen smør og sukker i en bolle til det er kremete.",
+        "Mos bananene med en gaffel til en klumpete konsistens og bland dem inn i smørblandingen sammen med eggene.",
+        "Visp sammen mel, natron og salt i en egen bolle, deretter bland inn i røren.",
+        "Tilsett vaniljeekstrakt, de hakkede valnøttene og rosinene. Rør forsiktig sammen.",
+        "Hell røren i den forberedte formen. Stek på 175°C i 55-60 minutter, eller til en tannpirker som stikkes ned i midten kommer ut ren.",
+        "La banankaken hvile i 10 minutter før du tar den ut av formen og overfører den til en rist for å kjøle ned helt."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "bd32702c-902d-40d6-b32d-7d57c4ae488c",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/bd32702c-902d-40d6-b32d-7d57c4ae488c/1784794019995.jpg",
+      "info": [
+        "2 timer (inkl. marinering)",
+        "8 porsjoner",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "Marinade",
+          "items": [
+            "1 løk (ca. 150 g), grovhakket",
+            "3 vårløk, hakket",
+            "2 Scotch bonnet-chili (eller habanero), hakket",
+            "2 hvitløksfedd, hakket",
+            "1 ss fem-krydderpulver",
+            "1 ss allehånde-bær (eller pimentbær), grovmalt",
+            "1 ss grovmalt svart pepper",
+            "1 ts tørket timian, smuldret",
+            "1 ts fersk revet muskatnøtt",
+            "1 ts kosher salt",
+            "1 dl / 100 g soyasaus",
+            "1 ss vegetabilsk olje"
+          ]
+        },
+        {
+          "group": "Hovedingrediens",
+          "items": [
+            "2 kyllinger (à 1,5-1,8 kg), delt i kvartaler"
+          ]
+        }
+      ],
+      "name": "Jerk Chicken",
+      "result": "Krydret jamaicansk kylling med røyksmak og sterk, aromatisk marinade",
+      "source_url": "",
+      "steps": [
+        "Bland løk, vårløk, chili, hvitløk, fem-krydderpulver, allehånde-bær, pepper, timian, muskatnøtt og salt i en foodprocessor eller blender.",
+        "Tilsett soyasaus og olje, og kjør til du har en jevn marinade.",
+        "Legg kyllingkvartalene i en stor bolle eller pose, og hell marinaden over. Gni godt inn i kjøttet.",
+        "La kyllingen marinere i kjøleskapet i minst 4 timer, gjerne over natten.",
+        "Forvarm grillen til middels varme, eller sett ovnen på 200°C.",
+        "Grill kyllingen i ca. 40-50 minutter, vend jevnlig, til kjernetemperaturen er 75°C og kjøttet er gjennomstekt med fin grillflate.",
+        "La kyllingen hvile i 5-10 minutter før servering."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "41ef717b-e1ba-4b3a-afc8-1a3ffa94d968",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/41ef717b-e1ba-4b3a-afc8-1a3ffa94d968/1784793952631.jpg",
+      "info": [
+        "60 min",
+        "4 porsjoner",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "Gryte",
+          "items": [
+            "800 g rypekjøtt",
+            "2 dl / 200 g fløte",
+            "1 dl / 100 g rømme",
+            "1 ss einebær",
+            "50 g brunost",
+            "3 dl / 300 g kraft",
+            "2 fedd hvitløk",
+            "2 stk sjarlottløk",
+            "salt",
+            "pepper",
+            "1 dl / 100 g tyttebærsaft",
+            "30 g smør",
+            "2 ss mel",
+            "1 ts timmian"
+          ]
+        },
+        {
+          "group": "Wok-grønnsaker",
+          "items": [
+            "1 stk løk",
+            "2 stk gulrot",
+            "200 g rosenkål",
+            "150 g sjampinjong",
+            "20 g smør"
+          ]
+        },
+        {
+          "group": "Tilbehør",
+          "items": [
+            "600 g røstipoteter (ferdig)"
+          ]
+        }
+      ],
+      "name": "Fars Rypegryte",
+      "result": "En smakfull viltgryte med kremet saus og sprø grønnsaker",
+      "source_url": "",
+      "steps": [
+        "Bryn rypekjøttet i smør i en gryte til det har fått farge.",
+        "Tilsett hakket sjarlottløk, hvitløk og einebær. La det surre et par minutter.",
+        "Dryss over mel og rør godt inn.",
+        "Hell i kraft, tyttebærsaft og fløte. La det koke opp.",
+        "Riv i brunosten og tilsett rømme og timmian. La gryten småkoke i ca 30 minutter til kjøttet er mørt.",
+        "Skjær grønnsakene i biter. Wok dem i smør til de er sprø-møre.",
+        "Tilbered røstipotetene etter pakken.",
+        "Smak gryten til med salt og pepper.",
+        "Server gryten med wok-grønnsaker og røstipoteter."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "49ec6807-839f-4e19-b8be-d2c24568681f",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/49ec6807-839f-4e19-b8be-d2c24568681f/1784793899308.jpg",
+      "info": [
+        "30 min",
+        "2-4 porsjoner",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "Aubergine",
+          "items": [
+            "400 g kinesisk aubergine (eller vanlig aubergine), kutt i biter",
+            "1 ts salt (til bløtlegging)",
+            "2 ts maisstivelse (til panering)"
+          ]
+        },
+        {
+          "group": "Saus",
+          "items": [
+            "2 ss Chinkiang eddik (kinesisk svart eddik, eller riseddik)",
+            "1,5 ss lys soyasaus",
+            "1 ss Shaoxing vin (eller tørr sherry)",
+            "2 ss sukker",
+            "0,6 dl / 60 g kyllingbuljong (eller grønnsaksbuljong)",
+            "2 ts maisstivelse"
+          ]
+        },
+        {
+          "group": "Tilberedning",
+          "items": [
+            "3 ss peanøttolje (eller vegetabilsk olje)",
+            "115 g svinekjøttdeig (eller kyllingkjøttdeig, valgfritt)",
+            "2 stk vårløk, skåret",
+            "2 fedd hvitløk, finhakket",
+            "1 ss fersk ingefær, finhakket",
+            "8-10 tørkede kinesiske chilipepper",
+            "2 ts doubanjiang (fermentert krydret bønnepasta)",
+            "1/2 ts malt sichuan pepper (valgfritt)"
+          ]
+        }
+      ],
+      "name": "Yu Xiang Eggplant - Sichuan Aubergine Stir Fry",
+      "result": "Sprø aubergine i en søt, sur, salt og lett krydret saus med umami-rik smak",
+      "source_url": "",
+      "steps": [
+        "Legg auberginebitene i en bolle og dekk med vann. Tilsett 1 ts salt og bland godt. Legg en tallerken oppå slik at auberginen ligger under vann. La stå i 10-15 minutter mens du forbereder resten.",
+        "Hell av vannet og tørk auberginen godt med papirhåndkle. Dryss over maisstivelse og bland med hendene til auberginen er jevnt dekket.",
+        "Bland alle sausingredienserene i en bolle og rør godt sammen.",
+        "Varm 2 ss olje i en stor stekepanne på middels høy varme. Fordel auberginen utover pannen uten overlapping. Stek under omrøring av og til til kantene er lett svidd og konsistensen begynner å bli myk, ca 5 minutter. Overfør til en tallerken.",
+        "Tilsett resterende 1 ss olje og kjøttdeigen i pannen. Stek og del kjøttet opp i mindre biter til det er gjennomstekt.",
+        "Tilsett vårløk, hvitløk, ingefær og chilipepper. Rør noen ganger til duften frigis.",
+        "Tilsett doubanjiang og sichuan pepper. Rør og stek til kjøttet er jevnt dekket.",
+        "Rør i sausen igjen for å oppløse maisstivelsen helt, og hell i pannen. Rør til sausen tykner.",
+        "Legg auberginen tilbake i pannen og rør raskt sammen. Server varm som hovedrett eller tilbehør."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "b64c72ad-2d39-432d-84ab-c62d83856343",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/b64c72ad-2d39-432d-84ab-c62d83856343/1784793834311.jpg",
+      "info": [
+        "45 min",
+        "6 porsjoner",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "Grunnlag",
+          "items": [
+            "1 ss smør",
+            "1 ss olivenolje",
+            "4 stk røde sjalottløk, finhakket",
+            "4 fedd hvitløk, finhakket",
+            "300 g karbonadedeig"
+          ]
+        },
+        {
+          "group": "Grønnsaker og væske",
+          "items": [
+            "1 flaske Pomodoro (tomatsaus)",
+            "2 ss tomatpuré",
+            "1 stk rød paprika, grovhakket",
+            "2 stk gulrøtter, grovhakket",
+            "1 terning kjøttbuljong",
+            "1 liter vann",
+            "1 stk rød chili, finhakket"
+          ]
+        },
+        {
+          "group": "Krydder og smak",
+          "items": [
+            "1 ts paprikapulver",
+            "1 ts ristet og malt spisskummin",
+            "4 g mørk sjokolade (70%)",
+            "litt fersk estragon",
+            "nymalt pepper"
+          ]
+        },
+        {
+          "group": "Bønner",
+          "items": [
+            "285 g sorte bønner (ferdigkokte)",
+            "285 g hvite bønner eller kikerter (ferdigkokte)"
+          ]
+        },
+        {
+          "group": "Til servering",
+          "items": [
+            "yoghurt naturell",
+            "fersk koriander"
+          ]
+        }
+      ],
+      "name": "Vinterens beste chili con carne",
+      "result": "Varmende og smakfull chili proppfull av næring, krydder og hemmeligheten mørk sjokolade.",
+      "source_url": "",
+      "steps": [
+        "Smelt smør og olje i en stor tykkbunnet gryte på middels varme, og stek løk og hvitløk mykt.",
+        "Tilsett kjøtt og brun i cirka fem minutter.",
+        "Tilsett resten av ingrediensene, med unntak av estragon og koriander. La koke til mørt, cirka en halvtime.",
+        "Tilsett bønnene og de ferske urtene, og varm opp.",
+        "Server med yoghurt naturell og fersk koriander."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c16c1499-20ee-421d-a9db-e0fe054502f9/1785527719766.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c16c1499-20ee-421d-a9db-e0fe054502f9/1785527719396.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c16c1499-20ee-421d-a9db-e0fe054502f9/1785527720087.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c16c1499-20ee-421d-a9db-e0fe054502f9/1785527720246.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c16c1499-20ee-421d-a9db-e0fe054502f9/1785527720563.jpg"
+      ],
+      "id": "019016e4-1aa7-4f6d-9261-3c16b6c1e829",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/c16c1499-20ee-421d-a9db-e0fe054502f9/1785527720087.jpg",
+      "info": [
+        "25 min",
+        "1 porsjon",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "60 g hvetende mel med bakepulver (eller 60 g hvetemel + 1/2 ts bakepulver)",
+            "50 g cottage cheese",
+            "15 g feta",
+            "15 g tomat, terninger",
+            "1 ts fersk basilikum"
+          ]
+        }
+      ],
+      "name": "Air Fryer Feta & Tomato Cottage Cheese Bread",
+      "result": "Et luftig, proteinrikt brød med smak av feta, tomat og basilikum",
+      "source_url": "",
+      "steps": [
+        "Bland alle ingrediensene i en bolle til det blir en deig.",
+        "Form deigen til et lite rundt brød med hendene. Hvis den er for klissete, tilsett litt ekstra mel.",
+        "Skjær inn mønster på toppen med en skarp kniv.",
+        "Tilbered i air fryer ved 180°C i 20 minutter, eller bak i ovn ved 180°C i 35 minutter.",
+        "Hvis midten ikke er gjennomstekt, snu brødet og tilbered i ytterligere 3 til 5 minutter.",
+        "Skjær i skiver og server."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "619f09f1-52b0-421d-9c09-6dc2abc5b98a",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/619f09f1-52b0-421d-9c09-6dc2abc5b98a/1784746297728.jpg",
+      "info": [
+        "45 min",
+        "2 porsjoner",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "Cookiedeig - Våte ingredienser",
+          "items": [
+            "40 g gresk yoghurt (naturell eller vanilje, fettfri)",
+            "25 g / 25 ml eggehvite",
+            "2,5 ml vaniljeekstrakt (valgfritt)"
+          ]
+        },
+        {
+          "group": "Cookiedeig - Tørre ingredienser",
+          "items": [
+            "10 g hvetemel",
+            "10 g kaseinproteinpulver",
+            "5 g havremel",
+            "24 g sukkererstatning (granulert)",
+            "1 g natron",
+            "1 klype salt"
+          ]
+        },
+        {
+          "group": "Browniedeig - Våte ingredienser",
+          "items": [
+            "1,2 dl / 120 g eggehvite",
+            "80 g gresk yoghurt (naturell eller vanilje, fettfri)",
+            "120 g gresskarmos",
+            "1,2 dl / 120 g mandelmelk"
+          ]
+        },
+        {
+          "group": "Browniedeig - Tørre ingredienser",
+          "items": [
+            "35 g hvetemel",
+            "35 g hvetemel ekstra (valgfritt, for mer tetthet)",
+            "72-96 g sukkererstatning (granulert)",
+            "20 g whey/kasein proteinpulver",
+            "25 g mørk kakaopulver",
+            "2 g natron",
+            "2 g bakepulver",
+            "1 klype salt"
+          ]
+        },
+        {
+          "group": "Topping",
+          "items": [
+            "10 g sjokoladebiter",
+            "ekstra sjokoladebiter (valgfritt)"
+          ]
+        },
+        {
+          "group": "Pynt (valgfritt)",
+          "items": [
+            "iskrem",
+            "sjokoladesaus"
+          ]
+        }
+      ],
+      "name": "Crumbl Protein Brookie",
+      "result": "En enorm proteinrik brookie som kombinerer brownie og cookie i én dekadent dessert",
+      "source_url": "",
+      "steps": [
+        "Forvarm ovnen til 175°C og spray to 12-15 cm springformer lett med olje.",
+        "Bland de våte ingrediensene til cookiedeigen i en bolle, og de tørre i en annen. Kombiner deretter våt og tørr blanding.",
+        "Bland de våte ingrediensene til browniedeigen i en bolle, og de tørre i en annen. Kombiner deretter våt og tørr blanding. Ikke overmiks.",
+        "Fordel browniedeigen likt mellom de to formene.",
+        "Drypp cookiedeigen over browniedeigen, spre forsiktig utover og strø sjokoladebiter på toppen.",
+        "Stek i 28-38 minutter (15 cm form) eller 32-42 minutter (12 cm form), til kantene er ferdig stekt og midten fortsatt er litt myk.",
+        "Avkjøl i formene i 30 minutter før servering. Topp eventuelt med iskrem og sjokoladesaus."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "f222d540-4583-4240-983e-7a5032141747",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/f222d540-4583-4240-983e-7a5032141747/1784722891005.jpg",
+      "info": [
+        "25 min",
+        "2 porsjoner",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "Kanelsnitter",
+          "items": [
+            "450 g flytende eggehvite",
+            "1 1/2 ts vaniljeekstrakt",
+            "3/4 ts kanel",
+            "4 ts munkefruktsøtstoff (eller annet søtstoff)",
+            "Valgfritt: 1 skje proteinpulver (ca 30 g)"
+          ]
+        },
+        {
+          "group": "Frosting",
+          "items": [
+            "30 g kremost",
+            "1/2 ts vaniljeekstrakt",
+            "1/4 ts kanel",
+            "2 ts munkefruktsøtstoff (eller annet søtstoff)",
+            "1 klype salt"
+          ]
+        }
+      ],
+      "name": "Proteinrike kanelsnitter",
+      "result": "Luftige kanelsnitter med frosting som er lave i kalorier og høye i protein",
+      "source_url": "",
+      "steps": [
+        "Visp eggehviten til myke topper dannes. Tilsett vaniljeekstrakt, kanel, munkefruktsøtstoff og salt, og fortsett å vise til stive topper dannes.",
+        "Bland inn proteinpulveret hvis du bruker det, ved å folde det forsiktig inn i massen.",
+        "Fordel massen i 2 stk 12-hulls muffinsformer.",
+        "Stek på 180°C i 10-12 minutter.",
+        "Bland ingrediensene til frosting og smør over snittene når de er avkjølt."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "debe38f5-91b2-4ada-9f17-65c3cc1f027d",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/debe38f5-91b2-4ada-9f17-65c3cc1f027d/1784451401413.jpg",
+      "info": [
+        "45 min",
+        "10-12 ruletter",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "10-12 napakålblader",
+            "1 mellomstort aubergine",
+            "450 g sopp",
+            "190 g kokt jasminris",
+            "3 vårløk",
+            "4 fedd hvitløk",
+            "1 ss fersk revet ingefær",
+            "1 1/2 ss soyasaus",
+            "1 ts lønnesirup eller agavesirup",
+            "1 ts riseddik",
+            "1-2 ts sesamolje",
+            "Nøytral olje til steking"
+          ]
+        },
+        {
+          "group": "Saus",
+          "items": [
+            "2,4 dl / 240 g grønnsaksbuljong",
+            "5 ss soyasaus",
+            "1 ss lønnesirup",
+            "2 ts riseddik",
+            "1-1 1/2 ts sesamolje",
+            "1/8 ts tørket ingefær",
+            "2 ts maisstivelse",
+            "2 ss / 30 g vann"
+          ]
+        }
+      ],
+      "name": "Asiatiske napakålruletter",
+      "result": "Saftige asiatisk-inspirerte kålruletter med smaksrik saus og sprø grønnsaker",
+      "source_url": "",
+      "steps": [
+        "La napakålbladene koke forsiktig i ca. 1 minutt til de er myke.",
+        "Stek finhakket aubergine i en panne med litt olje i 8-10 minutter til den er myk og lett gyllen. Legg til side.",
+        "Stek soppen i samme panne til all væske er fordampet og soppen begynner å bli brun. Tilsett hvitløk, ingefær og vårløk. Stek i 1 minutt til.",
+        "Ha auberginen tilbake i pannen sammen med soyasaus, lønnesirup og riseddik. Stek i 1-2 minutter til, og bland inn risen.",
+        "Fyll hvert kålblad med fyll, brett inn sidene og rull tett sammen.",
+        "Stek rullene med sømsiden ned til de er gylne på flere sider.",
+        "Til sausen: Kok opp buljong, soyasaus, lønnesirup, riseddik, sesamolje og tørket ingefær i 1-2 minutter. Rør inn maisstivelse blandet med vann og kok til sausen er blank.",
+        "Hell sausen over kålrullene og topp med vårløk og sesamfrø."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/36524c63-2f78-4aad-ba7c-d9d4099f312b/1782741287574.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/36524c63-2f78-4aad-ba7c-d9d4099f312b/1783397292681.jpg"
+      ],
+      "id": "36524c63-2f78-4aad-ba7c-d9d4099f312b",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/36524c63-2f78-4aad-ba7c-d9d4099f312b/1783397292681.jpg",
+      "info": [
+        "30 min",
+        "6 stk",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "300 g eggehviter",
+            "100 g cottage cheese, mager",
+            "30 g parmesan, finrevet",
+            "50 g rød paprika, finhakket",
+            "30 g babyspinat, grovhakket",
+            "12 g vårløk, finhakket",
+            "2 g salt",
+            "1 g sort pepper",
+            "1 g hvitløkspulver"
+          ]
+        }
+      ],
+      "name": "Proteinrike muffins",
+      "result": "Sunne og proteinrike muffins perfekte som mellommåltid eller snacks",
+      "source_url": "",
+      "steps": [
+        "Forvarm ovnen til 180°C.",
+        "Bland eggehviter og cottage cheese godt sammen.",
+        "Tilsett parmesan, paprika, babyspinat og vårløk.",
+        "Krydre med salt, pepper og hvitløkspulver.",
+        "Fordel blandingen i 6 muffinsformer.",
+        "Stek i ovnen i ca. 20-25 minutter til muffinsen er gyllen og gjennomstekt."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "3f7b5e5d-7ce2-4e37-8438-a31b287f31bd",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/3f7b5e5d-7ce2-4e37-8438-a31b287f31bd/1782030692662.jpg",
+      "info": [
+        "20 min",
+        "4 porsjoner",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "60 g havregryn",
+            "80 g cottage cheese",
+            "2 stk egg",
+            "1 dl / 100 g melk",
+            "klype salt",
+            "godt med kanel",
+            "1 ts bakepulver"
+          ]
+        }
+      ],
+      "name": "Sunnehavrevafler",
+      "result": "Sprø og sunne havrevafler med cottage cheese som gir ekstra protein og saftig konsistens",
+      "source_url": "",
+      "steps": [
+        "Bland alle ingrediensene sammen i en bolle til en jevn røre",
+        "Varm opp vaffeljernet og smør det lett",
+        "Hell røren på vaffeljernet og stek til vaflene er gylne",
+        "Server varme med ønsket topping som bær, yoghurt eller sirup"
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "8da29e31-dba9-4ee2-b327-102f1b6fe699",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/8da29e31-dba9-4ee2-b327-102f1b6fe699/1782030593598.jpg",
+      "info": [
+        "30 min",
+        "2-4 porsjoner",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "Aubergine",
+          "items": [
+            "2 stk kinesisk aubergine (eller japansk/vanlig aubergine), kuttet i biter",
+            "1 ts salt",
+            "2 ts maisstivelse"
+          ]
+        },
+        {
+          "group": "Saus",
+          "items": [
+            "2 ss Chinkiang eddik (kinesisk svart eddik, eller balsamico)",
+            "1,5 ss lys soyasaus",
+            "1 ss Shaoxing vin (eller tørr sherry)",
+            "2 ss sukker",
+            "0,6 dl / 60 g kyllingbuljong (eller grønnsaksbuljong)",
+            "2 ts maisstivelse"
+          ]
+        },
+        {
+          "group": "Steking",
+          "items": [
+            "3 ss peanøttolje (eller vegetabilsk olje)",
+            "100 g kjøttdeig av svin (eller kylling) - valgfritt",
+            "2 stk vårløk, skåret",
+            "2 fedd hvitløk, hakket",
+            "1 ss ingefær, hakket",
+            "8-10 stk tørkede kinesiske chili",
+            "2 ts doubanjiang (fermentert sterk bønnepasta, eller chili bean paste)",
+            "1 klype malt Sichuan-pepper - valgfritt"
+          ]
+        }
+      ],
+      "name": "Yu Xiang Eggplant (Sichuan Aubergine Stir Fry)",
+      "result": "Sprø aubergine dekket i en syrlig, søt, salt og lett sterk saus med umami-rik Sichuan-smak",
+      "source_url": "",
+      "steps": [
+        "Legg auberginebitene i en stor bolle og dekk med vann. Tilsett 1 ts salt og bland godt. Legg en tallerken oppå slik at auberginen holdes under vann. La det stå i 10-15 minutter. Hell av vannet og tørk auberginen med kjøkkenpapir.",
+        "Bland alle sausens ingredienser i en bolle.",
+        "Dryss maisstivelse over auberginen og bland med hendene til den er jevnt dekket.",
+        "Varm 2 ss olje i en stor stekepanne på middels høy varme. Fordel auberginen i pannen uten overlapping. Stek under hyppig omrøring til kantene er lett svidd og teksturen begynner å mykes, ca 5 minutter. Overfør til en tallerken.",
+        "Tilsett resterende 1 ss olje og kjøttdeigen i pannen. Stek og hakk kjøttet i mindre biter til det er gjennomstekt.",
+        "Tilsett vårløk, hvitløk, ingefær og chili. Rør noen ganger til duften frigjøres.",
+        "Tilsett doubanjiang og Sichuan-pepper. Rør og stek til kjøttet er jevnt dekket.",
+        "Rør i sausen igjen for å løse opp maisstivelsen helt, hell deretter i pannen. Rør til sausen tykner.",
+        "Legg auberginen tilbake i pannen og bland raskt alt sammen.",
+        "Server varm som hovedrett over dampet ris eller som siderett."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/6bfac995-1611-4e60-a382-9eeed53bacb5/1781542978629.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/6bfac995-1611-4e60-a382-9eeed53bacb5/1783397295731.jpg"
+      ],
+      "id": "6bfac995-1611-4e60-a382-9eeed53bacb5",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/6bfac995-1611-4e60-a382-9eeed53bacb5/1783397295731.jpg",
+      "info": [
+        "10 min",
+        "1 porsjon",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "Crepes",
+          "items": [
+            "30-35 g proteinpulver",
+            "125 ml / 125 g eggehviter"
+          ]
+        },
+        {
+          "group": "Topping",
+          "items": [
+            "20 g PB2 pulver",
+            "50 g banan",
+            "Sukkerfri karamelltopping",
+            "50 g blåbær",
+            "Sukkerfri lønnesirup",
+            "Kanel, drys"
+          ]
+        }
+      ],
+      "name": "Protein Crepes med Blåbær og Banan",
+      "result": "Sunne og proteinrike crepes med kun 2 ingredienser, toppet med friske blåbær og banan",
+      "source_url": "",
+      "steps": [
+        "Bland proteinpulver og eggehviter til røren er jevn",
+        "Hell tynt ut i en non-stick stekepanne på middels varme",
+        "Stek 1-2 minutter på hver side. Hold crepesen tynn, ellers blir den gummiert",
+        "Legg på toppingen og brett sammen"
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/5067c1d0-6c56-41fe-aa91-b3dd5dd883f1/1781542951086.jpg",
+        "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/5067c1d0-6c56-41fe-aa91-b3dd5dd883f1/1783397297231.jpg"
+      ],
+      "id": "5067c1d0-6c56-41fe-aa91-b3dd5dd883f1",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/5067c1d0-6c56-41fe-aa91-b3dd5dd883f1/1783397297231.jpg",
+      "info": [
+        "45 min",
+        "4 porsjoner",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "450 g kyllingbryst",
+            "200 g basmatiris (ukokt)",
+            "32 g thai rød currypasta",
+            "4 dl / 400 g lett kokosmelk",
+            "100 g lett mozzarella",
+            "200 g kirsebærtomater",
+            "100 g spinat",
+            "100 g brun løk (ca 1 stk)",
+            "400 g frosne grønnsaker",
+            "Salt og pepper etter smak",
+            "Vegetabilsk olje"
+          ]
+        }
+      ],
+      "name": "Autentisk Thailandsk Rød Curry One Dish Bake",
+      "result": "En kremet og krydret thailandsk gratengrett med smeltet mozzarella på toppen",
+      "source_url": "",
+      "steps": [
+        "Forvarm ovnen til 180°C.",
+        "Tilsett ukokt ris, ternet kylling, currypasta, kokosmelk, løk, tomater, frosne grønnsaker og krydder rett i en ildfast form. Bland godt så currypasten er jevnt fordelt.",
+        "Dekk til med folie og stek i 30 til 45 minutter til risen er kokt og væsken er absorbert.",
+        "Fjern folie, rør gjennom med spinat, topp med mozzarella, og stek ustengt i ytterligere 10 minutter til osten er smeltet og litt gyllen.",
+        "La retten hvile i 5 minutter slik at den tykner, og server."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "e3b43dfe-ec8d-46aa-bc90-b75202026aec",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/e3b43dfe-ec8d-46aa-bc90-b75202026aec/1784746955985.jpg",
+      "info": [
+        "50 min",
+        "1 porsjon",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "1 stk stor søtpotet (ca. 350 g)",
+            "200 g ekstra magert kjøttdeig",
+            "35 g fettfri mozzarella",
+            "40 g hakket tomat",
+            "20 g hakket løk",
+            "20 g jalapeños i skiver",
+            "2 ss limejuice",
+            "1/2 avokado (ca. 75 g)",
+            "Flaksalt"
+          ]
+        }
+      ],
+      "name": "Taco-fylt søtpotet",
+      "result": "En næringsrik søtpotet fylt med krydret kjøttdeig, mozzarella og friske grønnsaker, toppet med kremet avokado",
+      "source_url": "",
+      "steps": [
+        "Skjær søtpoteten i halv lengdeveis og krydre med flaksalt.",
+        "Plasser søtpoteten med kuttsiden ned på en bakepapir-kledd stekeplate og stek på 220°C i ca. 40 minutter, eller til den er myk og karamellisert.",
+        "Mens søtpoteten steker, brun kjøttdeigen i en stekepanne og krydre etter smak.",
+        "Ta søtpoteten ut av ovnen og legg begge halvdelene i en bolle.",
+        "Bruk en gaffel til forsiktig å mose søtpotetens indre for å lage en base.",
+        "Topp med stekt kjøttdeig, mozzarella, hakket tomat, løk, jalapeños og avokado.",
+        "Fullfør med limejuice og et dryss av flaksalt."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "fd6478f2-7ff2-4a00-8de9-a2984f50c038",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/fd6478f2-7ff2-4a00-8de9-a2984f50c038/1781500349068.jpg",
+      "info": [
+        "25 min",
+        "1 porsjon",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "1 stk (150 g) kyllingbryst",
+            "30 g knuste cornflakes",
+            "10 g revet parmesan",
+            "10 g hvetemel",
+            "1 stk (50 g) egg (eller eggehvite som bindemiddel)",
+            "Italiensk krydder",
+            "Hvitløkspulver",
+            "Salt",
+            "Pepper",
+            "100 g tomatsaus",
+            "30 g lett mozzarella",
+            "Olje spray"
+          ]
+        }
+      ],
+      "name": "Chicken Parmigiana",
+      "result": "Saftig kylling med sprø cornflakes-parmesan-coating, toppet med tomatsaus og smeltet mozzarella",
+      "source_url": "",
+      "steps": [
+        "Del kyllingbrystet i to og bank det jevnt.",
+        "Krydre med salt, pepper, hvitløkspulver og italiensk krydder.",
+        "Vend først i mel, deretter egg, og til slutt en blanding av knuste cornflakes og parmesan.",
+        "Spray lett med olje.",
+        "Stek i airfryer eller ovn på 200°C i ca. 15–18 minutter til gyllen og gjennomstekt.",
+        "Topp med tomatsaus og mozzarella.",
+        "Stek videre 2–4 minutter til osten har smeltet."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "ef065ec2-ac34-415e-9ca6-7f7c9b680963",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/ef065ec2-ac34-415e-9ca6-7f7c9b680963/1781500428095.jpg",
+      "info": [
+        "35 min",
+        "11 burgerbrød",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "286 g cottage cheese",
+            "114 g yoghurt naturell",
+            "1 stk egg",
+            "300 g hvetemel",
+            "1 ts bakepulver",
+            "½ ts salt",
+            "Sesamfrø (valgfritt)"
+          ]
+        }
+      ],
+      "name": "Cottage cheese burgerbrød",
+      "result": "Myke og luftige burgerbrød med høyt proteininnhold takket være cottage cheese",
+      "source_url": "",
+      "steps": [
+        "Sett ovnen på 200°C.",
+        "Kjør cottage cheese og yoghurt helt glatt.",
+        "Bland inn egget.",
+        "Tilsett mel, bakepulver og salt. Rør til en myk, litt klissete deig.",
+        "Juster med mer mel ved behov til deigen akkurat slipper fingrene.",
+        "Del i 6-7 emner og form runde brød på bakepapir.",
+        "Strø over sesamfrø.",
+        "Stek midt i ovnen i 20-25 minutter til gyllen overflate."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "aa3efef7-1151-49cf-8655-20dff0287a37",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/aa3efef7-1151-49cf-8655-20dff0287a37/1781379768208.jpg",
+      "info": [
+        "40 min",
+        "8 stykker",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "Bunn",
+          "items": [
+            "1 kg karbonadedeig",
+            "4 stk egg",
+            "200 g revet lettost (10%)",
+            "1-2 ts salt",
+            "1 ts pepper",
+            "1 ts oregano",
+            "1 ts hvitløkspulver"
+          ]
+        },
+        {
+          "group": "Topping per pizza",
+          "items": [
+            "70 g lettost",
+            "Litt løk",
+            "Vårløk",
+            "Valgfri pizzasaus"
+          ]
+        }
+      ],
+      "name": "Meatsa / Lavkarbo pizza med karbonadedeig",
+      "result": "En proteinrik lavkarbo pizza med bunn av karbonadedeig og ost, perfekt for lavkarbo-diett",
+      "source_url": "",
+      "steps": [
+        "Sett ovnen på 220°C",
+        "Bland karbonadedeig, egg, ost og krydder godt i 4 porsjoner",
+        "Press ut deigen på bakepapir",
+        "Forstек 10-15 minutter",
+        "Ha på topping",
+        "Stek videre 10-15 minutter"
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "00fb02c3-b407-4f2b-ab09-1f35daba9168",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/00fb02c3-b407-4f2b-ab09-1f35daba9168/1780815725213.jpg",
+      "info": [
+        "40 min",
+        "12 porsjoner",
+        "Sunt"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "300 g havregryn, store",
+            "50 g mandelflak",
+            "30 g pekannøtter, grovhakket",
+            "20 g hasselnøtter, grovhakket",
+            "20 g valnøtter, grovhakket",
+            "50 g gresskarkjerner",
+            "50 g solsikkekjerner",
+            "30 g chiafrø",
+            "50 g kokosflak, usøtet",
+            "3 ss kokosolje",
+            "1 ss honning",
+            "1 ss agavesirup",
+            "2 ss appelsinjuice eller vann",
+            "1 ts kanel",
+            "1 ts salt",
+            "1 ts vaniljeekstrakt"
+          ]
+        }
+      ],
+      "name": "Hjemmelaget granola – lett versjon med kokos, kanel og blandede nøtter",
+      "result": "Sprø og næringsrik granola med god balanse mellom nøtter, frø og kokos.",
+      "source_url": "",
+      "steps": [
+        "Sett ovnen på 150°C varmluft. Kle en stor stekeplate med bakepapir.",
+        "Bland alle tørre ingredienser godt i en stor bolle.",
+        "Smelt kokosoljen og rør inn honning, agave, appelsinjuice, kanel, salt og vaniljeekstrakt.",
+        "Hell den våte blandingen over de tørre ingrediensene og bland godt til alt er jevnt dekket.",
+        "Fordel utover stekeplaten i et jevnt lag og press lett ned med en slikkepott.",
+        "Stek i 25–30 minutter og rør forsiktig to ganger – etter 10 og 20 minutter. Hold ekstra godt øye de siste 5 minuttene.",
+        "Ta ut og la avkjøle helt på platen uten å røre for å få gode klumper.",
+        "Ha over i lufttett glass når den er helt kald. Holder seg sprø i 2–3 uker."
+      ]
+    },
+    {
+      "author": "Anders",
+      "gallery_images": [],
+      "id": "479d2629-9166-412d-aa24-69649cac1432",
+      "image_url": "https://hfktoxmjudaopjsbvram.supabase.co/storage/v1/object/public/recipe-images/15798f14-a1d2-4d87-8d8e-333d567cfd32/479d2629-9166-412d-aa24-69649cac1432/1780815337650.jpg",
+      "info": [
+        "15 min",
+        "3 porsjoner",
+        "Balansert"
+      ],
+      "ingredients": [
+        {
+          "group": "",
+          "items": [
+            "6 rispapirarker",
+            "1 stk egg (stort)",
+            "30 g / 3 cl lettmelk",
+            "En klype salt",
+            "120 g lavkalori bringebærsyltetøy",
+            "Sukkerfri melis til glasur (valgfritt)"
+          ]
+        }
+      ],
+      "name": "Rice Paper Danish",
+      "result": "Lett og sprø rice paper danish med søtt syltetøyfyll — overraskende god lavkalori-frokost.",
+      "source_url": "",
+      "steps": [
+        "La rispapperet bløtgjøre i 1-2 minutter før bretting.",
+        "Bland egg, melk og salt sammen.",
+        "Legg 2 rispapirarker per danish, tilsett bringebærsyltetøyfyll og brett til ønsket form.",
+        "Luftstek eller stek i ovn på 200°C/390°F i ca. 10 minutter til de er sprø og gyldenbrune.",
+        "Bland sukkerfri glasursukker med litt vann for å lage en glasur, dryss over toppen før servering."
+      ]
+    }
+  ]
+}
