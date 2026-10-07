@@ -2,7 +2,10 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#221E16">
 <meta name="robots" content="noindex, nofollow">
 <title>Kokeboka vår</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,6 +19,9 @@
   --amber:#B5621E;--amber-bg:#FDF0E6;--coral:#C0392B;--coral-bg:#FDF1EF;
   --blue:#1A5C8A;--blue-bg:#EAF3FA;--purple:#4A3B9C;--purple-bg:#EEECFB;
   --pink:#8B2C5A;--pink-bg:#F9EBF3;
+  /* Bevegelse: én kurve, én varighet per tier. Hover = ease, trykk/inn-ut = sterk ease-out. */
+  --ease-out:cubic-bezier(.23,1,.32,1);--ease-in-out:cubic-bezier(.77,0,.175,1);--ease-drawer:cubic-bezier(.32,.72,0,1);
+  --t-hover:150ms ease;--t-press:120ms var(--ease-out);
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#18150F;--surface:#221E16;--surface2:#2C2720;--border:rgba(255,240,210,.12);--border2:rgba(255,240,210,.24);
@@ -25,55 +31,53 @@
   --blue:#5DA0D8;--blue-bg:#0F2030;--purple:#8A7AE0;--purple-bg:#1A1630;
   --pink:#D06090;--pink-bg:#2A1020;
 }}
+html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* HEADER */
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:50}
+header{background:var(--surface);background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top) 24px 0;position:sticky;top:0;z-index:50}
 .header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px;gap:14px}
 .logo{font-family:'Lora',serif;font-size:19px;font-weight:600;color:var(--text);text-decoration:none;white-space:nowrap}
 .logo span{color:var(--accent)}
 .header-search{position:relative;flex:1;max-width:340px}
 .header-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);width:15px;height:15px;pointer-events:none}
-.header-search input{width:100%;padding:8px 12px 8px 32px;background:var(--surface2);border:1px solid var(--border);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .15s}
+.header-search input{-webkit-appearance:none;appearance:none;width:100%;padding:8px 12px 8px 32px;background:var(--surface2);border:1px solid var(--border);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color var(--t-hover)}
 .header-search input::placeholder{color:var(--text3)}
+.header-search input::-webkit-search-decoration,.header-search input::-webkit-search-cancel-button{-webkit-appearance:none}
 .header-search input:focus{border-color:var(--accent)}
-.add-btn-header{display:flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:0;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;transition:opacity .15s}
-.add-btn-header:hover{opacity:.85}
+.add-btn-header{display:flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:0;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;transition:opacity var(--t-hover),transform var(--t-press)}
 .add-btn-header svg{width:14px;height:14px}
 
 /* HERO */
 .hero{background:var(--surface);border-bottom:1px solid var(--border);padding:22px 24px 16px}
 .hero-inner{max-width:1100px;margin:0 auto}
 .hero-greeting{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
-.hero h1{font-family:'Lora',serif;font-size:clamp(22px,3.5vw,36px);font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.2}
+.hero h1{font-family:'Lora',serif;font-size:clamp(22px,3.5vw,36px);font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.15;letter-spacing:-.015em}
 .hero p{font-size:14px;color:var(--text2);margin-bottom:12px}
 /* Tallene er ETT stille varselsignal, ikke et dashbord — hele statistikken
    bor i statistikkmodalen, ett trykk unna. */
 .stats-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .hero-meta{font-size:13px;color:var(--text2)}
 .hero-meta b{font-family:'Lora',serif;color:var(--accent);font-weight:600;font-size:15px}
-.hero-stats-btn{font:500 12px 'DM Sans',sans-serif;background:none;border:1px solid var(--border2);color:var(--text2);padding:3px 10px;cursor:pointer;transition:all .12s}
-.hero-stats-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hero-stats-btn{font:500 12px 'DM Sans',sans-serif;background:none;border:1px solid var(--border2);color:var(--text2);padding:3px 10px;cursor:pointer;transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press)}
 .stat{display:flex;align-items:baseline;gap:5px}
 .stat-n{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--accent)}
 .stat-l{font-size:12px;color:var(--text3)}
 
 /* FILTERS */
 .filters-bar{max-width:1100px;margin:14px auto 0;padding:0 24px}
-.filter-toggle{display:none;align-items:center;gap:7px;font:500 13px 'DM Sans',sans-serif;background:var(--surface);border:1px solid var(--border2);color:var(--text2);padding:9px 14px;cursor:pointer;margin-bottom:8px;transition:all .12s}
+.filter-toggle{display:none;align-items:center;gap:7px;font:500 13px 'DM Sans',sans-serif;background:var(--surface);border:1px solid var(--border2);color:var(--text2);padding:9px 14px;cursor:pointer;margin-bottom:8px;transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press)}
 .filter-toggle.on{border-color:var(--accent);color:var(--accent)}
 #filterCount{color:var(--accent);font-weight:600}
 .filter-group{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
 .filter-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-right:4px;white-space:nowrap}
-.chip{font-size:12px;padding:4px 11px;border-radius:0;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
-.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip{font-size:12px;padding:4px 11px;border-radius:0;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;transition:border-color var(--t-hover),color var(--t-hover),background-color var(--t-hover),transform var(--t-press);font-family:'DM Sans',sans-serif}
 .chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* GRID */
 .main{max-width:1100px;margin:20px auto 60px;padding:0 24px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:var(--border)}
-.card{background:var(--surface);overflow:hidden;cursor:pointer;transition:border .15s;position:relative}
-.card:hover{outline:2px solid var(--accent);outline-offset:-1px}
+.card{background:var(--surface);overflow:hidden;cursor:pointer;transition:transform var(--t-press);position:relative}
 .card-thumb{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .card-thumb img.recipe-img{width:100%;height:100%;object-fit:cover}
 .card-thumb .emoji-fallback{font-size:48px}
@@ -88,23 +92,22 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .card-img-count{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 6px;border-radius:0;display:flex;align-items:center;gap:3px}
 
 /* Camera button on card */
-.card-cam-btn{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:0;padding:4px 9px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;opacity:0;transition:opacity .2s;z-index:3;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.card:hover .card-cam-btn{opacity:1}
-.card-cam-btn:hover{background:rgba(0,0,0,.85)}
+.card-cam-btn{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:0;padding:4px 9px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;opacity:0;transition:opacity var(--t-hover);z-index:3;font-family:'DM Sans',sans-serif;white-space:nowrap}
 
 /* MODALS */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
-.modal-bg.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .18s ease}
-@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:20px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);opacity:0;transition:opacity 160ms var(--ease-out),display 160ms,overlay 160ms;transition-behavior:allow-discrete}
+.modal-bg.open{display:flex;opacity:1;transition-duration:220ms}
+@starting-style{.modal-bg.open{opacity:0}}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;transform:translateY(12px) scale(.98);transition:transform 160ms var(--ease-out)}
+.modal-bg.open .modal{transform:none;transition-duration:220ms}
+@starting-style{.modal-bg.open .modal{transform:translateY(12px) scale(.98)}}
 .modal-hero{width:100%;aspect-ratio:16/6;display:flex;align-items:center;justify-content:center;font-size:80px;position:relative;overflow:hidden}
 .modal-hero img.hero-img{width:100%;height:100%;object-fit:cover}
 .modal-hero .emoji-over{position:absolute;font-size:80px}
-.modal-close{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.92);border:none;border-radius:0;width:30px;height:30px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#333;z-index:2}
-.modal-img-btn{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:0;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;z-index:2;font-family:'DM Sans',sans-serif;transition:background .15s}
-.modal-img-btn:hover{background:rgba(0,0,0,.88)}
+.modal-close{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.92);border:none;border-radius:0;width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#333;z-index:2}
+.modal-img-btn{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:0;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;z-index:2;font-family:'DM Sans',sans-serif;transition:background-color var(--t-hover),transform var(--t-press);white-space:nowrap}
 .modal-body{padding:18px 22px 26px}
-.modal-title{font-family:'Lora',serif;font-size:21px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.25}
+.modal-title{font-family:'Lora',serif;font-size:21px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.2;letter-spacing:-.01em}
 .modal-info{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border)}
 .info-pill{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:0;padding:4px 10px;font-size:12px;color:var(--text2)}
 .info-pill svg{width:13px;height:13px;color:var(--text3)}
@@ -116,9 +119,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ingr-list li{font-size:14px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.45}
 .ingr-list li::before{content:"• ";color:var(--accent);font-weight:600}
 .ingr-list li:last-child{border-bottom:none}
-.ingr-scalable{cursor:pointer;transition:color .12s}
-.ingr-scalable:hover{color:var(--accent)}
-.ingr-scalable:hover::after{content:" ⚖";font-size:12px;opacity:.7}
+.ingr-scalable{cursor:pointer;transition:color var(--t-hover)}
 .scale-note{font-size:12px;color:var(--accent);font-weight:500;margin:2px 0 4px}
 .scale-note:empty{display:none}
 .scale-hint{font-size:11px;color:var(--text3);margin:0 0 6px}
@@ -139,23 +140,19 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 /* Portion calculator */
 .ingr-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
 .serving-ctrl{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
-.serving-ctrl button{width:26px;height:26px;border:1px solid var(--border2);background:var(--surface2);border-radius:50%;cursor:pointer;font-size:16px;line-height:1;color:var(--text);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .12s}
-.serving-ctrl button:hover{border-color:var(--accent);color:var(--accent)}
+.serving-ctrl button{width:26px;height:26px;border:1px solid var(--border2);background:var(--surface2);border-radius:50%;cursor:pointer;font-size:16px;line-height:1;color:var(--text);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press)}
 .serving-ctrl input[type=number]{width:40px;text-align:center;border:1px solid var(--border2);background:var(--surface);border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;padding:3px 0;color:var(--text);-moz-appearance:textfield}
 .serving-ctrl input[type=number]::-webkit-outer-spin-button,.serving-ctrl input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 /* Detail actions */
 .detail-actions{display:flex;gap:8px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
-.detail-action-btn{padding:6px 14px;background:none;border:1px solid var(--border2);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
-.detail-action-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
+.detail-action-btn{padding:6px 14px;background:none;border:1px solid var(--border2);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:border-color var(--t-hover),color var(--t-hover),background-color var(--t-hover),transform var(--t-press);white-space:nowrap}
 .detail-action-btn.danger{color:var(--coral,#e05)}
-.detail-action-btn.danger:hover{border-color:var(--coral,#e05);background:var(--surface2)}
 
 /* GALLERY */
 .detail-gallery{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
 .gallery-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .gallery-strip::-webkit-scrollbar{display:none}
-.gallery-thumb{flex-shrink:0;width:72px;height:72px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:border-color .12s;position:relative}
-.gallery-thumb:hover{border-color:var(--accent)}
+.gallery-thumb{flex-shrink:0;width:72px;height:72px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:border-color var(--t-hover),transform var(--t-press);position:relative}
 .gallery-thumb img{width:100%;height:100%;object-fit:cover}
 .gallery-thumb.hero-img-thumb{border-color:var(--accent);border-width:2px}
 .gallery-thumb .img-label-tip{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65);color:#fff;font-size:9px;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -163,47 +160,42 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 /* IMAGE MANAGER MODAL */
 .img-modal{max-width:560px}
 .mgr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.mgr-item{position:relative;aspect-ratio:1;overflow:hidden;border:2px solid transparent;transition:border-color .12s}
+.mgr-item{position:relative;aspect-ratio:1;overflow:hidden;border:2px solid transparent;transition:border-color var(--t-hover)}
 .mgr-item.is-hero{border-color:var(--accent)}
 .mgr-item img{width:100%;height:100%;object-fit:cover;display:block}
-.mgr-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:5px;background:linear-gradient(to bottom,rgba(0,0,0,.55) 0,transparent 45%,transparent 55%,rgba(0,0,0,.65) 100%);opacity:0;transition:opacity .15s}
-.mgr-item:hover .mgr-overlay{opacity:1}
+.mgr-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:5px;background:linear-gradient(to bottom,rgba(0,0,0,.55) 0,transparent 45%,transparent 55%,rgba(0,0,0,.65) 100%);opacity:0;transition:opacity var(--t-hover)}
 .mgr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:3px}
 .mgr-del{background:rgba(0,0,0,.7);color:#fff;border:none;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:0}
-.mgr-hero-chip{font-size:9px;background:rgba(0,0,0,.55);color:#FFD700;padding:2px 4px;border-radius:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 24px)}
+.mgr-hero-chip{font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:2px 4px;border-radius:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 24px)}
 .mgr-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:3px}
 .mgr-label-text{color:#fff;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 50px)}
 .mgr-set-hero{background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);font-size:9px;padding:2px 5px;cursor:pointer;white-space:nowrap;border-radius:0;font-family:'DM Sans',sans-serif}
-.mgr-set-hero:hover{background:rgba(255,255,255,.35)}
-.mgr-add-cell{aspect-ratio:1;border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);transition:border-color .12s;gap:5px;color:var(--text3);font-size:11px;border-radius:0}
-.mgr-add-cell:hover{border-color:var(--accent);color:var(--accent)}
+.mgr-add-cell{aspect-ratio:1;border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press);gap:5px;color:var(--text3);font-size:11px;border-radius:0}
 .mgr-add-cell svg{width:20px;height:20px}
 .img-add-panel{background:var(--surface2);border:1px solid var(--border2);padding:14px;margin-top:2px}
 .img-add-panel-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .img-upload-zone{margin-bottom:10px;overflow:hidden}
 .img-upload-prompt{display:flex;gap:8px;padding:2px 0 10px}
-.img-pick-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;background:var(--surface);border:1px dashed var(--border2);border-radius:10px;cursor:pointer;gap:6px;transition:border-color .12s}
-.img-pick-btn:hover{border-color:var(--accent)}
+.img-pick-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;background:var(--surface);border:1px dashed var(--border2);border-radius:10px;cursor:pointer;gap:6px;transition:border-color var(--t-hover),transform var(--t-press)}
 .img-pick-btn input{display:none}
-.img-pick-btn .pick-icon{font-size:26px}
+.img-pick-btn .pick-icon{color:var(--text2);display:flex}
 .img-pick-btn span{font-size:12px;color:var(--text2);font-weight:500}
 .img-upload-preview{display:none;width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-bottom:10px}
 .img-upload-preview{display:none;width:100%;max-height:160px;object-fit:cover}
 .img-label-row{display:none;margin-bottom:10px}
-.img-label-row input{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--border2);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;border-radius:0;transition:border-color .12s}
+.img-label-row input{width:100%;padding:7px 10px;background:var(--surface);border:1px solid var(--border2);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;border-radius:0;transition:border-color var(--t-hover)}
 .img-label-row input:focus{border-color:var(--accent)}
 .img-analyze-row{display:none;margin-bottom:10px}
 .img-suggest-row{margin-bottom:10px}
 .img-suggest-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
-.img-suggest-grid img{width:100%;aspect-ratio:1;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .12s}
-.img-suggest-grid img:hover{border-color:var(--accent)}
+.img-suggest-grid img{width:100%;aspect-ratio:1;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color var(--t-hover),transform var(--t-press)}
 .img-suggest-msg{grid-column:1/-1;font-size:12px;color:var(--text2)}
 /* STATISTIKK */
 .stat-btn{cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
-.stat-btn:hover .stat-l{color:var(--accent)}
 .card-counts{display:flex;gap:7px;font-size:11px;color:var(--text3);white-space:nowrap}
-.cooked-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin:14px 0 4px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;transition:opacity .15s}
-.cooked-btn:hover:not(:disabled){opacity:.9}
+.card-counts span{display:inline-flex;align-items:center;gap:3px}
+.card-counts svg{width:11px;height:11px}
+.cooked-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin:14px 0 4px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;transition:opacity var(--t-hover),transform var(--t-press)}
 .cooked-btn:disabled{opacity:.85;cursor:default}
 .cooked-badge{font-weight:400;font-size:12px;opacity:.92}
 .stats-modal{max-width:640px}
@@ -224,7 +216,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 /* ADD MODAL */
 .add-modal{max-width:600px}
 .add-tabs{display:flex;border-bottom:1px solid var(--border)}
-.add-tab{padding:12px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;font-family:'DM Sans',sans-serif;background:none;border-top:none;border-left:none;border-right:none}
+.add-tab{padding:12px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-hover),border-color var(--t-hover);font-family:'DM Sans',sans-serif;background:none;border-top:none;border-left:none;border-right:none}
 .add-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab-panel{display:none;padding:18px 22px 22px}
 .tab-panel.active{display:block}
@@ -235,19 +227,16 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ai-import-area textarea::placeholder{color:var(--text3)}
 
 /* Recipe card upload */
-.recipe-card-upload-zone{display:block;border:1px dashed var(--border2);background:var(--surface2);cursor:pointer;transition:border-color .12s;margin-bottom:12px;overflow:hidden}
-.recipe-card-upload-zone:hover{border-color:var(--accent)}
+.recipe-card-upload-zone{display:block;border:1px dashed var(--border2);background:var(--surface2);cursor:pointer;transition:border-color var(--t-hover);margin-bottom:12px;overflow:hidden}
 .recipe-card-upload-zone input{display:none}
 .recipe-card-prompt{padding:14px;display:flex;align-items:center;gap:12px}
-.recipe-card-prompt .rcp-icon{font-size:26px;flex-shrink:0}
+.recipe-card-prompt .rcp-icon{color:var(--text3);flex-shrink:0;display:flex}
 .recipe-card-prompt-text{font-size:13px;color:var(--text2);font-weight:500}
 .recipe-card-prompt-sub{font-size:11px;color:var(--text3);margin-top:1px}
 .recipe-card-preview-img{width:100%;max-height:160px;object-fit:cover;display:none}
 .recipe-card-clear{width:100%;padding:7px;background:none;border:none;border-top:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text3);cursor:pointer;text-align:center}
-.recipe-card-clear:hover{background:var(--surface2);color:var(--coral)}
 
-.ai-analyze-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.ai-analyze-btn:hover{opacity:.85}
+.ai-analyze-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity var(--t-hover),transform var(--t-press);display:flex;align-items:center;justify-content:center;gap:8px}
 .ai-analyze-btn:disabled{opacity:.5;cursor:not-allowed}
 .ai-status{font-size:13px;color:var(--text2);margin-top:8px;min-height:18px;text-align:center}
 .ai-preview{display:none;margin-top:14px;border:1px solid var(--border)}
@@ -256,27 +245,23 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ai-preview-title{font-family:'Lora',serif;font-size:15px;font-weight:600;margin-bottom:7px;color:var(--text)}
 .ai-preview-meta{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
 .preview-pill{font-size:12px;padding:3px 8px;border-radius:0;background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
-.ai-save-btn{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;transition:opacity .15s}
-.ai-save-btn:hover{opacity:.85}
+.ai-save-btn{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;transition:opacity var(--t-hover),transform var(--t-press)}
 
 /* Manual form */
 .form-row{margin-bottom:12px}
 .form-row label{display:block;font-size:12px;color:var(--text2);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
-.form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 11px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .12s}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 11px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color var(--t-hover)}
 .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--accent)}
 .form-row textarea{resize:vertical;min-height:72px}
 .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .health-slider-row{display:flex;align-items:center;gap:10px}
 .health-slider-row input[type=range]{flex:1;accent-color:var(--accent)}
 .form-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
-.btn-cancel{padding:8px 18px;background:none;border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text2);cursor:pointer;transition:border-color .12s}
-.btn-cancel:hover{border-color:var(--accent);color:var(--accent)}
-.btn-save{padding:8px 22px;background:var(--accent);border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;cursor:pointer;transition:opacity .15s}
-.btn-save:hover{opacity:.85}
+.btn-cancel{padding:8px 18px;background:none;border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text2);cursor:pointer;transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press)}
+.btn-save{padding:8px 22px;background:var(--accent);border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;cursor:pointer;transition:opacity var(--t-hover),transform var(--t-press)}
 
 /* SETTINGS */
-.settings-btn{background:none;border:1px solid var(--border2);border-radius:0;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0;transition:all .12s}
-.settings-btn:hover{border-color:var(--accent);color:var(--accent)}
+.settings-btn{background:none;border:1px solid var(--border2);border-radius:0;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0;transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press)}
 .settings-modal{max-width:480px}
 .settings-body{padding:22px}
 .settings-body h3{font-family:'Lora',serif;font-size:15px;margin-bottom:5px;color:var(--text)}
@@ -289,7 +274,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .api-status.ok{color:var(--accent)}
 .api-status.err{color:var(--coral)}
 .api-link{color:var(--accent);text-decoration:none;font-weight:500}
-.api-link:hover{text-decoration:underline}
 .step-guide{background:var(--surface2);border:1px solid var(--border);border-radius:0;padding:14px;margin-bottom:14px}
 .step-guide ol{padding-left:16px;font-size:13px;color:var(--text2);line-height:2}
 .step-guide li b{color:var(--text)}
@@ -301,14 +285,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .no-key-banner button{background:var(--amber);color:#fff;border:none;border-radius:0;padding:4px 11px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif}
 
 /* Mobile link */
-.mobile-link{display:flex;align-items:center;gap:6px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:0;padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:13px;text-decoration:none;white-space:nowrap;transition:all .12s}
-.mobile-link:hover{border-color:var(--accent);color:var(--accent)}
+.mobile-link{display:flex;align-items:center;gap:6px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:0;padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:13px;text-decoration:none;white-space:nowrap;transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press)}
 
 /* Modal header */
 .modal-header{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.modal-header-title{font-family:'Lora',serif;font-size:17px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 32px)}
-.modal-header-close{background:none;border:none;cursor:pointer;color:var(--text2);font-size:18px;padding:0;line-height:1;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.modal-header-close:hover{color:var(--text)}
+.modal-header-title{font-family:'Lora',serif;font-size:17px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 40px)}
+.modal-header-close{background:none;border:none;cursor:pointer;color:var(--text2);font-size:18px;padding:0;line-height:1;width:32px;height:32px;margin-right:-6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 @media(max-width:600px){
   .logo{font-size:15px}
@@ -320,16 +302,86 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 }
 
 /* AUTH OVERLAY */
-.auth-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:10px;transition:border-color .12s;display:block}
+.auth-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:10px;transition:border-color var(--t-hover);display:block}
 .auth-input:focus{border-color:var(--accent)}
-.auth-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:opacity .15s}
-.auth-btn:hover{opacity:.85}
+.auth-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:opacity var(--t-hover),transform var(--t-press)}
 .auth-btn:disabled{opacity:.5;cursor:not-allowed}
 .auth-switch{text-align:center;font-size:13px;color:var(--text2)}
 .auth-switch a{color:var(--accent);cursor:pointer;text-decoration:underline}
 .auth-status{font-size:13px;text-align:center;min-height:18px;margin-bottom:8px}
 .auth-status.ok{color:var(--accent)}
 .auth-status.err{color:var(--coral)}
+/* Trykk-respons: alt som kan trykkes svarer på pointer-down, ikke på release. */
+.api-save-btn,.author-pill-btn,.avatar-upload-btn,.modal-close,.modal-header-close,.mgr-del,.mgr-set-hero,.comment-del,.recipe-card-clear,.no-key-banner button,.stat-btn{transition:transform var(--t-press)}
+.add-btn-header:active,.hero-stats-btn:active,.filter-toggle:active,.chip:active,.mode-btn:active,.detail-action-btn:active,.serving-ctrl button:active,
+.cooked-btn:active:not(:disabled),.ai-analyze-btn:active:not(:disabled),.ai-save-btn:active,.btn-save:active,.btn-cancel:active,.auth-btn:active:not(:disabled),
+.settings-btn:active,.mobile-link:active,.modal-img-btn:active,.card-status.add:active,.header-avatar-btn:active,.mgr-add-cell:active,.img-pick-btn:active,
+.api-save-btn:active,.author-pill-btn:active,.avatar-upload-btn:active,.modal-close:active,.modal-header-close:active,.mgr-del:active,.mgr-set-hero:active,
+.comment-del:active,.recipe-card-clear:active,.no-key-banner button:active,.stat-btn:active{transform:scale(.97)}
+.card:active{transform:scale(.985)}
+.gallery-thumb:active,.frame-thumb:active,.img-suggest-grid img:active{transform:scale(.96)}
+
+/* Tastaturfokus synlig på knapper og kort; felt viser fokus via kantfargen. */
+button:focus-visible,[role=button]:focus-visible,a:focus-visible,label:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Touch: ingen 300 ms-forsinkelse, ingen tekstmarkering på kontroller, 16 px i felt så iOS ikke zoomer. */
+button,[role=button],.chip,.add-tab,.mobile-link,.card,.gallery-thumb,.frame-thumb,.img-pick-btn,.avatar-upload-btn{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.sort-row,.gallery-strip{overscroll-behavior-x:contain}
+@media (pointer:coarse){
+  input:not([type=range]):not([type=checkbox]):not([type=file]),textarea,select{font-size:16px}
+}
+
+/* Spinner: rask (600 ms) – oppleves som raskere lasting. Arver tekstfargen. */
+.img-spinner{display:inline-block;width:14px;height:14px;border:2px solid color-mix(in srgb,currentColor 30%,transparent);border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:7px;flex-shrink:0}
+
+/* Toast erstatter alert(): går inn og ut samme vei, transitions (avbrytbar), aldri keyframes. */
+.toast-host{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:600;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:min(92vw,420px)}
+.toast{pointer-events:auto;background:var(--text);color:var(--bg);font-size:14px;line-height:1.45;padding:11px 14px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transform:translateY(12px);transition:opacity 200ms var(--ease-out),transform 200ms var(--ease-out);cursor:pointer}
+.toast.show{opacity:1;transform:none}
+.toast.err{background:var(--coral);color:#fff}
+
+@media (prefers-reduced-transparency:reduce){header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}.modal-bg{-webkit-backdrop-filter:none;backdrop-filter:none}}
+@media (prefers-reduced-motion:reduce){
+  .modal,.modal-bg.open .modal{transform:none;transition:none}
+  .modal-bg{transition-duration:120ms}
+  .toast{transform:none;transition:opacity 150ms ease}
+  :active{transform:none!important}
+}
+
+/* Hover kun der pekeren faktisk kan sveve. Touch får :active i stedet. */
+@media (hover:hover) and (pointer:fine){
+.add-btn-header:hover{opacity:.85}
+.hero-stats-btn:hover{border-color:var(--accent);color:var(--accent)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.card:hover{outline:2px solid var(--accent);outline-offset:-1px}
+.card:hover .card-cam-btn{opacity:1}
+.card-cam-btn:hover{background:rgba(0,0,0,.85)}
+.modal-img-btn:hover{background:rgba(0,0,0,.88)}
+.ingr-scalable:hover{color:var(--accent)}
+.ingr-scalable:hover::after{content:" ⚖";font-size:12px;opacity:.7}
+.serving-ctrl button:hover{border-color:var(--accent);color:var(--accent)}
+.detail-action-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
+.detail-action-btn.danger:hover{border-color:var(--coral,#e05);background:var(--surface2)}
+.gallery-thumb:hover{border-color:var(--accent)}
+.mgr-item:hover .mgr-overlay{opacity:1}
+.mgr-set-hero:hover{background:rgba(255,255,255,.35)}
+.mgr-add-cell:hover{border-color:var(--accent);color:var(--accent)}
+.img-pick-btn:hover{border-color:var(--accent)}
+.img-suggest-grid img:hover{border-color:var(--accent)}
+.stat-btn:hover .stat-l{color:var(--accent)}
+.cooked-btn:hover:not(:disabled){opacity:.9}
+.recipe-card-upload-zone:hover{border-color:var(--accent)}
+.recipe-card-clear:hover{background:var(--surface2);color:var(--coral)}
+.ai-analyze-btn:hover{opacity:.85}
+.ai-save-btn:hover{opacity:.85}
+.btn-cancel:hover{border-color:var(--accent);color:var(--accent)}
+.btn-save:hover{opacity:.85}
+.settings-btn:hover{border-color:var(--accent);color:var(--accent)}
+.api-link:hover{text-decoration:underline}
+.mobile-link:hover{border-color:var(--accent);color:var(--accent)}
+.modal-header-close:hover{color:var(--text)}
+.auth-btn:hover{opacity:.85}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -337,7 +389,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <!-- Auth overlay -->
 <div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--surface);border:1px solid var(--border2);padding:32px;width:100%;max-width:380px">
-    <div style="font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">nine<span style="color:var(--accent)">of</span>ve 🍽</div>
+    <div style="font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">nine<span style="color:var(--accent)">of</span>ve</div>
     <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5">Kokeboka vår – oppskrifter vi deler</div>
     <input class="auth-input" type="email" id="authEmail" placeholder="E-postadresse" autocomplete="email">
     <input class="auth-input" type="password" id="authPassword" placeholder="Passord (minst 6 tegn)" autocomplete="current-password">
@@ -364,10 +416,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 <header>
   <div class="header-inner">
-    <a class="logo" href="#">Koke<span>boka</span> 🍽</a>
+    <a class="logo" href="#">Koke<span>boka</span></a>
     <div class="header-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="searchInput" placeholder="Søk etter oppskrift…" oninput="render()">
+      <input type="search" id="searchInput" placeholder="Søk etter oppskrift…" enterkeyhint="search" autocomplete="off" oninput="render()">
     </div>
     <div style="display:flex;gap:6px;align-items:center">
       <a class="mobile-link hide-mobile" href="capture.html" title="Send oppskrift fra mobil">
@@ -393,13 +445,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </div>
 
 <div class="mode-bar">
-  <button class="mode-btn active" id="modeCookbook" onclick="setMode('cookbook')">📖 Min kokebok</button>
-  <button class="mode-btn" id="modeDiscover" onclick="setMode('discover')">🔍 Oppdag</button>
+  <button class="mode-btn active" id="modeCookbook" onclick="setMode('cookbook')">Min kokebok</button>
+  <button class="mode-btn" id="modeDiscover" onclick="setMode('discover')">Oppdag</button>
 </div>
 
 <div class="filters-bar">
   <div class="no-key-banner" id="noKeyBanner">
-    <span>⚠️ Legg inn API-nøkkel for å importere oppskrifter automatisk.</span>
+    <span>Legg inn API-nøkkel for å importere oppskrifter automatisk.</span>
     <button onclick="openSettings()">Sett opp nå</button>
   </div>
   <!-- Sortering står alltid synlig: å rangere «best likt / mest laget» er
@@ -442,27 +494,27 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <button class="modal-header-close" onclick="closeAddModal()">✕</button>
     </div>
     <div class="add-tabs" id="addModalTabs">
-      <button class="add-tab active" onclick="switchTab('ai')">✨ Importer automatisk</button>
-      <button class="add-tab" onclick="switchTab('manual')">✏️ Skriv inn selv</button>
+      <button class="add-tab active" onclick="switchTab('ai')">Importer automatisk</button>
+      <button class="add-tab" onclick="switchTab('manual')">Skriv inn selv</button>
     </div>
 
     <!-- AI tab -->
     <div class="tab-panel active" id="tab-ai">
       <p style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6">
-        Lim inn en lenke eller oppskriftstekst her — Claude analyserer og legger den til automatisk.
+        Lim inn en lenke eller oppskriftstekst – Claude strukturerer den for deg.
       </p>
       <div class="ai-import-area">
-        <textarea id="aiInput" autofocus placeholder="Lim inn lenke eller oppskriftstekst her...&#10;&#10;Instagram · TikTok · Facebook · nettside&#10;— eller —&#10;Kylling tikka masala&#10;Ingredienser: kylling, tikka-saus, ris..."></textarea>
+        <textarea id="aiInput" autofocus placeholder="Lim inn lenke eller oppskriftstekst&#10;&#10;Instagram · TikTok · Facebook · nettside&#10;eller&#10;Kylling tikka masala&#10;Ingredienser: kylling, tikka-saus, ris …"></textarea>
       </div>
       <button class="ai-analyze-btn" id="analyzeBtn" onclick="analyzeRecipe()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         Analyser med Claude
       </button>
-      <div class="import-or">— eller last opp et bilde av oppskriften —</div>
+      <div class="import-or">eller last opp et bilde av oppskriften</div>
       <label class="recipe-card-upload-zone" id="recipeCardLabel">
         <input type="file" accept="image/*" id="recipeCardInput" onchange="onRecipeCardSelected(this)">
         <div id="recipeCardPrompt" class="recipe-card-prompt">
-          <div class="rcp-icon">📋</div>
+          <div class="rcp-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></div>
           <div>
             <div class="recipe-card-prompt-text">Last opp bilde av oppskriften</div>
             <div class="recipe-card-prompt-sub">Håndskrevet, utskrift, oppskriftsbok…</div>
@@ -470,7 +522,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         </div>
         <img id="recipeCardPreview" class="recipe-card-preview-img" alt="Oppskriftsbilde">
       </label>
-      <button id="recipeCardClearBtn" class="recipe-card-clear" style="display:none" type="button" onclick="clearRecipeCard(event)">✕ Fjern bilde</button>
+      <button id="recipeCardClearBtn" class="recipe-card-clear" style="display:none" type="button" onclick="clearRecipeCard(event)">Fjern bilde</button>
       <div class="ai-status" id="aiStatus"></div>
       <div class="ai-preview" id="aiPreview">
         <div class="ai-preview-header">
@@ -482,7 +534,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           <div class="ai-preview-meta" id="previewMeta"></div>
           <div id="previewIngr" style="font-size:13px;color:var(--text2);margin-bottom:8px"></div>
           <div id="framePicker" class="frame-picker" style="display:none"></div>
-          <button class="ai-save-btn" onclick="saveAiRecipe()">✓ Legg til i kokeboken</button>
+          <button class="ai-save-btn" onclick="saveAiRecipe()">Legg til i kokeboken</button>
         </div>
       </div>
     </div>
@@ -522,7 +574,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
       <div class="form-row" id="f-cuisine-row" style="display:none"><label>Kjøkken / nasjonalitet</label><input type="text" id="f-cuisine" placeholder="f.eks. italiensk, thai, norsk – valgfritt"></div>
       <label class="private-toggle" id="f-private-row" style="display:none">
         <input type="checkbox" id="f-private">
-        <span><b>🔒 Privat oppskrift</b> – kun du ser den. Del den senere når du er klar.</span>
+        <span><b>Privat oppskrift</b> – kun du ser den. Del den senere når du er klar.</span>
       </label>
       <div class="form-btns">
         <button class="btn-cancel" onclick="closeAddModal()">Avbryt</button>
@@ -536,7 +588,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <div class="modal-bg" id="settingsModal" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal settings-modal">
     <div class="modal-header">
-      <span class="modal-header-title">⚙️ Innstillinger</span>
+      <span class="modal-header-title">Innstillinger</span>
       <button class="modal-header-close" onclick="document.getElementById('settingsModal').classList.remove('open')">✕</button>
     </div>
     <div class="settings-body">
@@ -547,7 +599,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           <div>
             <label class="avatar-upload-btn">
               <input type="file" accept="image/*" id="avatarInput" onchange="onAvatarSelected(this)" style="display:none">
-              📷 Bytt bilde
+              Bytt bilde
             </label>
             <div class="api-status" id="avatarStatus" style="text-align:left;margin-top:5px"></div>
           </div>
@@ -578,7 +630,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 
       <div class="settings-section">
-        <h3>💰 Hva koster det?</h3>
+        <h3>Hva koster det?</h3>
         <p>Veldig lite. Én oppskriftsimport koster ca. <b>0,01–0,02 kr</b>. Merkelapp-analyse av ett stegbilde med Claude Haiku: ca. <b>0,003 kr</b>.</p>
       </div>
 
@@ -595,7 +647,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <div class="modal-bg" id="imgModal" onclick="if(event.target===this)closeImgModal()">
   <div class="modal img-modal">
     <div class="modal-header">
-      <span class="modal-header-title" id="imgModalTitle">📷 Bilder</span>
+      <span class="modal-header-title" id="imgModalTitle">Bilder</span>
       <button class="modal-header-close" onclick="closeImgModal()">✕</button>
     </div>
     <div style="padding:16px 20px 24px">
@@ -612,20 +664,20 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
           <div class="img-upload-prompt" id="imgUploadPrompt">
             <label class="img-pick-btn">
               <input type="file" accept="image/*" capture="environment" id="imgCameraInput" onchange="onImgFileSelected(this)">
-              <span class="pick-icon">📷</span>
+              <span class="pick-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
               <span>Ta bilde</span>
             </label>
             <label class="img-pick-btn">
               <input type="file" accept="image/*" id="imgLibraryInput" onchange="onImgFileSelected(this)">
-              <span class="pick-icon">🖼️</span>
+              <span class="pick-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
               <span>Bildebibliotek</span>
             </label>
           </div>
         </div>
 
         <div class="img-suggest-row" id="imgSuggestRow">
-          <button class="btn-cancel" style="width:100%;font-size:13px" id="imgSuggestBtn" onclick="loadImgSuggestions()">✨ Foreslå bilder automatisk</button>
-          <button class="btn-cancel" style="width:100%;font-size:13px;margin-top:6px;display:none" id="sourceImgBtn" onclick="newImageFromSource()">🎬 Nytt bilde fra kilden</button>
+          <button class="btn-cancel" style="width:100%;font-size:13px" id="imgSuggestBtn" onclick="loadImgSuggestions()">Foreslå bilder</button>
+          <button class="btn-cancel" style="width:100%;font-size:13px;margin-top:6px;display:none" id="sourceImgBtn" onclick="newImageFromSource()">Nytt bilde fra kilden</button>
           <div class="img-suggest-grid" id="imgSuggestGrid"></div>
         </div>
 
@@ -634,12 +686,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
         </div>
 
         <div class="img-analyze-row" id="imgAnalyzeRow">
-          <button class="btn-cancel" style="width:100%;font-size:13px;margin-bottom:6px" id="imgAnalyzeBtn" onclick="analyzeStepImage()">✨ Analyser bilde med Claude – generer merkelapp</button>
+          <button class="btn-cancel" style="width:100%;font-size:13px;margin-bottom:6px" id="imgAnalyzeBtn" onclick="analyzeStepImage()">Lag merkelapp med Claude</button>
           <div class="ai-status" id="imgAnalyzeStatus" style="text-align:left;margin-top:0"></div>
         </div>
 
         <div id="imgSaveOrigDiv" style="display:none;margin-bottom:8px">
-          <button class="btn-save" style="width:100%;font-size:13px" onclick="saveNewImage()">✓ Lagre bilde</button>
+          <button class="btn-save" style="width:100%;font-size:13px" onclick="saveNewImage()">Lagre bilde</button>
         </div>
 
       </div>
@@ -651,7 +703,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <div class="modal-bg" id="statsModal" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal stats-modal">
     <div class="modal-header">
-      <span class="modal-header-title">📊 Statistikk</span>
+      <span class="modal-header-title">Statistikk</span>
       <button class="modal-header-close" onclick="document.getElementById('statsModal').classList.remove('open')">✕</button>
     </div>
     <div style="padding:16px 20px 24px" id="statsContent"></div>
@@ -703,6 +755,9 @@ const ICONS = {
   users:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
   camera:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
   edit:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  star:`<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+  lock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  link:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
   trash:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`
 };
 
@@ -771,7 +826,7 @@ async function initAuth() {
     // Kom via «Glemt passord»-lenke, men lenken var brukt/utløpt → ingen innlogging
     if (_cameFromRecovery) {
       const st = document.getElementById('authStatus');
-      st.innerHTML = '⚠️ <b>Lenken var utløpt eller allerede brukt.</b><br>Fyll inn e-posten din og trykk «Glemt passord?» for å få en ny.';
+      st.innerHTML = '<b>Lenken var utløpt eller allerede brukt.</b><br>Fyll inn e-posten din og trykk «Glemt passord?» for å få en ny.';
       st.className = 'auth-status err';
     }
   }
@@ -840,7 +895,7 @@ async function signIn() {
     if (/Invalid login credentials/i.test(msg)) msg = 'Feil e-post eller passord.';
     else if (/Email not confirmed/i.test(msg)) msg = 'Du må bekrefte e-posten din først – klikk lenken i e-posten vi sendte deg.';
     else if (/only request this after/i.test(msg)) msg = 'Vent noen sekunder før du prøver igjen.';
-    status.textContent = '⚠️ ' + msg; status.className = 'auth-status err';
+    status.textContent = msg; status.className = 'auth-status err';
   }
 }
 
@@ -860,7 +915,7 @@ async function signUp() {
     if (/only request this after/i.test(msg)) msg = 'Vent noen sekunder før du prøver igjen (spam-beskyttelse).';
     else if (/already registered|already exists/i.test(msg)) msg = 'Denne e-posten har allerede en konto – prøv å logge inn i stedet.';
     else if (/at least 6/i.test(msg)) msg = 'Passordet må ha minst 6 tegn.';
-    status.innerHTML = '⚠️ ' + msg; status.className = 'auth-status err';
+    status.innerHTML = msg; status.className = 'auth-status err';
     return;
   }
   // Supabase svarer «suksess» uten å sende e-post hvis kontoen finnes fra før (identities er tom)
@@ -872,7 +927,7 @@ async function signUp() {
   // Hvis kontoen er logget inn med en gang (e-postbekreftelse er slått av) → inn i appen
   if (data?.session) { return; }
   // Ellers: tydelig beskjed om å bekrefte e-posten
-  status.innerHTML = '<b>✓ Konto opprettet!</b><br>Vi sendte en bekreftelses-e-post til <b>' + email + '</b>.<br>Åpne den, klikk lenken (sjekk også <b>søppelpost</b>), og logg inn.';
+  status.innerHTML = '<b>Konto opprettet.</b><br>Vi sendte en bekreftelses-e-post til <b>' + email + '</b>.<br>Åpne den, klikk lenken (sjekk også <b>søppelpost</b>), og logg inn.';
   status.className = 'auth-status ok';
   btn.disabled = true; btn.textContent = '✉️ Sjekk e-posten din';
 }
@@ -886,10 +941,10 @@ async function forgotPassword() {
   if (error) {
     let msg = error.message;
     if (/only request this after|rate limit/i.test(msg)) msg = 'Vent litt før du prøver igjen (spam-beskyttelse).';
-    status.textContent = '⚠️ ' + msg; status.className = 'auth-status err';
+    status.textContent = msg; status.className = 'auth-status err';
     return;
   }
-  status.innerHTML = '<b>✓ E-post sendt!</b><br>Åpne lenken i e-posten (sjekk også <b>søppelpost</b>) – den logger deg inn og lar deg velge nytt passord.';
+  status.innerHTML = '<b>E-post sendt.</b><br>Åpne lenken i e-posten (sjekk også <b>søppelpost</b>) – den logger deg inn og lar deg velge nytt passord.';
   status.className = 'auth-status ok';
 }
 
@@ -917,7 +972,7 @@ async function submitNewPassword() {
     if (/session|not authenticated|jwt/i.test(msg)) msg = '<b>Lenken var utløpt eller allerede brukt</b>, så passordet ble IKKE endret. Lukk denne, fyll inn e-posten din og trykk «Glemt passord?» for en ny lenke – bruk den med én gang.';
     else if (/different from the old/i.test(msg)) msg = 'Det nye passordet må være forskjellig fra det gamle.';
     else if (/at least 6/i.test(msg)) msg = 'Passordet må ha minst 6 tegn.';
-    status.innerHTML = '⚠️ ' + msg; status.className = 'auth-status err';
+    status.innerHTML = msg; status.className = 'auth-status err';
     return;
   }
   // Sjekk at passordet FAKTISK virker, så ingen blir låst ute av en falsk suksessmelding
@@ -925,12 +980,12 @@ async function submitNewPassword() {
   const {error: verifyError} = email ? await _supa.auth.signInWithPassword({email, password: pw}) : {error: null};
   btn.disabled = false; btn.textContent = 'Lagre nytt passord';
   if (verifyError) {
-    status.innerHTML = '⚠️ Passordet ble lagret, men <b>innlogging med det virket ikke</b> ved test. Prøv å sette det på nytt, eller be om en ny lenke.';
+    status.innerHTML = 'Passordet ble lagret, men <b>innlogging med det virket ikke</b> ved test. Prøv å sette det på nytt, eller be om en ny lenke.';
     status.className = 'auth-status err';
     return;
   }
   document.getElementById('pwResetNew').value = ''; document.getElementById('pwResetRepeat').value = '';
-  status.innerHTML = '<b>✓ Passordet er oppdatert og testet!</b><br>Du kan nå logge inn med ' + esc(email) + ' og det nye passordet.';
+  status.innerHTML = '<b>Passordet er oppdatert.</b><br>Du kan nå logge inn med ' + esc(email) + ' og det nye passordet.';
   status.className = 'auth-status ok';
   setTimeout(hidePwReset, 3000);
 }
@@ -1101,7 +1156,7 @@ async function createVariant(originalId, recipe, changeNote) {
   const saved = await addRecipeToDB(recipe);
   recipes.unshift(saved);
   if (CAPS.comments) {
-    const note = changeNote ? ('🔀 Lagde en variant: ' + changeNote) : '🔀 Lagde en variant av denne.';
+    const note = changeNote ? ('Lagde en variant: ' + changeNote) : 'Lagde en variant av denne.';
     try { await addComment(originalId, note); } catch(e) { console.warn('Auto-kommentar feilet:', e.message); }
   }
   return saved;
@@ -1357,7 +1412,7 @@ function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
   if (!key) { document.getElementById('apiStatus').textContent = 'Skriv inn nøkkelen først.'; document.getElementById('apiStatus').className = 'api-status err'; return; }
   localStorage.setItem('nineofve_apikey', key);
-  document.getElementById('apiStatus').textContent = '✓ Claude-nøkkel lagret!';
+  document.getElementById('apiStatus').textContent = 'Claude-nøkkel lagret';
   document.getElementById('apiStatus').className = 'api-status ok';
   checkKeyBanner();
   setTimeout(() => document.getElementById('settingsModal').classList.remove('open'), 1400);
@@ -1400,9 +1455,9 @@ function onAvatarSelected(input) {
       _pendingAvatarUrl = await uploadAvatar(compressed);
       document.getElementById('profileEditAvatar').innerHTML =
         '<span class="avatar" style="width:64px;height:64px"><img src="' + esc(_pendingAvatarUrl) + '" alt=""></span>';
-      status.textContent = '✓ Bilde klart – trykk Lagre'; status.style.color = 'var(--accent)';
+      status.textContent = 'Bilde klart – trykk Lagre'; status.style.color = 'var(--accent)';
     } catch(err) {
-      status.textContent = '⚠️ ' + err.message; status.style.color = 'var(--coral)';
+      status.textContent = err.message; status.style.color = 'var(--coral)';
     }
   };
   reader.readAsDataURL(file);
@@ -1417,9 +1472,9 @@ async function saveProfile() {
     _pendingAvatarUrl = undefined;
     renderHeaderAvatar();
     render(); // forfatter-navn/-bilde oppdateres på kortene
-    status.textContent = '✓ Profil lagret!'; status.style.color = 'var(--accent)';
+    status.textContent = 'Profil lagret'; status.style.color = 'var(--accent)';
   } catch(e) {
-    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
+    status.textContent = e.message; status.style.color = 'var(--coral)';
   }
 }
 
@@ -1488,7 +1543,7 @@ function openEditModal(recipeId, asVariant) {
   if (!r) return;
   _editVariantOf = asVariant ? recipeId : null;
   document.getElementById('detailModal').classList.remove('open');
-  document.getElementById('addModalTitle').textContent = asVariant ? '🔀 Lag din versjon' : 'Rediger oppskrift';
+  document.getElementById('addModalTitle').textContent = asVariant ? 'Lag din versjon' : 'Rediger oppskrift';
   document.getElementById('addModalTabs').style.display = 'none';
   document.getElementById('tab-ai').classList.remove('active');
   document.getElementById('tab-manual').classList.add('active');
@@ -1558,9 +1613,9 @@ function looksLikeRecipe(t) {
 
 async function analyzeRecipe() {
   const input = document.getElementById('aiInput').value.trim();
-  if (!input && !_recipeCardBase64) { alert('Lim inn en lenke, oppskriftstekst, eller last opp et bilde av oppskriften!'); return; }
+  if (!input && !_recipeCardBase64) { toast('Lim inn en lenke eller oppskriftstekst, eller last opp et bilde', 'err'); return; }
   const apiKey = getApiKey();
-  if (!apiKey) { alert('Du må legge inn API-nøkkel først!'); openSettings(); return; }
+  if (!apiKey) { toast('Legg inn API-nøkkel først', 'err'); openSettings(); return; }
   const btn = document.getElementById('analyzeBtn');
   const status = document.getElementById('aiStatus');
   const preview = document.getElementById('aiPreview');
@@ -1705,7 +1760,7 @@ async function analyzeRecipe() {
     showAiPreview(recipe);
     status.textContent = '';
   } catch(e) {
-    status.textContent = '⚠️ ' + e.message; console.error(e);
+    status.textContent = e.message; console.error(e);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Analyser med Claude';
@@ -1789,16 +1844,16 @@ async function saveAiRecipe() {
     buildFilters(); render();
   } catch(e) {
     console.error('saveAiRecipe feil:', e);
-    if (status) { status.textContent = '⚠️ Lagring feilet: ' + e.message; }
+    if (status) { status.textContent = 'Lagring feilet: ' + e.message; }
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '✓ Legg til i kokeboken'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Legg til i kokeboken'; }
   }
 }
 
 // ─── Manual Save / Edit ────────────────────────────────────────────────────────
 async function saveManualRecipe() {
   const name = document.getElementById('f-name').value.trim();
-  if (!name) { alert('Navn mangler!'); return; }
+  if (!name) { toast('Oppskriften trenger et navn', 'err'); return; }
   const editId = document.getElementById('edit-recipe-id').value;
   const btn = document.getElementById('manualSaveBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Lagrer...'; }
@@ -1850,7 +1905,7 @@ async function saveManualRecipe() {
     buildFilters(); render();
   } catch(e) {
     console.error('saveManualRecipe feil:', e);
-    alert('Lagring feilet: ' + e.message);
+    toast('Lagring feilet: ' + e.message, 'err');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = editId ? 'Lagre endringer' : 'Lagre oppskrift'; }
   }
@@ -1860,8 +1915,7 @@ async function saveManualRecipe() {
 async function deleteRecipe(recipeId) {
   const r = recipes.find(x => x.id === recipeId);
   if (!r) return;
-  if (!confirm('Vil du slette "' + r.name + '"?')) return;
-  if (!confirm('Er du helt sikker? Dette kan ikke angres.')) return;
+  if (!confirm('Slette «' + r.name + '»? Dette kan ikke angres.')) return;
   document.getElementById('detailModal').classList.remove('open');
   const ok = await deleteRecipeFromDB(recipeId);
   if (ok) {
@@ -1871,7 +1925,7 @@ async function deleteRecipe(recipeId) {
     rebuildEntryIndex();
     buildFilters(); render();
   } else {
-    alert('Kunne ikke slette oppskriften.');
+    toast('Kunne ikke slette oppskriften', 'err');
   }
 }
 
@@ -1903,8 +1957,8 @@ function buildFilters() {
   const sf = document.getElementById('sortFilters');
   if (sf) {
     const SORTS = activeMode === 'discover'
-      ? [['popular','⭐ Mest likt'],['cooked','🍳 Mest laget'],['newest','✨ Nyeste']]
-      : [['popular','⭐ Mine favoritter'],['cooked','🍳 Mest laget av meg'],['newest','✨ Nyeste']];
+      ? [['popular','Mest likt'],['cooked','Mest laget'],['newest','Nyeste']]
+      : [['popular','Mine favoritter'],['cooked','Mest laget av meg'],['newest','Nyeste']];
     sf.innerHTML = SORTS.map(([k, label]) =>
       '<button class="chip' + (activeSort === k ? ' active' : '') + '" onclick="setSort(\'' + k + '\')">' + label + '</button>').join('');
   }
@@ -1951,6 +2005,8 @@ function dotHtml(health, size) {
   return [1,2,3,4,5].map(i => '<div class="h-dot" style="width:' + size + 'px;height:' + size + 'px;' + (i <= health ? 'background:' + HEALTH_COLOR[health] : '') + '"></div>').join('');
 }
 
+// Norsk desimal: 9,0 – ikke 9.0
+function nb1(n) { return (Math.round(n * 10) / 10).toLocaleString('nb-NO', {minimumFractionDigits: 1, maximumFractionDigits: 1}); }
 function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 // Trygg verdi inne i onclick="fn('…')": JS-escape (\ og ') FØR HTML-escape.
 function jsStr(s) { return esc(String(s == null ? '' : s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")); }
@@ -1973,17 +2029,17 @@ function cardHtml(r) {
   let status = '';
   if (activeMode === 'discover') {
     if (inMyCookbook(r.id)) status = '<span class="card-status in">✓ I boka</span>';
-    else if (inMyToTry(r.id)) status = '<span class="card-status try">🧪 Vil prøve</span>';
+    else if (inMyToTry(r.id)) status = '<span class="card-status try">Vil prøve</span>';
     else status = '<button class="card-status add" onclick="event.stopPropagation();quickAddToTry(\'' + r.id + '\')">+ Vil prøve</button>';
   } else if (inMyToTry(r.id)) {
-    status = '<span class="card-status try">🧪 Uprøvd</span>';
+    status = '<span class="card-status try">Uprøvd</span>';
   }
 
   const counts = activeMode === 'discover'
-    ? '<div class="card-counts">' + (agg.ratingCount ? '<span>⭐ ' + avg.toFixed(1) + '</span>' : '<span class="dim">—</span>') + (agg.cookedTotal ? '<span>🍳 ' + agg.cookedTotal + '</span>' : '') + '</div>'
-    : '<div class="card-counts">' + (e?.rating ? '<span>⭐ ' + e.rating + '</span>' : '') + (e?.cooked_count ? '<span>🍳 ' + e.cooked_count + '</span>' : '') + '</div>';
+    ? '<div class="card-counts">' + (agg.ratingCount ? '<span title="Snitt-terning">' + ICONS.star + nb1(avg) + '</span>' : '<span class="dim">–</span>') + (agg.cookedTotal ? '<span title="Ganger laget">' + ICONS.flame + agg.cookedTotal + '</span>' : '') + '</div>'
+    : '<div class="card-counts">' + (e?.rating ? '<span title="Din terning">' + ICONS.star + e.rating + '</span>' : '') + (e?.cooked_count ? '<span title="Ganger laget">' + ICONS.flame + e.cooked_count + '</span>' : '') + '</div>';
 
-  const priv = r.is_private ? '<span class="card-private" title="Privat – kun du ser den">🔒</span>' : '';
+  const priv = r.is_private ? '<span class="card-private" title="Privat – kun du ser den">' + ICONS.lock + '</span>' : '';
   const cuisineTag = r.cuisine ? '<span class="card-cuisine">' + esc(r.cuisine) + '</span>' : '';
   const aName = profileName(r.author_id, r.author_name);
   const author = activeMode === 'discover'
@@ -2017,7 +2073,7 @@ function emptyState(title, sub) {
 
 async function quickAddToTry(id) {
   try { await setEntryStatus(id, 'to_try'); render(); }
-  catch(e) { alert('Kunne ikke legge til: ' + e.message); }
+  catch(e) { toast('Kunne ikke legge til: ' + e.message, 'err'); }
 }
 
 // ─── Render ────────────────────────────────────────────────────────────────────
@@ -2037,13 +2093,13 @@ function render() {
     const approved = sortForView(list.filter(r => inMyCookbook(r.id)));
     const toTry = list.filter(r => inMyToTry(r.id));
     if (!approved.length && !toTry.length) {
-      html = emptyState('Kokeboken din er tom', 'Gå til «🔍 Oppdag» for å finne oppskrifter å prøve, eller trykk «Ny oppskrift».');
+      html = emptyState('Kokeboken din er tom', 'Gå til «Oppdag» for å finne oppskrifter å prøve, eller trykk «Ny oppskrift».');
     } else {
       if (toTry.length) {
-        html += shelfHeader('🧪 Vil prøve (' + toTry.length + ')', 'Lag dem og gi terning – da flyttes de inn i kokeboken.');
+        html += shelfHeader('Vil prøve (' + toTry.length + ')', 'Lag dem og gi terning – da flyttes de inn i kokeboken.');
         html += toTry.map(cardHtml).join('');
       }
-      html += shelfHeader('📖 I kokeboken (' + approved.length + ')', '');
+      html += shelfHeader('I kokeboken (' + approved.length + ')', '');
       html += approved.length ? approved.map(cardHtml).join('')
         : '<div class="empty" style="grid-column:1/-1"><p style="color:var(--text3);font-size:13px">Ingen godkjente ennå – lag noe fra «Vil prøve».</p></div>';
     }
@@ -2066,7 +2122,7 @@ function updateStatsRow() {
     parts.push('<b>' + approvedN + '</b> i kokeboken');
     if (toTryN) parts.push('<b>' + toTryN + '</b> vil prøve');
     if (rated.length) {
-      const avgMy = (rated.reduce((s, r) => s + myEntry(r.id).rating, 0) / rated.length).toFixed(1);
+      const avgMy = nb1(rated.reduce((s, r) => s + myEntry(r.id).rating, 0) / rated.length);
       parts.push('snitt <b>' + avgMy + '</b>');
     }
   } else {
@@ -2077,7 +2133,7 @@ function updateStatsRow() {
     if (totalCooked) parts.push('<b>' + totalCooked + '</b> ganger laget');
   }
   row.innerHTML = '<span class="hero-meta">' + parts.join(' · ') + '</span>'
-    + '<button class="hero-stats-btn" onclick="openStats()">📊 Statistikk</button>';
+    + '<button class="hero-stats-btn" onclick="openStats()">Statistikk</button>';
 }
 
 // Tidsriktig hilsen — appen skal føles som en velkomst, ikke et regneark.
@@ -2119,7 +2175,7 @@ async function markCooked(id) {
   const btn = document.getElementById('cookedBtn');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '🎉 Registrert! Du har laget denne ' + newCount + ' ganger';
+    btn.textContent = 'Registrert – du har laget denne ' + newCount + ' ganger';
   }
   try {
     const {data, error} = await withTimeout(
@@ -2160,29 +2216,29 @@ function openStats() {
   const topV = recipes.slice().sort((a, b) => b.view_count - a.view_count).filter(r => r.view_count > 0).slice(0, 10);
 
   const allRated = recipes.filter(r => aggFor(r.id).ratingCount);
-  const famAvg = allRated.length ? (allRated.reduce((s, r) => s + avgRating(r.id), 0) / allRated.length).toFixed(1) : '–';
+  const famAvg = allRated.length ? nb1(allRated.reduce((s, r) => s + avgRating(r.id), 0) / allRated.length) : '–';
   const totCooked = recipes.reduce((s, r) => s + aggFor(r.id).cookedTotal, 0);
 
   document.getElementById('statsContent').innerHTML =
     '<div class="stat-tiles">'
     + statTile(recipes.length, 'oppskrifter totalt')
-    + statTile(myApproved.length, '📖 i din kokebok')
-    + statTile(famAvg, '⭐ snitt (alle)')
-    + statTile(totCooked, '🍳 laget totalt')
+    + statTile(myApproved.length, 'i din kokebok')
+    + statTile(famAvg, 'snitt (alle)')
+    + statTile(totCooked, 'laget totalt')
     + '</div>'
-    + '<div class="section-title">⭐ Mine favoritter</div>'
+    + '<div class="section-title">Mine favoritter</div>'
     + (myRated.length ? statBars(myRated, r => myEntry(r.id).rating, 'var(--accent)', v => v, 10)
         : statsEmpty('Gi terning (1–10) på oppskriftene dine for å bygge din egen toppliste.'))
-    + '<div class="section-title" style="margin-top:18px">🍳 Mest laget av meg</div>'
+    + '<div class="section-title" style="margin-top:18px">Mest laget av meg</div>'
     + (myCooked.length ? statBars(myCooked, r => myEntry(r.id).cooked_count, 'var(--amber)')
-        : statsEmpty('Trykk «🍳 Vi lagde denne» når du lager noe.'))
-    + '<div class="section-title" style="margin-top:18px">⭐ Mest likt av alle</div>'
-    + (famFav.length ? statBars(famFav, r => avgRating(r.id), 'var(--accent)', v => v.toFixed(1), 10)
+        : statsEmpty('Trykk «Vi lagde denne» når du lager noe.'))
+    + '<div class="section-title" style="margin-top:18px">Mest likt av alle</div>'
+    + (famFav.length ? statBars(famFav, r => avgRating(r.id), 'var(--accent)', nb1, 10)
         : statsEmpty('Ingen terninger på tvers av brukere ennå.'))
-    + '<div class="section-title" style="margin-top:18px">🔥 Mest laget totalt</div>'
+    + '<div class="section-title" style="margin-top:18px">Mest laget totalt</div>'
     + (famCooked.length ? statBars(famCooked, r => aggFor(r.id).cookedTotal, 'var(--amber)')
         : statsEmpty('Ingen registrert ennå.'))
-    + '<div class="section-title" style="margin-top:18px">👁 Mest sett</div>'
+    + '<div class="section-title" style="margin-top:18px">Mest sett</div>'
     + (topV.length ? statBars(topV, r => r.view_count, 'var(--text3)')
         : statsEmpty('Ingen visninger registrert ennå.'));
   document.getElementById('statsModal').classList.add('open');
@@ -2311,7 +2367,7 @@ function applyScale(ratio) {
   const noteEl = document.getElementById('scaleNote');
   if (noteEl) {
     noteEl.textContent = ratio === 1 ? ''
-      : 'Skalert ' + (Math.round(ratio * 100) / 100 + '').replace('.', ',') + '× → ca. ' + formatScaled(scaled) + ' ' + servingsUnitWord(r.yield) + ' · næring per porsjon er uendret';
+      : 'Skalert ' + (Math.round(ratio * 100) / 100 + '').replace('.', ',') + '× – ca. ' + formatScaled(scaled) + ' ' + servingsUnitWord(r.yield) + ' · næring per porsjon er uendret';
   }
 }
 
@@ -2331,7 +2387,7 @@ function openIngrScale(idx) {
   );
   if (svar === null) return;
   const val = parseFloat(String(svar).replace(',', '.'));
-  if (!val || val <= 0) { alert('Ugyldig mengde — skriv et tall, f.eks. 924'); return; }
+  if (!val || val <= 0) { toast('Ugyldig mengde – skriv et tall, f.eks. 924', 'err'); return; }
   applyScale(val / baseVal);
 }
 
@@ -2404,19 +2460,19 @@ function openDetail(id) {
     + '<div class="modal-info">'
     + (r.time ? '<div class="info-pill">' + ICONS.clock + esc(r.time) + '</div>' : '')
     + (r.yield ? '<div class="info-pill">' + ICONS.users + esc(r.yield) + '</div>' : '')
-    + '<div class="info-pill"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
+    + '<div class="info-pill" title="Sunnhet"><div style="display:flex;gap:3px;margin-right:4px">' + dotHtml(r.health, 9) + '</div>' + (HEALTH_LABEL[r.health] || '') + '</div>'
     + '<button class="author-pill-btn" title="Se profil" onclick="openProfile(\'' + r.author_id + '\')">' + avatarHtml(r.author_id, profileName(r.author_id, r.author_name), 20) + '<span>' + esc(profileName(r.author_id, r.author_name)) + '</span></button>'
-    + (r.cuisine ? '<div class="info-pill" title="Kjøkken">🌍 ' + esc(r.cuisine) + '</div>' : '')
-    + (r.is_private ? '<div class="info-pill" style="border-color:var(--amber);color:var(--amber)" title="Kun du ser denne">🔒 Privat</div>' : '')
-    + (agg.ratingCount ? '<div class="info-pill" title="Snitt-terning fra alle">⭐ ' + avg.toFixed(1) + ' (' + agg.ratingCount + ')</div>' : '')
-    + (agg.cookedTotal ? '<div class="info-pill" title="Ganger laget totalt">🍳 ' + agg.cookedTotal + '</div>' : '')
-    + (r.source_url ? '<a class="info-pill source-link" href="' + esc(r.source_url) + '" target="_blank" rel="noopener">🔗 Se original</a>' : '')
+    + (r.cuisine ? '<div class="info-pill" title="Kjøkken">' + esc(r.cuisine) + '</div>' : '')
+    + (r.is_private ? '<div class="info-pill" style="border-color:var(--amber);color:var(--amber)" title="Kun du ser denne">' + ICONS.lock + 'Privat</div>' : '')
+    + (agg.ratingCount ? '<div class="info-pill" title="Snitt-terning fra alle">' + ICONS.star + nb1(avg) + ' (' + agg.ratingCount + ')</div>' : '')
+    + (agg.cookedTotal ? '<div class="info-pill" title="Ganger laget totalt">' + ICONS.flame + agg.cookedTotal + ' ganger laget</div>' : '')
+    + (r.source_url ? '<a class="info-pill source-link" href="' + esc(r.source_url) + '" target="_blank" rel="noopener">' + ICONS.link + 'Se original</a>' : '')
     + '</div>'
     + '<div class="section-title ingr-header">'
     + 'Ingredienser' + (totalIngr ? ' (' + totalIngr + ')' : '')
     + '<div class="serving-ctrl">'
     + '<button onclick="changeServings(-1)" aria-label="Færre porsjoner">−</button>'
-    + '<input type="number" id="servingsInput" value="' + _detailBaseServings + '" min="0.5" max="99" step="any" oninput="changeServings(0)" aria-label="Antall porsjoner">'
+    + '<input type="number" id="servingsInput" value="' + _detailBaseServings + '" min="0.5" max="99" step="any" inputmode="decimal" oninput="changeServings(0)" aria-label="Antall porsjoner">'
     + '<button onclick="changeServings(1)" aria-label="Flere porsjoner">+</button>'
     + '<span>porsj.</span>'
     + '</div></div>'
@@ -2433,11 +2489,11 @@ function openDetail(id) {
     + '<div class="detail-actions">'
     + (e ? '<button class="detail-action-btn" onclick="removeFromMyBook(\'' + r.id + '\')">Fjern fra min bok</button>' : '')
     + (isAuthor ? '<button class="detail-action-btn" onclick="openEditModal(\'' + r.id + '\')">Rediger</button>' : '')
-    + (!isAuthor && CAPS.variants ? '<button class="detail-action-btn" onclick="makeVariant(\'' + r.id + '\')" title="Lag din egen versjon">🔀 Lag din versjon</button>' : '')
+    + (!isAuthor && CAPS.variants ? '<button class="detail-action-btn" onclick="makeVariant(\'' + r.id + '\')" title="Lag din egen versjon">Lag din versjon</button>' : '')
     + '<button class="detail-action-btn" onclick="openImgModal(\'' + r.id + '\')">Bilder</button>'
     + (isAuthor ? '<button class="detail-action-btn danger" onclick="deleteRecipe(\'' + r.id + '\')">Slett</button>' : '')
     + '</div>'
-    + (CAPS.comments ? '<div class="section-title">💬 Kommentarer</div><div id="commentsList" class="comments-list"><p class="stats-empty">Laster…</p></div>'
+    + (CAPS.comments ? '<div class="section-title">Kommentarer</div><div id="commentsList" class="comments-list"><p class="stats-empty">Laster…</p></div>'
         + '<div class="comment-composer"><textarea id="commentInput" rows="2" placeholder="Skriv en kommentar…"></textarea>'
         + '<button class="api-save-btn" onclick="submitComment(\'' + r.id + '\')">Send</button></div>' : '')
     + '</div>';
@@ -2451,11 +2507,11 @@ function variantInfoHtml(r) {
   let html = '';
   if (r.parent_recipe_id) {
     const parent = recipes.find(x => x.id === r.parent_recipe_id);
-    if (parent) html += '<div class="variant-note">🔀 Din versjon – variant av <a onclick="openDetail(\'' + parent.id + '\')">' + esc(parent.name) + '</a></div>';
+    if (parent) html += '<div class="variant-note">Din versjon – variant av <a onclick="openDetail(\'' + parent.id + '\')">' + esc(parent.name) + '</a></div>';
   }
   const vs = variantsOf(r.id);
   if (vs.length) {
-    html += '<div class="variant-note">🔀 <b>' + vs.length + '</b> ' + (vs.length === 1 ? 'variant' : 'varianter') + ' av denne: '
+    html += '<div class="variant-note"><b>' + vs.length + '</b> ' + (vs.length === 1 ? 'variant' : 'varianter') + ' av denne: '
       + vs.map(v => '<a onclick="openDetail(\'' + v.id + '\')">' + esc(profileName(v.author_id, v.author_name)) + ' sin versjon</a>').join(' · ')
       + '</div>';
   }
@@ -2488,14 +2544,14 @@ async function submitComment(recipeId) {
     await addComment(recipeId, body);
     input.value = '';
     await renderComments(recipeId);
-  } catch(e) { alert('Kunne ikke sende kommentar: ' + e.message); }
+  } catch(e) { toast('Kunne ikke sende kommentar: ' + e.message, 'err'); }
   finally { input.disabled = false; }
 }
 
 async function removeComment(id, recipeId) {
   if (!confirm('Slette kommentaren?')) return;
   try { await deleteComment(id); await renderComments(recipeId); }
-  catch(e) { alert('Kunne ikke slette: ' + e.message); }
+  catch(e) { toast('Kunne ikke slette: ' + e.message, 'err'); }
 }
 
 // «Lag din versjon» – åpne redigering i variant-modus
@@ -2507,7 +2563,7 @@ function makeVariant(recipeId) {
 // oppskriften og flytter den fra «Vil prøve» til kokeboken.
 function ratingCookedBox(r, e) {
   if (!e) {
-    return '<button class="cooked-btn" onclick="detailAddToTry(\'' + r.id + '\')">➕ Legg til i min kokebok</button>'
+    return '<button class="cooked-btn" onclick="detailAddToTry(\'' + r.id + '\')">Legg til i min kokebok</button>'
       + '<p class="scale-hint" style="text-align:center">Ligger i den delte samlingen – legg den til for å prøve og gi terning.</p>';
   }
   const rv = e.rating || 0;
@@ -2522,11 +2578,11 @@ function ratingCookedBox(r, e) {
     +   Array.from({length: 10}, (_, i) => '<span class="tick' + (rv === i + 1 ? ' on' : '') + '">' + (i + 1) + '</span>').join('')
     + '</div>'
     + '</div>'
-    + '<button class="cooked-btn" id="cookedBtn" onclick="markCooked(\'' + r.id + '\')">🍳 Vi lagde denne i dag!'
+    + '<button class="cooked-btn" id="cookedBtn" onclick="markCooked(\'' + r.id + '\')">Vi lagde denne i dag'
     +   (myCooked > 0 ? ' <span class="cooked-badge">· du har laget den ' + myCooked + ' ganger</span>' : '')
     + '</button>'
     + (e.status === 'to_try'
-        ? '<p class="scale-hint" style="text-align:center">🧪 Uprøvd – gi terning eller trykk «Vi lagde denne» for å flytte den til kokeboken.</p>'
+        ? '<p class="scale-hint" style="text-align:center">Uprøvd – gi terning eller trykk «Vi lagde denne» for å flytte den til kokeboken.</p>'
         : '');
 }
 
@@ -2539,7 +2595,7 @@ function onRatingInput(v) {
 
 async function detailAddToTry(id) {
   try { await setEntryStatus(id, 'to_try'); openDetail(id); render(); }
-  catch(e) { alert('Kunne ikke legge til: ' + e.message); }
+  catch(e) { toast('Kunne ikke legge til: ' + e.message, 'err'); }
 }
 
 async function saveDetailRating(id, val) {
@@ -2548,7 +2604,7 @@ async function saveDetailRating(id, val) {
     const wrap = document.getElementById('ratingSliderWrap');
     if (wrap) wrap.classList.remove('nudge');
     render(); // oppdater kort/hyller bak modalen (kan ha graduert til kokeboken)
-  } catch(e) { alert('Kunne ikke lagre terning: ' + e.message); }
+  } catch(e) { toast('Kunne ikke lagre terning: ' + e.message, 'err'); }
 }
 
 async function removeFromMyBook(id) {
@@ -2558,7 +2614,7 @@ async function removeFromMyBook(id) {
     await removeEntry(id);
     document.getElementById('detailModal').classList.remove('open');
     render();
-  } catch(e) { alert('Kunne ikke fjerne: ' + e.message); }
+  } catch(e) { toast('Kunne ikke fjerne: ' + e.message, 'err'); }
 }
 
 // ─── Image Manager Modal ───────────────────────────────────────────────────────
@@ -2584,7 +2640,7 @@ function renderImgManager() {
   const recipe = recipes.find(r => r.id === _imgRecipeId);
   const grid = document.getElementById('imgManagerGrid');
 
-  document.getElementById('imgModalTitle').textContent = '📷 ' + (recipe ? recipe.name : 'Bilder') + ' – ' + imgs.length + '/' + CONFIG.MAX_IMAGES_PER_RECIPE;
+  document.getElementById('imgModalTitle').textContent = (recipe ? recipe.name : 'Bilder') + ' – ' + imgs.length + '/' + CONFIG.MAX_IMAGES_PER_RECIPE;
 
   // «Nytt bilde fra kilden» vises kun når oppskriften har en kilde-URL
   const srcBtn = document.getElementById('sourceImgBtn');
@@ -2598,12 +2654,12 @@ function renderImgManager() {
       + '<img src="' + esc(img.url) + '" alt="' + esc(img.label || 'Bilde ' + (i + 1)) + '" onclick="openLightbox(\'' + jsStr(img.url) + '\')">'
       + '<div class="mgr-overlay">'
       + '<div class="mgr-top">'
-      + (img.is_hero ? '<span class="mgr-hero-chip">⭐ Forsidebilde</span>' : '<span class="mgr-hero-chip" style="color:rgba(255,255,255,.6)">' + esc(img.label ? img.label.substring(0, 18) : 'Bilde ' + (i + 1)) + '</span>')
+      + (img.is_hero ? '<span class="mgr-hero-chip">Forsidebilde</span>' : '<span class="mgr-hero-chip" style="color:rgba(255,255,255,.6)">' + esc(img.label ? img.label.substring(0, 18) : 'Bilde ' + (i + 1)) + '</span>')
       + '<button class="mgr-del" onclick="deleteImage(\'' + img.id + '\')" title="Slett">✕</button>'
       + '</div>'
       + '<div class="mgr-bottom">'
       + '<span class="mgr-label-text">' + esc(img.label || '') + '</span>'
-      + (!img.is_hero ? '<button class="mgr-set-hero" onclick="setHeroImage(\'' + img.id + '\')">⭐ Forside</button>' : '')
+      + (!img.is_hero ? '<button class="mgr-set-hero" onclick="setHeroImage(\'' + img.id + '\')">Bruk som forside</button>' : '')
       + '</div>'
       + '</div></div>'
     ).join('');
@@ -2656,7 +2712,7 @@ function onImgFileSelected(input) {
 async function analyzeStepImage() {
   if (!_pendingUploadBase64) return;
   const apiKey = getApiKey();
-  if (!apiKey) { alert('Legg inn Claude API-nøkkel i innstillingene!'); return; }
+  if (!apiKey) { toast('Legg inn Claude API-nøkkel i innstillingene', 'err'); return; }
   const btn = document.getElementById('imgAnalyzeBtn');
   const status = document.getElementById('imgAnalyzeStatus');
   btn.disabled = true; btn.textContent = '⏳ Analyserer bilde…';
@@ -2679,15 +2735,15 @@ async function analyzeStepImage() {
     const label = d.content?.[0]?.text?.trim() || '';
     if (label) {
       document.getElementById('imgLabelInput').value = label;
-      status.textContent = '✓ Merkelapp generert!';
+      status.textContent = 'Merkelapp generert';
       status.style.color = 'var(--accent)';
     }
   } catch(e) {
-    status.textContent = '⚠️ ' + e.message;
+    status.textContent = e.message;
     status.style.color = 'var(--coral)';
   } finally {
     btn.disabled = false;
-    btn.textContent = '✨ Analyser bilde med Claude – generer merkelapp';
+    btn.textContent = 'Lag merkelapp med Claude';
   }
 }
 
@@ -2706,8 +2762,8 @@ async function saveNewImage() {
     render();
   } catch(e) {
     if (status) status.textContent = '';
-    if (btn) { btn.disabled = false; btn.textContent = '✓ Lagre bilde'; }
-    document.getElementById('imgAnalyzeStatus').textContent = '⚠️ ' + e.message;
+    if (btn) { btn.disabled = false; btn.textContent = 'Lagre bilde'; }
+    document.getElementById('imgAnalyzeStatus').textContent = e.message;
     document.getElementById('imgAnalyzeStatus').style.color = 'var(--danger, #e05)';
   }
 }
@@ -2976,7 +3032,7 @@ function renderFramePicker() {
   window._frameChoices = shown.map(f => f.full);
   pendingSelectedFrame = shown[0].full; // beste er forhåndsvalgt
   const left = Math.max(0, _framePool.length - (_frameShown + FRAME_SHOW));
-  box.innerHTML = '<div class="frame-picker-title">🎬 ' + (_frameAI ? 'Claude har valgt de beste bildene av retten' : 'Velg forsidebilde fra videoen') + '</div>'
+  box.innerHTML = '<div class="frame-picker-title">' + (_frameAI ? 'Claude har valgt de beste bildene av retten' : 'Velg forsidebilde fra videoen') + '</div>'
     + '<div class="frame-grid">'
     + shown.map((f, i) => '<img class="frame-thumb' + (i === 0 ? ' sel' : '') + '" src="' + f.full + '" onclick="pickFrame(' + i + ')" alt="Bilde ' + (i + 1) + '">').join('')
     + '</div>'
@@ -3060,9 +3116,9 @@ async function loadImgSuggestions() {
       '<img src="' + p.thumb + '" alt="' + (p.alt || '').replace(/"/g, '&quot;') + '" title="Foto: ' + p.photographer.replace(/"/g, '&quot;') + '" onclick="pickSuggestedImage(' + i + ')">'
     ).join('');
   } catch(e) {
-    grid.innerHTML = '<div class="img-suggest-msg" style="color:var(--coral)">⚠️ ' + e.message + '</div>';
+    grid.innerHTML = '<div class="img-suggest-msg" style="color:var(--coral)">' + esc(e.message) + '</div>';
   } finally {
-    btn.disabled = false; btn.textContent = '✨ Foreslå bilder automatisk';
+    btn.disabled = false; btn.textContent = 'Foreslå bilder';
   }
 }
 
@@ -3076,11 +3132,11 @@ async function pickSuggestedImage(i) {
     const compressed = await compressImage(dataUrl, 1200, 0.85);
     const imgs = recipeImagesCache[_imgRecipeId] || [];
     await uploadNewImage(_imgRecipeId, compressed, 'Bildeforslag', imgs.length === 0);
-    status.textContent = '✓ Bilde lagt til!'; status.style.color = 'var(--accent)';
+    status.textContent = 'Bilde lagt til'; status.style.color = 'var(--accent)';
     document.getElementById('imgSuggestGrid').innerHTML = '';
     renderImgManager(); render();
   } catch(e) {
-    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
+    status.textContent = e.message; status.style.color = 'var(--coral)';
   }
 }
 
@@ -3135,15 +3191,15 @@ async function newImageFromSource() {
       const compressed = await compressImage(dataUrl, 1200, 0.85);
       const imgs = recipeImagesCache[_imgRecipeId] || [];
       await uploadNewImage(_imgRecipeId, compressed, 'Fra kilden', imgs.length === 0);
-      status.textContent = '✓ Bilde hentet fra kilden!'; status.style.color = 'var(--accent)';
+      status.textContent = 'Bilde hentet fra kilden'; status.style.color = 'var(--accent)';
       renderImgManager(); render();
     } else {
       throw new Error('Fant verken bilde eller video i kilden');
     }
   } catch(e) {
-    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
+    status.textContent = e.message; status.style.color = 'var(--coral)';
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '🎬 Nytt bilde fra kilden'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Nytt bilde fra kilden'; }
   }
 }
 
@@ -3163,7 +3219,7 @@ async function showSourceFrames() {
   } catch(e) {
     // Instagram lot oss ikke lese videoen (CORS) — si fra ærlig
     console.warn('Bilde-fra-video feilet:', e.message);
-    status.textContent = '⚠️ Fikk ikke lest bildepunktene fra videoen. Prøv «Foreslå bilder» eller last opp selv.';
+    status.textContent = 'Fikk ikke lest bildepunktene fra videoen. Prøv «Foreslå bilder» eller last opp selv.';
     status.style.color = 'var(--coral)';
     grid.innerHTML = '';
   }
@@ -3200,11 +3256,11 @@ async function pickSourceFrame(i) {
     const compressed = await compressImage(frames[i], 1200, 0.85);
     const imgs = recipeImagesCache[_imgRecipeId] || [];
     await uploadNewImage(_imgRecipeId, compressed, 'Fra videoen', imgs.length === 0);
-    status.textContent = '✓ Bilde lagt til!'; status.style.color = 'var(--accent)';
+    status.textContent = 'Bilde lagt til'; status.style.color = 'var(--accent)';
     document.getElementById('imgSuggestGrid').innerHTML = '';
     renderImgManager(); render();
   } catch(e) {
-    status.textContent = '⚠️ ' + e.message; status.style.color = 'var(--coral)';
+    status.textContent = e.message; status.style.color = 'var(--coral)';
   }
 }
 
@@ -3212,6 +3268,32 @@ async function pickSourceFrame(i) {
 function openLightbox(url) {
   document.getElementById('imgLightboxImg').src = url;
   document.getElementById('imgLightbox').classList.add('open');
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────────
+// Ikke-blokkerende tilbakemelding i stedet for alert(). Inn og ut samme vei;
+// transitions (kan avbrytes/omdirigeres), aldri keyframes. Trykk for å lukke.
+function toast(msg, kind, ms) {
+  let host = document.getElementById('toastHost');
+  if (!host) {
+    host = document.createElement('div'); host.id = 'toastHost'; host.className = 'toast-host';
+    host.setAttribute('role', 'status'); host.setAttribute('aria-live', 'polite');
+    document.body.appendChild(host);
+  }
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind ? ' ' + kind : '');
+  el.textContent = msg;
+  host.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  let gone = false;
+  const hide = () => {
+    if (gone) return; gone = true;
+    el.classList.remove('show');
+    el.addEventListener('transitionend', () => el.remove(), {once: true});
+    setTimeout(() => el.remove(), 400);
+  };
+  const t = setTimeout(hide, ms || (kind === 'err' ? 5000 : 2600));
+  el.addEventListener('click', () => { clearTimeout(t); hide(); });
 }
 
 // ─── Keyboard & Init ───────────────────────────────────────────────────────────
@@ -3236,8 +3318,7 @@ _style.textContent = `
 
 /* Modus-toggle: Min kokebok / Oppdag */
 .mode-bar{display:flex;gap:8px;max-width:1100px;margin:0 auto;padding:14px 24px 0}
-.mode-btn{flex:1;max-width:220px;padding:11px 14px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);font:600 14px 'DM Sans',sans-serif;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:6px}
-.mode-btn:hover{border-color:var(--accent);color:var(--accent)}
+.mode-btn{flex:1;max-width:220px;padding:11px 14px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);font:600 14px 'DM Sans',sans-serif;cursor:pointer;transition:border-color var(--t-hover),color var(--t-hover),background-color var(--t-hover),transform var(--t-press);display:flex;align-items:center;justify-content:center;gap:6px}
 .mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* Import: skille mellom lim-inn og bilde */
@@ -3247,8 +3328,7 @@ _style.textContent = `
 .card-status{position:absolute;top:8px;left:8px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:0;z-index:2;font-family:'DM Sans',sans-serif}
 .card-status.in{background:var(--accent);color:#fff}
 .card-status.try{background:var(--amber);color:#fff}
-.card-status.add{border:none;background:rgba(0,0,0,.62);color:#fff;cursor:pointer;transition:background .12s}
-.card-status.add:hover{background:var(--accent)}
+.card-status.add{border:none;background:rgba(0,0,0,.62);color:#fff;cursor:pointer;transition:background-color var(--t-hover),transform var(--t-press)}
 .card-author{font-size:11px;color:var(--text3);margin:2px 0 6px}
 .card-counts .dim{color:var(--text3);opacity:.6}
 
@@ -3258,7 +3338,7 @@ _style.textContent = `
 .shelf-sub{font-size:12px;color:var(--text3)}
 
 /* Rating-slider (1–10) */
-.rating-box{margin:16px 0 10px;padding:16px;background:var(--surface2);border:1px solid var(--border);transition:box-shadow .2s}
+.rating-box{margin:16px 0 10px;padding:16px;background:var(--surface2);border:1px solid var(--border);transition:box-shadow 200ms var(--ease-out)}
 .rating-box.nudge{box-shadow:0 0 0 2px var(--accent)}
 .rating-head{font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px}
 .rating-val{font:700 22px 'Lora',serif;color:var(--accent)}
@@ -3268,14 +3348,12 @@ _style.textContent = `
 
 /* Kildelenke som info-pill */
 a.info-pill.source-link{text-decoration:none;color:var(--accent);border-color:var(--accent)}
-a.info-pill.source-link:hover{background:var(--accent-bg)}
 
 /* Bildevelger fra video (import) */
 .frame-picker{margin:6px 0 12px;padding:12px;background:var(--surface2);border:1px solid var(--border)}
 .frame-picker-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:9px;display:flex;align-items:center;gap:7px}
 .frame-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
-.frame-thumb{width:100%;aspect-ratio:1/1;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .12s;display:block}
-.frame-thumb:hover{border-color:var(--border2)}
+.frame-thumb{width:100%;aspect-ratio:1/1;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color var(--t-hover),transform var(--t-press);display:block}
 .frame-thumb.sel{border-color:var(--accent)}
 .frame-refresh{width:100%;font-size:13px}
 
@@ -3287,7 +3365,6 @@ a.info-pill.source-link:hover{background:var(--accent-bg)}
 .comment-name{font-weight:600;font-size:13px;color:var(--text)}
 .comment-text{font-size:14px;color:var(--text2);line-height:1.45;overflow-wrap:break-word}
 .comment-del{border:none;background:none;color:var(--text3);cursor:pointer;font-size:12px;padding:2px}
-.comment-del:hover{color:var(--coral)}
 .comment-composer{display:flex;gap:8px;align-items:flex-end}
 .comment-composer textarea{flex:1;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);font:inherit;font-size:14px;color:var(--text);resize:vertical;min-height:42px}
 .comment-composer textarea:focus{outline:none;border-color:var(--accent)}
@@ -3295,25 +3372,20 @@ a.info-pill.source-link:hover{background:var(--accent-bg)}
 /* Variant-notis */
 .variant-note{font-size:13px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);padding:9px 12px;margin:12px 0}
 .variant-note a{color:var(--accent);cursor:pointer;text-decoration:none}
-.variant-note a:hover{text-decoration:underline}
 
 /* Avatarer (profilbilde eller initialer) */
 .avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;flex:0 0 auto;background:var(--surface2);vertical-align:middle}
 .avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .avatar-fallback{background:var(--accent);color:#fff;font-weight:600;line-height:1}
-.header-avatar-btn{padding:0;border:1.5px solid var(--border2);background:var(--surface2);border-radius:50%;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:border-color .12s}
-.header-avatar-btn:hover{border-color:var(--accent)}
+.header-avatar-btn{padding:0;border:1.5px solid var(--border2);background:var(--surface2);border-radius:50%;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:border-color var(--t-hover),transform var(--t-press)}
 .card-author{display:flex;align-items:center;gap:5px}
 .card-author.clickable{cursor:pointer}
-.card-author.clickable:hover{color:var(--accent)}
 .author-pill-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);padding:3px 10px 3px 3px;font:inherit;color:var(--text2);border-radius:999px}
-.author-pill-btn:hover{border-color:var(--accent);color:var(--accent)}
 
 /* Profil-redigering i innstillinger */
 .profile-edit{display:flex;align-items:center;gap:14px;margin-bottom:12px}
 .profile-edit .avatar{width:64px;height:64px;font-size:24px}
 .avatar-upload-btn{font:500 12px 'DM Sans',sans-serif;border:1px solid var(--border2);background:var(--surface);color:var(--text2);padding:6px 10px;cursor:pointer}
-.avatar-upload-btn:hover{border-color:var(--accent);color:var(--accent)}
 
 /* Profil-visning (klikk på en bruker) */
 .profile-head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0 18px;text-align:center}
@@ -3327,7 +3399,8 @@ a.info-pill.source-link:hover{background:var(--accent-bg)}
 .private-toggle b{color:var(--text)}
 
 /* Privat-lås og kjøkken-merke på kort */
-.card-private{position:absolute;top:8px;right:8px;font-size:13px;background:rgba(0,0,0,.55);padding:3px 6px;z-index:2}
+.card-private{position:absolute;top:8px;right:8px;color:#fff;background:rgba(0,0,0,.55);padding:5px;z-index:2;display:flex}
+.card-private svg{width:12px;height:12px}
 .card-cuisine{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);border:1px solid var(--border2);padding:1px 6px;margin-left:6px}
 .card-author .card-cuisine{margin-left:0}
 
@@ -3355,7 +3428,9 @@ img,video{max-width:100%}
      når helt til topp og bunn selv når nettleserens linjer skjuler deler av 'vh'.
      Trygg-sone i bunn så handlingsknappene ikke havner bak hjem-indikatoren. */
   .modal-bg{padding:0;align-items:stretch}
-  .modal{max-width:100%;max-height:100vh;max-height:100dvh;height:100vh;height:100dvh}
+  .modal{max-width:100%;max-height:100vh;max-height:100dvh;height:100vh;height:100dvh;transform:translateY(100%);transition:transform 220ms var(--ease-drawer)}
+  .modal-bg.open .modal{transform:none;transition-duration:320ms}
+  @starting-style{.modal-bg.open .modal{transform:translateY(100%)}}
   .modal-body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px))}
 
   /* Maten først: filtrene ligger bak én knapp i stedet for seks rader chips */
@@ -3376,6 +3451,22 @@ img,video{max-width:100%}
   .hero-meta{font-size:12px}
   .hero h1{font-size:21px}
 }
+
+/* Hover kun der pekeren faktisk kan sveve. Touch får :active i stedet. */
+@media (hover:hover) and (pointer:fine){
+.mode-btn:hover{border-color:var(--accent);color:var(--accent)}
+.card-status.add:hover{background:var(--accent)}
+a.info-pill.source-link:hover{background:var(--accent-bg)}
+.frame-thumb:hover{border-color:var(--border2)}
+.comment-del:hover{color:var(--coral)}
+.variant-note a:hover{text-decoration:underline}
+.header-avatar-btn:hover{border-color:var(--accent)}
+.card-author.clickable:hover{color:var(--accent)}
+.author-pill-btn:hover{border-color:var(--accent);color:var(--accent)}
+.avatar-upload-btn:hover{border-color:var(--accent);color:var(--accent)}
+}
+/* Touch har ikke hover: bildeverktøyene må være synlige uten. */
+@media (hover:none){.mgr-overlay{opacity:1}}
 `;
 document.head.appendChild(_style);
 

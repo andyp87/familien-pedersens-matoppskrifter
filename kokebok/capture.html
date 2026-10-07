@@ -2,7 +2,10 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#221E16">
 <meta name="robots" content="noindex, nofollow">
 <title>Send oppskrift – nineofve</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,6 +18,9 @@
   --text:#1E1A14;--text2:#6B6152;--text3:#A8998A;
   --accent:#2D6A4F;--accent-bg:#E8F3EC;--accent-text:#1B4332;
   --amber:#B5621E;--amber-bg:#FDF0E6;--coral:#C0392B;
+  /* Bevegelse: én kurve, én varighet per tier. Hover = ease, trykk/inn-ut = sterk ease-out. */
+  --ease-out:cubic-bezier(.23,1,.32,1);--ease-in-out:cubic-bezier(.77,0,.175,1);--ease-drawer:cubic-bezier(.32,.72,0,1);
+  --t-hover:150ms ease;--t-press:120ms var(--ease-out);
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#18150F;--surface:#221E16;--surface2:#2C2720;--border:rgba(255,240,210,.12);--border2:rgba(255,240,210,.24);
@@ -22,14 +28,14 @@
   --accent:#52B788;--accent-bg:#1B3A2D;--accent-text:#A3D9B8;
   --amber:#E88C3A;--amber-bg:#2C1E0F;
 }}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
 
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;position:sticky;top:0;z-index:10}
+header{background:var(--surface);background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top) 20px 0;position:sticky;top:0;z-index:10}
 .header-inner{max-width:500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px}
 .logo{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--text);text-decoration:none}
 .logo span{color:var(--accent)}
 .back-link{font-size:13px;color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px}
-.back-link:hover{color:var(--accent)}
 
 .page{max-width:500px;margin:0 auto;padding:22px 20px}
 .page-title{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:5px}
@@ -38,50 +44,43 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .section-label{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;display:flex;align-items:center;gap:6px}
 .section-label .optional{background:var(--surface2);border:1px solid var(--border);color:var(--text3);font-size:9px;padding:1px 6px;letter-spacing:.04em}
 
-.photo-zone{border:1px solid var(--border2);overflow:hidden;margin-bottom:18px;cursor:pointer;transition:border-color .12s;background:var(--surface);display:block}
-.photo-zone:hover{border-color:var(--accent)}
+.photo-zone{border:1px solid var(--border2);overflow:hidden;margin-bottom:18px;cursor:pointer;transition:border-color var(--t-hover);background:var(--surface);display:block}
 .photo-zone input{display:none}
 .photo-placeholder{padding:22px 16px;text-align:center}
-.photo-placeholder .icon{font-size:36px;margin-bottom:8px}
+.photo-placeholder .icon{color:var(--text3);margin-bottom:8px;display:flex;justify-content:center}
 .photo-placeholder p{font-size:14px;color:var(--text2);font-weight:500}
 .photo-placeholder small{font-size:11px;color:var(--text3)}
 .photo-preview{width:100%;max-height:240px;object-fit:cover;display:none}
 .photo-retake{width:100%;padding:9px;background:var(--surface2);border:none;border-top:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;display:none;text-align:center}
-.photo-retake:hover{background:var(--border);color:var(--coral)}
 
 .or-divider{display:flex;align-items:center;gap:10px;margin:4px 0 16px;color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 .or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
-.recipe-input{width:100%;min-height:140px;padding:12px;background:var(--surface);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;line-height:1.6;margin-bottom:18px;transition:border-color .12s}
+.recipe-input{width:100%;min-height:140px;padding:12px;background:var(--surface);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;line-height:1.6;margin-bottom:18px;transition:border-color var(--t-hover)}
 .recipe-input:focus{border-color:var(--accent)}
 .recipe-input::placeholder{color:var(--text3)}
 
 .examples{background:var(--surface2);border:1px solid var(--border);padding:12px 14px;margin-bottom:18px}
 .examples p{font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
-.example-chip{display:inline-block;font-size:12px;padding:3px 9px;background:var(--surface);border:1px solid var(--border2);border-radius:0;color:var(--text2);cursor:pointer;margin:2px 2px 0 0;transition:all .12s}
-.example-chip:hover{border-color:var(--accent);color:var(--accent)}
+.example-chip{display:inline-block;font-size:12px;padding:3px 9px;background:var(--surface);border:1px solid var(--border2);border-radius:0;color:var(--text2);cursor:pointer;margin:2px 2px 0 0;transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press)}
 
 /* Multi-photo strip */
 .step-photos-section{margin-bottom:18px}
 .step-photos-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
 .step-photo-item{flex-shrink:0;width:90px;height:90px;position:relative;border:1px solid var(--border2);overflow:hidden;background:var(--surface2)}
 .step-photo-item img{width:100%;height:100%;object-fit:cover;display:block}
-.step-photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;flex-direction:column;justify-content:space-between;padding:4px;opacity:0;transition:opacity .15s}
-.step-photo-item:hover .step-photo-overlay{opacity:1}
+.step-photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;flex-direction:column;justify-content:space-between;padding:4px;opacity:0;transition:opacity var(--t-hover)}
 .step-photo-del{background:rgba(0,0,0,.7);color:#fff;border:none;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:0;margin-left:auto}
 .step-photo-label{color:#fff;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
-.step-photo-add{flex-shrink:0;width:90px;height:90px;border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);transition:border-color .12s;font-size:11px;color:var(--text3);gap:4px}
-.step-photo-add:hover{border-color:var(--accent);color:var(--accent)}
+.step-photo-add{flex-shrink:0;width:90px;height:90px;border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);transition:border-color var(--t-hover),color var(--t-hover),transform var(--t-press);font-size:11px;color:var(--text3);gap:4px}
 .step-photo-add svg{width:18px;height:18px}
 .step-photo-add input{display:none}
 
 /* Analyze chip */
-.analyze-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px;background:var(--accent-bg);border:1px solid var(--accent-text);color:var(--accent-text);cursor:pointer;border-radius:0;font-family:'DM Sans',sans-serif;transition:opacity .15s;margin-bottom:12px}
-.analyze-chip:hover{opacity:.85}
+.analyze-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px;background:var(--accent-bg);border:1px solid var(--accent-text);color:var(--accent-text);cursor:pointer;border-radius:0;font-family:'DM Sans',sans-serif;transition:opacity var(--t-hover),transform var(--t-press);margin-bottom:12px}
 .analyze-chip:disabled{opacity:.5;cursor:not-allowed}
 
-.send-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.send-btn:hover{opacity:.85}
+.send-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:opacity var(--t-hover),transform var(--t-press);display:flex;align-items:center;justify-content:center;gap:8px}
 .send-btn:disabled{opacity:.5;cursor:not-allowed}
 .send-btn svg{width:16px;height:16px;flex-shrink:0}
 
@@ -98,23 +97,45 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .success-sub{font-size:13px;color:var(--accent-text);opacity:.8;margin-bottom:14px}
 .success-name{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--accent-text);background:rgba(255,255,255,.5);border-radius:0;padding:7px 12px;display:inline-block;margin-bottom:14px}
 .go-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none}
-.go-btn:hover{opacity:.85}
+.go-btn{transition:opacity var(--t-hover),transform var(--t-press)}
 
 .no-key{background:var(--amber-bg);border:1px solid var(--amber);border-radius:0;padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--amber);display:none}
 .no-key.show{display:block}
 .no-key a{color:var(--amber);font-weight:600}
 
 /* Auth overlay */
-.auth-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:10px;transition:border-color .12s;display:block}
+.auth-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:10px;transition:border-color var(--t-hover);display:block}
 .auth-input:focus{border-color:var(--accent)}
-.auth-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:opacity .15s}
-.auth-btn:hover{opacity:.85}
+.auth-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:opacity var(--t-hover),transform var(--t-press)}
 .auth-btn:disabled{opacity:.5;cursor:not-allowed}
 .auth-switch{text-align:center;font-size:13px;color:var(--text2)}
 .auth-switch a{color:var(--accent);cursor:pointer;text-decoration:underline}
 .auth-status{font-size:13px;text-align:center;min-height:18px;margin-bottom:8px}
 .auth-status.ok{color:var(--accent)}
 .auth-status.err{color:var(--coral)}
+.example-chip:active,.step-photo-add:active,.analyze-chip:active:not(:disabled),.send-btn:active:not(:disabled),.auth-btn:active:not(:disabled),.go-btn:active,.photo-retake:active,.back-link:active{transform:scale(.97)}
+.photo-retake,.back-link{transition:transform var(--t-press)}
+button:focus-visible,a:focus-visible,label:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button,a,label,.example-chip{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.step-photos-strip{overscroll-behavior-x:contain}
+@media (pointer:coarse){input:not([type=file]),textarea,select{font-size:16px}}
+@media (prefers-reduced-transparency:reduce){header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
+@media (prefers-reduced-motion:reduce){:active{transform:none!important}}
+
+/* Hover kun der pekeren faktisk kan sveve. Touch får :active i stedet. */
+@media (hover:hover) and (pointer:fine){
+.back-link:hover{color:var(--accent)}
+.photo-zone:hover{border-color:var(--accent)}
+.photo-retake:hover{background:var(--border);color:var(--coral)}
+.example-chip:hover{border-color:var(--accent);color:var(--accent)}
+.step-photo-item:hover .step-photo-overlay{opacity:1}
+.step-photo-add:hover{border-color:var(--accent);color:var(--accent)}
+.analyze-chip:hover{opacity:.85}
+.send-btn:hover{opacity:.85}
+.go-btn:hover{opacity:.85}
+.auth-btn:hover{opacity:.85}
+}
+@media (hover:none){.step-photo-overlay{opacity:1}}
 </style>
 </head>
 <body>
@@ -122,7 +143,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <!-- Auth overlay -->
 <div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--surface);border:1px solid var(--border2);padding:32px;width:100%;max-width:380px">
-    <div style="font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">nine<span style="color:var(--accent)">of</span>ve 🍽</div>
+    <div style="font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">nine<span style="color:var(--accent)">of</span>ve</div>
     <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5">Logg inn for å sende oppskrifter</div>
     <input class="auth-input" type="email" id="authEmail" placeholder="E-postadresse" autocomplete="email">
     <input class="auth-input" type="password" id="authPassword" placeholder="Passord" autocomplete="current-password">
@@ -135,7 +156,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 <header>
   <div class="header-inner">
-    <a class="logo" href="index.html">nine<span>of</span>ve 🍽</a>
+    <a class="logo" href="index.html">nine<span>of</span>ve</a>
     <a class="back-link" href="index.html">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       Tilbake
@@ -148,7 +169,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <p class="page-sub">Last opp bilde av oppskriften, lim inn en lenke, eller skriv oppskriften. Claude strukturerer den automatisk.</p>
 
   <div class="no-key" id="noKeyBanner">
-    ⚠️ Ingen API-nøkkel funnet. <a href="index.html">Gå til kokeboken</a> og sett opp Claude API-nøkkel i ⚙️ Innstillinger først.
+    Ingen API-nøkkel funnet. <a href="index.html">Gå til kokeboken</a> og sett opp Claude API-nøkkel under Innstillinger først.
   </div>
 
   <!-- Recipe card photo (for Claude to read) -->
@@ -159,7 +180,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <label class="photo-zone" id="recipeCardZone">
     <input type="file" accept="image/*" id="recipeCardInput" onchange="onRecipeCardSelected(this)">
     <div class="photo-placeholder" id="recipeCardPlaceholder">
-      <div class="icon">📋</div>
+      <div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></div>
       <p>Håndskrevet, utskrift, oppskriftsbok</p>
       <small>Claude leser og strukturerer innholdet automatisk</small>
     </div>
@@ -181,22 +202,22 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 https://www.matprat.no/oppskrifter/...
 
-— eller —
+eller
 
 Lasagne
 500g kjøttdeig, løk, hvitløk, hermetiske tomater..."></textarea>
 
   <div class="examples">
     <p>Prøv disse</p>
-    <span class="example-chip" onclick="setExample('url')">🔗 Lenke fra nettside</span>
-    <span class="example-chip" onclick="setExample('instagram')">📱 Instagram-lenke</span>
-    <span class="example-chip" onclick="setExample('text')">✏️ Fritekst</span>
+    <span class="example-chip" onclick="setExample('url')">Lenke fra nettside</span>
+    <span class="example-chip" onclick="setExample('instagram')">Instagram-lenke</span>
+    <span class="example-chip" onclick="setExample('text')">Fritekst</span>
   </div>
 
   <!-- Step photos section -->
   <div class="section-label">
     Bilder (opptil 5)
-    <span class="optional">valgfritt — steg-for-steg + ferdig rett</span>
+    <span class="optional">valgfritt – steg for steg og ferdig rett</span>
   </div>
   <p style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">Første bilde blir forsidebilde. Claude kan analysere hvert bilde og generere en beskrivende merkelapp automatisk.</p>
 
@@ -213,7 +234,7 @@ Lasagne
 
   <button class="analyze-chip" id="analyzePhotosBtn" onclick="analyzeAllPhotos()" style="display:none">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-    ✨ Analyser bilder med Claude – generer merkelapper
+    Lag merkelapper med Claude
   </button>
   <div style="font-size:11px;color:var(--text3);margin-bottom:16px" id="analyzeStatus"></div>
 
@@ -298,7 +319,7 @@ async function signIn() {
   btn.disabled = true; btn.textContent = 'Logger inn…';
   const {error} = await _supa.auth.signInWithPassword({email, password});
   btn.disabled = false; btn.textContent = 'Logg inn';
-  if (error) { status.textContent = '⚠️ Feil e-post eller passord.'; status.className = 'auth-status err'; }
+  if (error) { status.textContent = 'Feil e-post eller passord.'; status.className = 'auth-status err'; }
 }
 
 async function signUp() {
@@ -311,8 +332,8 @@ async function signUp() {
   btn.disabled = true; btn.textContent = 'Oppretter konto…';
   const {error} = await _supa.auth.signUp({email, password, options:{emailRedirectTo: window.location.href}});
   btn.disabled = false; btn.textContent = 'Opprett konto';
-  if (error) { status.textContent = '⚠️ ' + error.message; status.className = 'auth-status err'; }
-  else { status.textContent = '✓ Sjekk e-posten din for bekreftelseslenke!'; status.className = 'auth-status ok'; }
+  if (error) { status.textContent = error.message; status.className = 'auth-status err'; }
+  else { status.textContent = 'Sjekk e-posten din for bekreftelseslenke.'; status.className = 'auth-status ok'; }
 }
 
 document.addEventListener('keydown', e => {
@@ -391,7 +412,7 @@ function renderStepPhotos() {
       '<img src="' + photo.base64 + '" alt="Bilde ' + (i + 1) + '">'
       + '<div class="step-photo-overlay">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
-      + '<span style="color:#FFD700;font-size:9px;padding:1px 3px;background:rgba(0,0,0,.4)">' + (i === 0 ? '⭐' : (i + 1)) + '</span>'
+      + '<span style="color:#FFD700;font-size:9px;padding:1px 3px;background:rgba(0,0,0,.4)">' + (i + 1) + '</span>'
       + '<button class="step-photo-del" onclick="removeStepPhoto(' + i + ')">✕</button>'
       + '</div>'
       + '<span class="step-photo-label">' + (photo.label || 'Klikk for å analysere') + '</span>'
@@ -443,8 +464,8 @@ async function analyzeAllPhotos() {
 
   renderStepPhotos();
   btn.disabled = false;
-  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ✨ Analyser bilder med Claude – generer merkelapper';
-  status.textContent = analyzed > 0 ? '✓ ' + analyzed + ' bilde(r) analysert og merket!' : '⚠️ Klarte ikke analysere bilder.';
+  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Lag merkelapper med Claude';
+  status.textContent = analyzed > 0 ? analyzed + (analyzed === 1 ? ' bilde' : ' bilder') + ' analysert og merket' : 'Klarte ikke analysere bilder.';
 }
 
 function setExample(type) {
@@ -585,7 +606,7 @@ async function sendRecipe() {
     status.textContent = '';
 
   } catch(e) {
-    status.textContent = '⚠️ ' + e.message;
+    status.textContent = '' + e.message;
     status.className = 'status-msg err';
     console.error(e);
   } finally {
