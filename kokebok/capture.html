@@ -5,17 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#221E16">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1C1C1E">
 <meta name="robots" content="noindex, nofollow">
 <title>Send oppskrift – nineofve</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#FAF8F4;--surface:#FFFFFF;--surface2:#F2EFE8;--border:rgba(60,50,30,.15);--border2:rgba(60,50,30,.28);
-  --text:#1E1A14;--text2:#6B6152;--text3:#A8998A;
+  --bg:#F5F5F7;--surface:#FFFFFF;--surface2:#EFEFF3;--border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.14);
+  --text:#1D1D1F;--text2:#6E6E73;--text3:#86868B;
+  /* Flater og dybde: fyll i stedet for strek, skygge i stedet for ramme */
+  --fill:rgba(120,120,128,.12);--fill-hover:rgba(120,120,128,.2);--seg-thumb:#FFFFFF;
+  --shadow-1:0 0 0 .5px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.05);
+  --shadow-2:0 0 0 .5px rgba(0,0,0,.06),0 2px 4px rgba(0,0,0,.05),0 14px 36px rgba(0,0,0,.12);
+  --shadow-3:0 0 0 .5px rgba(0,0,0,.1),0 24px 80px rgba(0,0,0,.28);
+  --shadow-thumb:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.04);
+  --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
   --accent:#2D6A4F;--accent-bg:#E8F3EC;--accent-text:#1B4332;
   --amber:#B5621E;--amber-bg:#FDF0E6;--coral:#C0392B;
   /* Bevegelse: én kurve, én varighet per tier. Hover = ease, trykk/inn-ut = sterk ease-out. */
@@ -23,13 +30,18 @@
   --t-hover:150ms ease;--t-press:120ms var(--ease-out);
 }
 @media(prefers-color-scheme:dark){:root{
-  --bg:#18150F;--surface:#221E16;--surface2:#2C2720;--border:rgba(255,240,210,.12);--border2:rgba(255,240,210,.24);
-  --text:#F5F0E8;--text2:#B0A090;--text3:#705F50;
+  --bg:#000000;--surface:#1C1C1E;--surface2:#2C2C2E;--border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);
+  --text:#F5F5F7;--text2:#A1A1A6;--text3:#8E8E93;
+  --fill:rgba(120,120,128,.24);--fill-hover:rgba(120,120,128,.34);--seg-thumb:#636366;
+  --shadow-1:0 0 0 .5px rgba(255,255,255,.08);
+  --shadow-2:0 0 0 .5px rgba(255,255,255,.12),0 14px 36px rgba(0,0,0,.65);
+  --shadow-3:0 0 0 .5px rgba(255,255,255,.14),0 24px 80px rgba(0,0,0,.75);
+  --shadow-thumb:0 1px 3px rgba(0,0,0,.4);
   --accent:#52B788;--accent-bg:#1B3A2D;--accent-text:#A3D9B8;
   --amber:#E88C3A;--amber-bg:#2C1E0F;
 }}
 html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
 
 header{background:var(--surface);background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);border-bottom:1px solid var(--border);padding:env(safe-area-inset-top) 20px 0;position:sticky;top:0;z-index:10}
 .header-inner{max-width:500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px}
@@ -51,12 +63,12 @@ header{background:var(--surface);background:color-mix(in srgb,var(--surface) 86%
 .photo-placeholder p{font-size:14px;color:var(--text2);font-weight:500}
 .photo-placeholder small{font-size:11px;color:var(--text3)}
 .photo-preview{width:100%;max-height:240px;object-fit:cover;display:none}
-.photo-retake{width:100%;padding:9px;background:var(--surface2);border:none;border-top:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;display:none;text-align:center}
+.photo-retake{width:100%;padding:9px;background:var(--surface2);border:none;border-top:1px solid var(--border);font-family:var(--font-ui);font-size:12px;color:var(--text2);cursor:pointer;display:none;text-align:center}
 
 .or-divider{display:flex;align-items:center;gap:10px;margin:4px 0 16px;color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 .or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
-.recipe-input{width:100%;min-height:140px;padding:12px;background:var(--surface);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:none;line-height:1.6;margin-bottom:18px;transition:border-color var(--t-hover)}
+.recipe-input{width:100%;min-height:140px;padding:12px;background:var(--surface);border:1px solid var(--border2);border-radius:0;font-family:var(--font-ui);font-size:14px;color:var(--text);outline:none;resize:none;line-height:1.6;margin-bottom:18px;transition:border-color var(--t-hover)}
 .recipe-input:focus{border-color:var(--accent)}
 .recipe-input::placeholder{color:var(--text3)}
 
@@ -77,10 +89,10 @@ header{background:var(--surface);background:color-mix(in srgb,var(--surface) 86%
 .step-photo-add input{display:none}
 
 /* Analyze chip */
-.analyze-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px;background:var(--accent-bg);border:1px solid var(--accent-text);color:var(--accent-text);cursor:pointer;border-radius:0;font-family:'DM Sans',sans-serif;transition:opacity var(--t-hover),transform var(--t-press);margin-bottom:12px}
+.analyze-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 12px;background:var(--accent-bg);border:1px solid var(--accent-text);color:var(--accent-text);cursor:pointer;border-radius:0;font-family:var(--font-ui);transition:opacity var(--t-hover),transform var(--t-press);margin-bottom:12px}
 .analyze-chip:disabled{opacity:.5;cursor:not-allowed}
 
-.send-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:opacity var(--t-hover),transform var(--t-press);display:flex;align-items:center;justify-content:center;gap:8px}
+.send-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:var(--font-ui);font-size:15px;font-weight:500;cursor:pointer;transition:opacity var(--t-hover),transform var(--t-press);display:flex;align-items:center;justify-content:center;gap:8px}
 .send-btn:disabled{opacity:.5;cursor:not-allowed}
 .send-btn svg{width:16px;height:16px;flex-shrink:0}
 
@@ -96,7 +108,7 @@ header{background:var(--surface);background:color-mix(in srgb,var(--surface) 86%
 .success-title{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--accent-text);margin-bottom:5px}
 .success-sub{font-size:13px;color:var(--accent-text);opacity:.8;margin-bottom:14px}
 .success-name{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--accent-text);background:rgba(255,255,255,.5);border-radius:0;padding:7px 12px;display:inline-block;margin-bottom:14px}
-.go-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none}
+.go-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:var(--font-ui);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none}
 .go-btn{transition:opacity var(--t-hover),transform var(--t-press)}
 
 .no-key{background:var(--amber-bg);border:1px solid var(--amber);border-radius:0;padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--amber);display:none}
@@ -104,9 +116,9 @@ header{background:var(--surface);background:color-mix(in srgb,var(--surface) 86%
 .no-key a{color:var(--amber);font-weight:600}
 
 /* Auth overlay */
-.auth-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:10px;transition:border-color var(--t-hover);display:block}
+.auth-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:0;font-family:var(--font-ui);font-size:14px;color:var(--text);outline:none;margin-bottom:10px;transition:border-color var(--t-hover);display:block}
 .auth-input:focus{border-color:var(--accent)}
-.auth-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:opacity var(--t-hover),transform var(--t-press)}
+.auth-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:0;font-family:var(--font-ui);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;transition:opacity var(--t-hover),transform var(--t-press)}
 .auth-btn:disabled{opacity:.5;cursor:not-allowed}
 .auth-switch{text-align:center;font-size:13px;color:var(--text2)}
 .auth-switch a{color:var(--accent);cursor:pointer;text-decoration:underline}
@@ -142,7 +154,7 @@ button,a,label,.example-chip{touch-action:manipulation;-webkit-user-select:none;
 
 <!-- Auth overlay -->
 <div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--surface);border:1px solid var(--border2);padding:32px;width:100%;max-width:380px">
+  <div class="auth-card">
     <div style="font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px">nine<span style="color:var(--accent)">of</span>ve</div>
     <div style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5">Logg inn for å sende oppskrifter</div>
     <input class="auth-input" type="email" id="authEmail" placeholder="E-postadresse" autocomplete="email">
@@ -617,5 +629,44 @@ async function sendRecipe() {
 
 initAuth();
 </script>
+
+<style id="design-layer">
+/* Designlag: samme språk som kokeboka (se index.html) */
+body{font-family:var(--font-ui);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+header{border-bottom:.5px solid var(--border)}
+.logo{font-size:20px;letter-spacing:-.02em}
+.page{max-width:520px;padding:30px 20px}
+.page-title{font-size:34px;font-weight:600;line-height:1.08;letter-spacing:-.028em;margin-bottom:8px}
+.page-sub{font-size:15.5px;color:var(--text2);margin-bottom:28px}
+.section-label{text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.section-label .optional{border:0;background:var(--fill);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:500;letter-spacing:0;text-transform:none}
+.photo-zone{border:0;border-radius:20px;box-shadow:var(--shadow-1)}
+.photo-placeholder{padding:28px 16px}
+.photo-placeholder .icon{color:var(--text3)}
+.photo-retake{border-top:.5px solid var(--border)}
+.or-divider{text-transform:none;letter-spacing:0;font-size:13px}
+.recipe-input{border:0;border-radius:18px;background:var(--surface);box-shadow:var(--shadow-1);padding:16px;font-size:16px}
+.recipe-input:focus{box-shadow:0 0 0 2px var(--accent)}
+.examples{border:0;border-radius:18px;background:var(--fill);padding:14px 16px}
+.examples p{text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--text2)}
+.example-chip{border:0;border-radius:999px;background:var(--surface);box-shadow:var(--shadow-1);padding:7px 14px;font-size:13px;margin:3px 3px 0 0}
+.step-photo-item,.step-photo-add{border-radius:16px}
+.analyze-chip{border:0;border-radius:999px;background:var(--accent-bg);color:var(--accent-text);padding:8px 14px;font-weight:600}
+.send-btn{border-radius:16px;padding:16px;font-size:16px;font-weight:600}
+.success-card{border:0;border-radius:22px;padding:26px}
+.success-name,.go-btn{border-radius:14px}
+.go-btn{padding:12px 24px;font-weight:600}
+.no-key{border:0;border-radius:14px}
+.auth-card{width:100%;max-width:400px;padding:40px 32px 32px;background:var(--surface);border-radius:26px;box-shadow:var(--shadow-3)}
+.auth-input{border:0;border-radius:12px;background:var(--fill);padding:14px;font-size:16px;transition:background-color var(--t-hover),box-shadow var(--t-hover)}
+.auth-input:focus{background:var(--surface);box-shadow:0 0 0 2px var(--accent)}
+.auth-btn{border-radius:14px;padding:14px;font-weight:600}
+@media (hover:hover) and (pointer:fine){
+  .example-chip:hover{border-color:transparent;color:var(--text)}
+  .photo-zone:hover{border-color:transparent}
+  .photo-retake:hover{color:var(--coral)}
+}
+@media (prefers-reduced-transparency:reduce){header{background:var(--surface)}}
+</style>
 </body>
 </html>
