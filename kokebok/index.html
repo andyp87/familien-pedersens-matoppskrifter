@@ -747,10 +747,10 @@ const CONFIG = {
   // Claude models — import prøver Sonnet først (best kvalitet). Hvis Sonnet
   // tangerer Netlifys ~10 s funksjonsgrense og gir 502, tas et nytt forsøk
   // automatisk med den raskere Haiku (~4 s), så import aldri feiler helt.
-  MODEL_IMPORT: 'claude-sonnet-4-5',
-  MODEL_IMPORT_FALLBACK: 'claude-haiku-4-5-20251001',
-  MODEL_LABEL: 'claude-haiku-4-5-20251001',
-  MODEL_VISION: 'claude-opus-5'   // ser på stillbildene og velger det beste matbildet
+  MODEL_IMPORT: 'claude-sonnet-5-5',
+  MODEL_IMPORT_FALLBACK: 'claude-haiku-5-5',
+  MODEL_LABEL: 'claude-haiku-5-5',
+  MODEL_VISION: 'claude-opus-5-5' // ser på stillbildene og velger det beste matbildet
 };
 
 const CAT_META = {
@@ -1764,7 +1764,7 @@ async function analyzeRecipe() {
         if (resp.ok) { data = await resp.json(); break; }
         const err = await resp.json().catch(() => ({}));
         lastErr = new Error(err.error?.message || 'Serverfeil (' + resp.status + ')');
-        if (resp.status < 500) throw lastErr; // klientfeil → ikke prøv igjen
+        if (resp.status === 401) throw lastErr; // ikke innlogget → fallback hjelper ikke
       } catch(e) { lastErr = e; }
       if (attempt < 2) { status.textContent = 'Førstevalget ble tregt – prøver med en raskere modell…'; await new Promise(r => setTimeout(r, 500)); }
     }
