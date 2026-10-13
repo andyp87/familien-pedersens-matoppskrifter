@@ -52,6 +52,55 @@
   force = true
 
 
+# ─── Interne filer skal ikke serveres ─────────────────────────────────────────
+# Netlify publiserer repo-roten, så ALT som ligger i repoet er ellers lesbart
+# på nineofive.no. 13. oktober 2026 var både HANDOVER.md, audits/ og
+# netlify/lib/auth.js åpent tilgjengelige. force = true er nødvendig, ellers
+# vinner en fil som faktisk finnes over regelen.
+# Dette treffer ikke serverfunksjonene: de kalles på /.netlify/functions/*,
+# med punktum, og den stien matcher ikke /netlify/*.
+[[redirects]]
+  from = "/netlify/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/db/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/audits/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/Oppskrifter-eldre/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/_innboks/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/output/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/HANDOVER.md"
+  to = "/index.html"
+  status = 404
+  force = true
+
 # Kokeboka bor på /kokebok — SPA-fallback for alle stier under den.
 [[redirects]]
   from = "/kokebok/*"

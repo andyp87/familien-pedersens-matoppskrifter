@@ -1,2 +1,15 @@
 # Lokal Claude Code-verktøyconfig (maskinspesifikk, ikke del av appen)
 .claude/
+
+# Prosjektdokumentasjon for agenter. Holdes utenfor Git fordi Netlify
+# publiserer repo-roten: en committet AGENTS.md ville vært lesbar for alle
+# på https://nineofive.no/AGENTS.md (verifisert 13. oktober 2026).
+AGENTS.md
+CLAUDE.md
+CONTEXT.md
+STATUS.md
+
+# Arbeidsmapper: innboks for oppskrifter som ikke er lagt inn ennå,
+# og leveranser/rapporter fra agentøkter.
+_innboks/
+output/
