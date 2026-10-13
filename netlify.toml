@@ -12,53 +12,45 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
-# Privat inngang til Castport Studio. Selve innloggingen håndteres av den
-# beskyttede Castport-tjenesten; ingen søkerdata lagres på Nineofive-siden.
+# ─── Castport (selvdriftet på Cloudflare siden 1. september 2026) ─────────────
+# All Castport-trafikk proxyes til Cloudflare-workeren. status = 200 er usynlig
+# videresending: adressen i nettleseren forblir nineofive.no.
+# force = true er nødvendig fordi mappa castport/ i dette repoet ellers ville
+# skygget regelen og servert den gamle, statiske innloggingssiden.
+# Rekkefølgen er viktig: disse reglene må ligge før fallbackene nederst.
 [[redirects]]
   from = "/castport"
-  to = "/castport/index.html"
+  to = "https://castport.anders-9c2.workers.dev/castport"
   status = 200
   force = true
 
 [[redirects]]
-  from = "/castport/"
-  to = "/castport/index.html"
+  from = "/castport/*"
+  to = "https://castport.anders-9c2.workers.dev/castport/:splat"
   status = 200
   force = true
 
-# Offentlig, ulistet søkerlenke. Rekkefølgen er viktig: disse proxyreglene
-# må ligge før SPA-fallbackene nedenfor.
+# Offentlige, ulistede lenker: søkerskjema, statistskjema, self-tape,
+# regi-/kunde-/statistlenker. /sok/* dekker alle tokens, også nye, så det
+# trengs ingen ny regel per utlysning.
 [[redirects]]
-  from = "/sok/a7k2m9"
-  # Last appskallet fra roten. Den synlige Nineofive-stien beholdes i
-  # nettleseren, og Castport velger riktig søknadsvisning fra den stien.
-  to = "https://casting-studio-no.andersen.chatgpt.site/"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/sok/a7k2m9/"
-  to = "https://casting-studio-no.andersen.chatgpt.site/"
+  from = "/sok/*"
+  to = "https://castport.anders-9c2.workers.dev/sok/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/assets/*"
-  to = "https://casting-studio-no.andersen.chatgpt.site/assets/:splat"
+  to = "https://castport.anders-9c2.workers.dev/assets/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/api/*"
-  to = "https://casting-studio-no.andersen.chatgpt.site/api/:splat"
+  to = "https://castport.anders-9c2.workers.dev/api/:splat"
   status = 200
   force = true
 
-[[redirects]]
-  from = "/cdn-cgi/*"
-  to = "https://casting-studio-no.andersen.chatgpt.site/cdn-cgi/:splat"
-  status = 200
-  force = true
 
 # Kokeboka bor på /kokebok — SPA-fallback for alle stier under den.
 [[redirects]]
